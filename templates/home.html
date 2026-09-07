@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome &mdash; TrizenAI Photo Sharing Platform{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row align-items-center justify-content-center min-vh-50 py-4">
+        <div class="col-lg-8 text-center">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold mb-3">
+                <i class="bi bi-shield-check me-1"></i> Production MVP Photo Sharing
+            </span>
+            <h1 class="display-4 fw-bold tracking-tight text-dark mb-3">
+                Collaborative Event Photography, Curated &amp; Secured
+            </h1>
+            <p class="lead text-secondary mb-4 px-md-5">
+                Photography and event teams upload, review, and curate photos seamlessly. 
+                Deliver high-resolution, PIN-protected galleries directly to your customers with zero account requirements.
+            </p>
+            
+            <div class="d-flex flex-wrap justify-content-center gap-3 mb-5">
+                <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-lg px-4 shadow-sm">
+                    <i class="bi bi-box-arrow-in-right me-2"></i> Team &amp; Admin Sign In
+                </a>
+                <a href="{% url 'accounts:register' %}" class="btn btn-outline-secondary btn-lg px-4">
+                    <i class="bi bi-person-plus me-2"></i> Create Team Account
+                </a>
+            </div>
+
+            <!-- Workflow Highlights -->
+            <div class="row g-4 text-start mt-2">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-3 bg-white">
+                        <div class="card-body">
+                            <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3 d-inline-flex align-items-center justify-content-center p-3 fs-4">
+                                <i class="bi bi-calendar-event"></i>
+                            </div>
+                            <h5 class="card-title fw-bold">1. Event Coordination</h5>
+                            <p class="card-text text-muted small">
+                                Leads create events and assign specific team members with strict server-side access boundaries.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-3 bg-white">
+                        <div class="card-body">
+                            <div class="feature-icon bg-success bg-gradient text-white rounded-3 mb-3 d-inline-flex align-items-center justify-content-center p-3 fs-4">
+                                <i class="bi bi-cloud-arrow-up"></i>
+                            </div>
+                            <h5 class="card-title fw-bold">2. Upload &amp; Curate</h5>
+                            <p class="card-text text-muted small">
+                                Team members upload to private Supabase Storage. Admins review in a multi-select grid.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-3 bg-white">
+                        <div class="card-body">
+                            <div class="feature-icon bg-warning bg-gradient text-dark rounded-3 mb-3 d-inline-flex align-items-center justify-content-center p-3 fs-4">
+                                <i class="bi bi-shield-lock"></i>
+                            </div>
+                            <h5 class="card-title fw-bold">3. PIN-Protected Galleries</h5>
+                            <p class="card-text text-muted small">
+                                Publish curated galleries accessible to customers via shareable link and hashed PIN verification.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
