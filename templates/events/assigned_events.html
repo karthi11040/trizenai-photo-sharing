@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}My Assigned Events &mdash; TrizenAI Photos{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark mb-1">My Assigned Events</h2>
+        <p class="text-muted small mb-0">Events where you are designated as a team photographer. You can view event logistics and upload photographs.</p>
+    </div>
+
+    {% if events %}
+        <div class="row g-4">
+            {% for event in events %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 neutral-card card-hover d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge-status badge-team">
+                                <i class="bi bi-calendar3 me-1"></i>{{ event.event_date|date:"M d, Y" }}
+                            </span>
+                            <span class="badge-status" style="background: #F1F5F9; color: var(--color-text-secondary);">
+                                Assigned Member
+                            </span>
+                        </div>
+
+                        <h5 class="fw-bold text-dark mb-2">
+                            <a href="{% url 'events:event_detail' event_id=event.id %}" class="text-decoration-none text-dark">
+                                {{ event.name }}
+                            </a>
+                        </h5>
+
+                        {% if event.location %}
+                            <p class="small text-muted mb-2">
+                                <i class="bi bi-geo-alt text-secondary me-1"></i>{{ event.location }}
+                            </p>
+                        {% endif %}
+
+                        {% if event.description %}
+                            <p class="small text-secondary mb-3 flex-grow-1">
+                                {{ event.description|truncatewords:16 }}
+                            </p>
+                        {% else %}
+                            <p class="small text-muted fst-italic mb-3 flex-grow-1">No additional notes provided.</p>
+                        {% endif %}
+
+                        <div class="pt-3 border-top d-flex justify-content-between align-items-center mt-auto">
+                            <a href="{% url 'events:event_detail' event_id=event.id %}" class="btn btn-secondary btn-sm">
+                                View Details &rarr;
+                            </a>
+                            <a href="{% url 'events:event_detail' event_id=event.id %}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-cloud-arrow-up me-1"></i> Open Event
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-calendar-check empty-state-icon d-block"></i>
+            <h4 class="fw-bold text-dark">No Events Assigned Yet</h4>
+            <p class="text-muted small mx-auto mb-3" style="max-width: 440px;">
+                Your team administrator has not assigned you to any photography events yet. Once assigned, they will appear here.
+            </p>
+            <a href="{% url 'accounts:dashboard_router' %}" class="btn btn-secondary">
+                <i class="bi bi-speedometer2 me-1"></i> Back to Dashboard
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

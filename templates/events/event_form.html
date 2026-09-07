@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action_title }} &mdash; TrizenAI Photos{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb small">
+                    <li class="breadcrumb-item"><a href="{% url 'events:event_list' %}" class="text-decoration-none text-muted">Events</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ action_title }}</li>
+                </ol>
+            </nav>
+
+            <div class="card neutral-card p-4">
+                <div class="mb-4">
+                    <h3 class="fw-bold text-dark mb-1">{{ action_title }}</h3>
+                    <p class="text-muted small mb-0">Specify event date, location, and photography instructions.</p>
+                </div>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold small text-dark">Event Name *</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger small mt-1">{{ form.name.errors|first }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.event_date.id_for_label }}" class="form-label fw-semibold small text-dark">Event Date *</label>
+                            {{ form.event_date }}
+                            {% if form.event_date.errors %}
+                                <div class="text-danger small mt-1">{{ form.event_date.errors|first }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.location.id_for_label }}" class="form-label fw-semibold small text-dark">Location</label>
+                            {{ form.location }}
+                            {% if form.location.errors %}
+                                <div class="text-danger small mt-1">{{ form.location.errors|first }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold small text-dark">Description &amp; Schedule Notes</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small mt-1">{{ form.description.errors|first }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <a href="{% url 'events:event_list' %}" class="btn btn-secondary">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i> {{ button_text }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

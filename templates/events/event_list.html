@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}All Events &mdash; TrizenAI Photos{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">Photography Events</h2>
+            <p class="text-muted small mb-0">Create, manage, and coordinate photography events and team assignments.</p>
+        </div>
+        <div>
+            <a href="{% url 'events:event_create' %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i> Create New Event
+            </a>
+        </div>
+    </div>
+
+    <!-- Event Grid / List -->
+    {% if events %}
+        <div class="row g-4">
+            {% for event in events %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 neutral-card card-hover d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge-status badge-team">
+                                <i class="bi bi-calendar3 me-1"></i>{{ event.event_date|date:"M d, Y" }}
+                            </span>
+                            <span class="text-muted small">
+                                <i class="bi bi-people me-1"></i>{{ event.memberships.count }} assigned
+                            </span>
+                        </div>
+
+                        <h5 class="fw-bold text-dark mb-2">
+                            <a href="{% url 'events:event_detail' event_id=event.id %}" class="text-decoration-none text-dark">
+                                {{ event.name }}
+                            </a>
+                        </h5>
+
+                        {% if event.location %}
+                            <p class="small text-muted mb-2">
+                                <i class="bi bi-geo-alt text-secondary me-1"></i>{{ event.location }}
+                            </p>
+                        {% endif %}
+
+                        {% if event.description %}
+                            <p class="small text-secondary mb-3 flex-grow-1">
+                                {{ event.description|truncatewords:16 }}
+                            </p>
+                        {% else %}
+                            <p class="small text-muted fst-italic mb-3 flex-grow-1">No additional description provided.</p>
+                        {% endif %}
+
+                        <div class="pt-3 border-top d-flex justify-content-between align-items-center mt-auto">
+                            <a href="{% url 'events:event_detail' event_id=event.id %}" class="btn btn-secondary btn-sm">
+                                View Event &rarr;
+                            </a>
+                            <div class="d-flex gap-1">
+                                <a href="{% url 'events:event_update' event_id=event.id %}" class="btn btn-secondary btn-sm p-2" title="Edit Event">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'events:event_delete' event_id=event.id %}" class="btn btn-secondary btn-sm p-2 text-danger" title="Delete Event">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-calendar-x empty-state-icon d-block"></i>
+            <h4 class="fw-bold text-dark">No Events Created Yet</h4>
+            <p class="text-muted small mx-auto mb-4" style="max-width: 440px;">
+                Get started by creating your first photography event to assign team photographers and begin uploading photos.
+            </p>
+            <a href="{% url 'events:event_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Create Your First Event
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
