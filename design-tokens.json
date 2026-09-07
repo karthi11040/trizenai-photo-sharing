@@ -1,0 +1,95 @@
+{
+  "color": {
+    "primary": {
+      "50": "#EFF6FF",
+      "100": "#DBEAFE",
+      "500": "#3B82F6",
+      "600": "#2563EB",
+      "700": "#1D4ED8"
+    },
+    "secondary": {
+      "500": "#8B5CF6"
+    },
+    "semantic": {
+      "success": "#16A34A",
+      "warning": "#D97706",
+      "danger": "#DC2626"
+    },
+    "neutral": {
+      "0": "#FFFFFF",
+      "50": "#F8FAFC",
+      "100": "#F1F5F9",
+      "200": "#E2E8F0",
+      "300": "#CBD5E1",
+      "500": "#64748B",
+      "700": "#334155",
+      "900": "#0F172A"
+    }
+  },
+  "typography": {
+    "fontFamily": "Inter, ui-sans-serif, system-ui, sans-serif",
+    "display": {
+      "size": "48px",
+      "weight": 700,
+      "lineHeight": 1.1
+    },
+    "h1": {
+      "size": "40px",
+      "weight": 700,
+      "lineHeight": 1.15
+    },
+    "h2": {
+      "size": "32px",
+      "weight": 700,
+      "lineHeight": 1.2
+    },
+    "h3": {
+      "size": "24px",
+      "weight": 600,
+      "lineHeight": 1.25
+    },
+    "body": {
+      "size": "16px",
+      "weight": 400,
+      "lineHeight": 1.5
+    },
+    "small": {
+      "size": "14px",
+      "weight": 400,
+      "lineHeight": 1.45
+    }
+  },
+  "spacing": {
+    "1": "4px",
+    "2": "8px",
+    "3": "12px",
+    "4": "16px",
+    "5": "20px",
+    "6": "24px",
+    "8": "32px",
+    "10": "40px",
+    "12": "48px",
+    "16": "64px",
+    "20": "80px",
+    "24": "96px"
+  },
+  "radius": {
+    "sm": "6px",
+    "md": "10px",
+    "lg": "16px",
+    "xl": "24px",
+    "pill": "9999px"
+  },
+  "shadow": {
+    "sm": "0 1px 2px rgb(15 23 42 / 6%)",
+    "md": "0 8px 24px rgb(15 23 42 / 10%)",
+    "lg": "0 16px 40px rgb(15 23 42 / 14%)"
+  },
+  "breakpoint": {
+    "sm": "640px",
+    "md": "768px",
+    "lg": "1024px",
+    "xl": "1280px",
+    "2xl": "1536px"
+  }
+}

@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,95 +11,84 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Bootstrap 5.3 CSS -->
+    <!-- Bootstrap 5.3 CSS for responsive layout primitives -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
-    <!-- Platform Custom CSS -->
+    <!-- Design System Tokens & Custom Stylesheet -->
+    <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
-<body class="d-flex flex-column min-vh-100 bg-body-tertiary">
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm py-2">
-        <div class="container-fluid px-lg-4">
-            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'home' %}">
-                <span class="brand-icon"><i class="bi bi-camera-fill text-primary"></i></span>
-                <span class="brand-text">Trizen<span class="text-primary">AI</span> Photos</span>
+<body class="d-flex flex-column min-vh-100">
+    <!-- Site Header (design.md Section 4.1) -->
+    <header class="site-header d-flex align-items-center">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a href="{% url 'home' %}" class="d-flex align-items-center gap-2 text-decoration-none">
+                <span class="brand-mark"><i class="bi bi-camera-fill"></i></span>
+                <span class="brand-name">Trizen<span style="color: var(--color-primary);">AI</span> Photos</span>
             </a>
             
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    {% if user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'accounts:dashboard_router' %}">
-                                <i class="bi bi-speedometer2 me-1"></i>Dashboard
-                            </a>
-                        </li>
-                        {% if user.profile.role == 'ADMIN' or user.is_superuser %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'events:event_list' %}">
-                                    <i class="bi bi-calendar-event me-1"></i>Events
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'events:assigned_events' %}">
-                                    <i class="bi bi-calendar-check me-1"></i>My Events
-                                </a>
-                            </li>
-                        {% endif %}
-                    {% endif %}
-                </ul>
-                
-                <div class="d-flex align-items-center gap-3">
-                    {% if user.is_authenticated %}
-                        <div class="dropdown">
-                            <button class="btn btn-outline-light btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-person-circle fs-6"></i>
-                                <span class="fw-semibold">{{ user.username }}</span>
-                                {% if user.profile.role == 'ADMIN' or user.is_superuser %}
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1">Admin</span>
-                                {% else %}
-                                    <span class="badge bg-info-subtle text-info border border-info-subtle ms-1">Team</span>
-                                {% endif %}
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                                <li><h6 class="dropdown-header text-uppercase fs-7 text-muted">Role: {{ user.profile.get_role_display|default:"User" }}</h6></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form method="post" action="{% url 'accounts:logout' %}">
-                                        {% csrf_token %}
-                                        <button type="submit" class="dropdown-item text-danger d-flex align-items-center gap-2">
-                                            <i class="bi bi-box-arrow-right"></i> Log out
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
+            <nav class="d-none d-md-flex align-items-center gap-4" aria-label="Primary navigation">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'accounts:dashboard_router' %}" class="text-decoration-none fw-medium text-secondary hover-primary">
+                        <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                    </a>
+                    {% if user.profile.role == 'ADMIN' or user.is_superuser %}
+                        <a href="{% url 'events:event_list' %}" class="text-decoration-none fw-medium text-secondary hover-primary">
+                            <i class="bi bi-calendar-event me-1"></i> Events
+                        </a>
                     {% else %}
-                        <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-sm px-3">
-                            <i class="bi bi-box-arrow-in-right me-1"></i> Log In
-                        </a>
-                        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm px-3">
-                            <i class="bi bi-person-plus me-1"></i> Register
+                        <a href="{% url 'events:assigned_events' %}" class="text-decoration-none fw-medium text-secondary hover-primary">
+                            <i class="bi bi-calendar-check me-1"></i> My Events
                         </a>
                     {% endif %}
-                </div>
+                {% endif %}
+            </nav>
+            
+            <div class="d-flex align-items-center gap-3">
+                {% if user.is_authenticated %}
+                    <div class="dropdown">
+                        <button class="btn btn-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle fs-6"></i>
+                            <span class="fw-semibold">{{ user.username }}</span>
+                            {% if user.profile.role == 'ADMIN' or user.is_superuser %}
+                                <span class="badge-status badge-admin ms-1">Admin</span>
+                            {% else %}
+                                <span class="badge-status badge-team ms-1">Team</span>
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border" style="border-radius: var(--radius-md);">
+                            <li><h6 class="dropdown-header text-uppercase text-muted" style="font-size: 0.75rem;">Role: {{ user.profile.get_role_display|default:"User" }}</h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'accounts:logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger d-flex align-items-center gap-2">
+                                        <i class="bi bi-box-arrow-right"></i> Log out
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <a href="{% url 'accounts:login' %}" class="btn btn-secondary btn-sm">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Log In
+                    </a>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-person-plus me-1"></i> Register
+                    </a>
+                {% endif %}
             </div>
         </div>
-    </nav>
+    </header>
 
     <!-- Global Alert / Messages Container -->
     <div class="container mt-3">
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show border shadow-sm d-flex align-items-center gap-2" style="border-radius: var(--radius-md);" role="alert">
                     {% if message.tags == 'success' %}
                         <i class="bi bi-check-circle-fill text-success fs-5"></i>
                     {% elif message.tags == 'error' or message.tags == 'danger' %}
@@ -121,14 +110,14 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
-    <footer class="footer mt-auto py-3 bg-white border-top text-muted">
-        <div class="container text-center">
-            <div class="small">
+    <!-- Site Footer (design.md Section 4.2) -->
+    <footer class="site-footer mt-auto py-4 border-top" style="background: var(--color-surface);">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="small" style="color: var(--color-text-muted);">
                 &copy; 2026 <strong>TrizenAI Technologies</strong> &mdash; Production Photo Sharing Platform.
             </div>
-            <div class="text-muted extra-small mt-1" style="font-size: 0.75rem;">
-                Secure RBAC &bull; Supabase Storage &bull; PIN-Protected Public Galleries
+            <div class="small" style="color: var(--color-text-muted); font-size: 0.8rem;">
+                Near-Neutral Design &bull; Supabase Storage &bull; PIN-Protected Public Galleries
             </div>
         </div>
     </footer>

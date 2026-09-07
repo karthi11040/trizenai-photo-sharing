@@ -1,151 +1,320 @@
 /* ==========================================================================
    TrizenAI Photo Sharing Platform - Core Stylesheet
+   Grounded in design.md specifications
    ========================================================================== */
 
-:root {
-    --primary-color: #0d6efd;
-    --primary-hover: #0b5ed7;
-    --surface-bg: #ffffff;
-    --page-bg: #f8f9fa;
-    --text-primary: #212529;
-    --text-muted: #6c757d;
-    --border-color: #e9ecef;
-    --card-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    --hover-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    --border-radius-sm: 8px;
-    --border-radius-md: 12px;
-    --border-radius-lg: 16px;
+@import url('tokens.css');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  scroll-behavior: smooth;
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: var(--text-primary);
-    background-color: var(--page-bg);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  min-width: 320px;
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Brand Navbar */
-.navbar-brand .brand-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: rgba(13, 110, 253, 0.15);
+/* Accessibility Focus States (Section 6.3) */
+:focus-visible {
+  outline: 3px solid rgb(37 99 235 / 35%) !important;
+  outline-offset: 2px !important;
 }
 
-/* Feature Cards */
-.feature-icon {
-    width: 54px;
-    height: 54px;
+/* Container Layout (Section 3.2) */
+.app-container, .container {
+  width: min(calc(100% - 32px), var(--container-max)) !important;
+  margin-inline: auto;
 }
 
-/* Photo Grid Component */
+@media (max-width: 767px) {
+  .app-container, .container {
+    width: min(calc(100% - 24px), var(--container-max)) !important;
+  }
+}
+
+/* Header & Navigation (Section 4.1) */
+.site-header {
+  min-height: var(--header-height);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: #ffffff;
+  font-size: 1.1rem;
+}
+
+.brand-name {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+/* Cards (Section 4.3) */
+.card, .neutral-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Buttons (Section 4.4 - Min Height 44px) */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.btn-primary {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+}
+
+.btn-primary:active {
+  background-color: var(--color-primary-active) !important;
+}
+
+.btn-secondary {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border-strong) !important;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-surface-muted) !important;
+  color: var(--color-text) !important;
+}
+
+.btn-danger {
+  background-color: var(--color-danger) !important;
+  border-color: var(--color-danger) !important;
+  color: #ffffff !important;
+}
+
+/* Inputs & Form Fields (Section 4.5 & 4.6) */
+.input, .form-control, .form-select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 25%);
+  outline: none;
+}
+
+/* Badges (Section 4.7) */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-published {
+  background-color: #DCFCE7;
+  color: var(--color-success);
+  border: 1px solid #BBF7D0;
+}
+
+.badge-draft {
+  background-color: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.badge-admin {
+  background-color: #FEE2E2;
+  color: var(--color-danger);
+  border: 1px solid #FECACA;
+}
+
+.badge-team {
+  background-color: var(--color-primary-50, #EFF6FF);
+  color: var(--color-primary);
+  border: 1px solid #BFDBFE;
+}
+
+/* Photo Grid Component (Section 4.8) */
 .photo-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1023px) {
+  .photo-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
 }
 
 .photo-card {
-    position: relative;
-    border-radius: var(--border-radius-md);
-    overflow: hidden;
-    background: #ffffff;
-    border: 1px solid var(--border-color);
-    box-shadow: var(--card-shadow);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
 .photo-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--hover-shadow);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .photo-thumb-container {
-    position: relative;
-    width: 100%;
-    padding-top: 75%; /* 4:3 Aspect Ratio */
-    background-color: #e9ecef;
-    overflow: hidden;
+  position: relative;
+  width: 100%;
+  padding-top: 75%; /* 4:3 Aspect Ratio */
+  background-color: var(--color-surface-muted);
+  overflow: hidden;
 }
 
 .photo-thumb {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 200ms ease;
 }
 
 .photo-card:hover .photo-thumb {
-    transform: scale(1.03);
+  transform: scale(1.02);
 }
 
 .photo-select-checkbox {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 5;
-    width: 22px;
-    height: 22px;
-    cursor: pointer;
-}
-
-.photo-badge-status {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 5;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  accent-color: var(--color-primary);
 }
 
 /* Empty States */
 .empty-state {
-    text-align: center;
-    padding: 3.5rem 1.5rem;
-    border-radius: var(--border-radius-lg);
-    background: #ffffff;
-    border: 1px dashed #dee2e6;
+  text-align: center;
+  padding: var(--space-16) var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border-strong);
 }
 
 .empty-state-icon {
-    font-size: 3rem;
-    color: #adb5bd;
-    margin-bottom: 1rem;
+  font-size: 3rem;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
 }
 
-/* PIN Verification Box */
+/* PIN Verification Box (Section 4.3 & 4.5) */
 .pin-card {
-    max-width: 440px;
-    margin: 0 auto;
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--hover-shadow);
-    background: #ffffff;
+  max-width: 440px;
+  margin: 0 auto;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: var(--space-8);
 }
 
 .pin-input {
-    letter-spacing: 0.5rem;
-    font-size: 1.75rem;
-    text-align: center;
-    font-weight: 700;
+  letter-spacing: 0.5rem;
+  font-size: 1.75rem;
+  text-align: center;
+  font-weight: 700;
+  min-height: 56px;
 }
 
 /* Upload Dropzone */
 .dropzone-container {
-    border: 2px dashed #0d6efd;
-    border-radius: var(--border-radius-md);
-    background: rgba(13, 110, 253, 0.02);
-    padding: 2.5rem 1.5rem;
-    text-align: center;
-    cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
+  border: 2px dashed var(--color-primary);
+  border-radius: var(--radius-lg);
+  background: #EFF6FF;
+  padding: var(--space-10) var(--space-6);
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
 }
 
 .dropzone-container:hover, .dropzone-container.dragover {
-    background: rgba(13, 110, 253, 0.08);
-    border-color: #0b5ed7;
+  background: #DBEAFE;
+  border-color: var(--color-primary-hover);
+}
+
+/* Reduced Motion (Section 5.5) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
