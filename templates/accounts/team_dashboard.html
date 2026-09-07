@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Photographer Dashboard &mdash; TrizenAI Photos{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <h2 class="fw-bold text-dark mb-0">Photographer Dashboard</h2>
+                <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-1">Team Member</span>
+            </div>
+            <p class="text-muted small mb-0 mt-1">View your assigned events and upload event photography.</p>
+        </div>
+        <div>
+            <a href="{% url 'events:assigned_events' %}" class="btn btn-primary btn-sm px-3 shadow-sm">
+                <i class="bi bi-calendar-check me-1"></i> View Assigned Events
+            </a>
+        </div>
+    </div>
+
+    <!-- Instructions / Rules Banner -->
+    <div class="alert alert-light border shadow-sm rounded-4 p-4 mb-4">
+        <h5 class="fw-bold text-dark mb-2"><i class="bi bi-info-circle text-primary me-2"></i>Team Member Guidelines</h5>
+        <div class="row g-3 mt-1">
+            <div class="col-md-4">
+                <div class="d-flex gap-2">
+                    <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                    <div>
+                        <strong class="d-block small text-dark">Assigned Events Only</strong>
+                        <span class="small text-muted">You can view details and upload photos only for events to which you have been assigned by a Lead.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex gap-2">
+                    <i class="bi bi-cloud-arrow-up-fill text-primary fs-5"></i>
+                    <div>
+                        <strong class="d-block small text-dark">Multi-Photo Upload</strong>
+                        <span class="small text-muted">Upload high-resolution JPEG, PNG, or WebP images up to 15MB each directly to object storage.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex gap-2">
+                    <i class="bi bi-shield-lock-fill text-warning fs-5"></i>
+                    <div>
+                        <strong class="d-block small text-dark">Lead Curation</strong>
+                        <span class="small text-muted">Admins curate photos and manage customer gallery publication. Team members cannot publish galleries.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Assigned Events Link Card -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-4 text-center">
+        <div class="py-4">
+            <i class="bi bi-calendar-heart text-primary display-4 mb-3 d-block"></i>
+            <h4 class="fw-bold text-dark">Ready to Upload Photos?</h4>
+            <p class="text-muted small mx-auto" style="max-width: 500px;">
+                Open your assigned events list to select an active shoot and begin uploading event images.
+            </p>
+            <a href="{% url 'events:assigned_events' %}" class="btn btn-outline-primary px-4 py-2 mt-2 fw-semibold">
+                <i class="bi bi-arrow-right-circle me-1"></i> Go to My Assigned Events
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,5 +1,8 @@
 from django.urls import path
+from accounts import api_views
 
 urlpatterns = [
-    # Placeholder API routes for Phase 1 scaffolding - to be expanded in Phase 2
+    path('login/', api_views.APILoginView.as_view(), name='api_login'),
+    path('logout/', api_views.APILogoutView.as_view(), name='api_logout'),
+    path('me/', api_views.APIMeView.as_view(), name='api_me'),
 ]
