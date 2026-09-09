@@ -150,7 +150,7 @@ class AuthenticationAndRBACTests(TestCase):
         self.admin_user.profile.refresh_from_db()
         response = self.client.get(reverse('accounts:admin_dashboard_token', kwargs={'token': self.admin_user.profile.dashboard_token}))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Lead Dashboard')
+        self.assertContains(response, 'admin_lead')
 
     def test_api_authentication_workflow(self):
         """Verify DRF API login, me, and logout adhere to API contract."""

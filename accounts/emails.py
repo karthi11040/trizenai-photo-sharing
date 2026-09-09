@@ -87,8 +87,8 @@ TrizenAI Studio Team
 </html>"""
 
     try:
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'TrizenAI Studio <karthigeyan.s11@gmail.com>')
-        host_user = getattr(settings, 'EMAIL_HOST_USER', 'karthigeyan.s11@gmail.com')
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'TrizenAI Studio <noreply@trizenai.com>')
+        host_user = getattr(settings, 'EMAIL_HOST_USER', '')
         reply_to_list = [host_user] if host_user else None
         msg = EmailMultiAlternatives(
             subject=subject,
@@ -183,8 +183,8 @@ TrizenAI Studio Team
 </html>"""
 
     try:
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'TrizenAI Studio <karthigeyan.s11@gmail.com>')
-        host_user = getattr(settings, 'EMAIL_HOST_USER', 'karthigeyan.s11@gmail.com')
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'TrizenAI Studio <noreply@trizenai.com>')
+        host_user = getattr(settings, 'EMAIL_HOST_USER', '')
         reply_to_list = [host_user] if host_user else None
         msg = EmailMultiAlternatives(
             subject=subject,
@@ -273,8 +273,8 @@ TrizenAI Studio Security Team
 </html>"""
 
     try:
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'TrizenAI Studio <karthigeyan.s11@gmail.com>')
-        host_user = getattr(settings, 'EMAIL_HOST_USER', 'karthigeyan.s11@gmail.com')
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'TrizenAI Studio <noreply@trizenai.com>')
+        host_user = getattr(settings, 'EMAIL_HOST_USER', '')
         reply_to_list = [host_user] if host_user else None
         msg = EmailMultiAlternatives(
             subject=subject,
