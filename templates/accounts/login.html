@@ -8,8 +8,7 @@
 {% block public_main_class %}p-0 m-0 w-100{% endblock %}
 
 {% block content %}
-<div class="min-vh-100 d-flex flex-column align-items-center justify-content-center p-4 bg-slate-50"
-    style="background: radial-gradient(circle at 50% 10%, #ffffff 0%, #f1f5f9 100%);">
+<div class="min-vh-100 d-flex flex-column align-items-center justify-content-center p-4 bg-white">
 
     <!-- Top Navigation & Brand Header -->
     <div class="w-100 d-flex justify-content-between align-items-center mb-4" style="max-width: 460px;">
@@ -30,8 +29,8 @@
     </div>
 
     <!-- Auth Card -->
-    <div class="card border rounded-4 p-4 p-sm-5 bg-white w-100 shadow-sm"
-        style="max-width: 460px; border-color: #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
+    <div class="card border rounded-4 p-4 p-sm-5 bg-white w-100"
+        style="max-width: 460px; border-color: #e2e8f0; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);">
 
         <div class="text-center mb-4">
             <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 mx-auto"
@@ -69,13 +68,13 @@
                     Email Address <span class="text-danger">*</span>
                 </label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light text-muted border-end-0 px-3"
-                        style="background-color: #f8fafc; border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
+                    <span class="input-group-text bg-white text-muted border-end-0 px-3"
+                        style="border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
                         <i class="bi bi-envelope text-secondary" style="font-size: 1.05rem;"></i>
                     </span>
                     <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}"
                         value="{{ form.username.value|default:'' }}" placeholder="name@trizenai.studio" autocomplete="username"
-                        required class="form-control border-start-0 ps-1 {% if form.username.errors %}is-invalid{% endif %}"
+                        required class="form-control border-start-0 ps-1 bg-white {% if form.username.errors %}is-invalid{% endif %}"
                         style="border-color: #e2e8f0; border-top-right-radius: 10px; border-bottom-right-radius: 10px; min-height: 46px; font-size: 0.9375rem;">
                 </div>
                 {% if form.username.errors %}
@@ -98,17 +97,17 @@
                     </a>
                 </div>
                 <div class="input-group">
-                    <span class="input-group-text bg-light text-muted border-end-0 px-3"
-                        style="background-color: #f8fafc; border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
+                    <span class="input-group-text bg-white text-muted border-end-0 px-3"
+                        style="border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
                         <i class="bi bi-lock text-secondary" style="font-size: 1.05rem;"></i>
                     </span>
                     <input type="password" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}"
                         placeholder="••••••••••••" autocomplete="current-password" required
-                        class="form-control border-start-0 border-end-0 px-1 {% if form.password.errors %}is-invalid{% endif %}"
+                        class="form-control border-start-0 border-end-0 px-1 bg-white {% if form.password.errors %}is-invalid{% endif %}"
                         style="border-color: #e2e8f0; min-height: 46px; font-size: 0.9375rem;">
-                    <button class="btn btn-outline-secondary border-start-0 px-3 d-flex align-items-center justify-content-center text-muted"
+                    <button class="btn btn-outline-secondary border-start-0 px-3 d-flex align-items-center justify-content-center text-muted bg-white"
                         type="button" data-password-toggle="{{ form.password.id_for_label }}" aria-label="Show password"
-                        style="border-color: #e2e8f0; background-color: #f8fafc; border-top-right-radius: 10px; border-bottom-right-radius: 10px;">
+                        style="border-color: #e2e8f0; border-top-right-radius: 10px; border-bottom-right-radius: 10px;">
                         <i class="bi bi-eye"></i>
                     </button>
                 </div>

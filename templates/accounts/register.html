@@ -8,23 +8,29 @@
 {% block public_main_class %}p-0 m-0 w-100{% endblock %}
 
 {% block content %}
-<div class="min-vh-100 d-flex flex-column align-items-center justify-content-center p-4 bg-slate-50"
-    style="background: radial-gradient(circle at 50% 10%, #ffffff 0%, #f1f5f9 100%);">
+<div class="min-vh-100 d-flex flex-column align-items-center justify-content-center p-4 bg-white">
 
-    <!-- Top Brand Logo -->
-    <a href="{% url 'home' %}" class="d-flex align-items-center gap-2.5 text-decoration-none mb-4">
-        <div class="d-flex align-items-center justify-content-center bg-white rounded-3 p-1 shadow-sm border"
-            style="width: 40px; height: 40px; border-color: #e2e8f0;">
-            <img src="{% static 'img/logo-icon.png' %}" alt="TrizenAI" width="28" height="28">
-        </div>
-        <span class="fw-bold text-dark tracking-tight"
-            style="font-size: 1.35rem; font-family: var(--font-family-display);">Trizen<span
-                style="color: #2563eb;">AI</span></span>
-    </a>
+    <!-- Top Navigation & Brand Header -->
+    <div class="w-100 d-flex justify-content-between align-items-center mb-4" style="max-width: 480px;">
+        <a href="{% url 'home' %}" class="d-flex align-items-center gap-2.5 text-decoration-none">
+            <div class="d-flex align-items-center justify-content-center bg-white rounded-3 p-1 shadow-sm border"
+                style="width: 40px; height: 40px; border-color: #e2e8f0;">
+                <img src="{% static 'img/logo-icon.png' %}" alt="TrizenAI" width="28" height="28">
+            </div>
+            <span class="fw-bold text-dark tracking-tight"
+                style="font-size: 1.35rem; font-family: var(--font-family-display);">Trizen<span
+                    style="color: #2563eb;">AI</span></span>
+        </a>
+        <a href="{% url 'accounts:login' %}"
+            class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1.5"
+            style="font-size: 0.825rem;">
+            <i class="bi bi-box-arrow-in-right"></i> Sign In
+        </a>
+    </div>
 
     <!-- Auth Card -->
-    <div class="card border rounded-4 p-4 p-sm-5 bg-white w-100 shadow-sm"
-        style="max-width: 480px; border-color: #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
+    <div class="card border rounded-4 p-4 p-sm-5 bg-white w-100"
+        style="max-width: 480px; border-color: #e2e8f0; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);">
 
         <div class="text-center mb-4">
             <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 mx-auto"
@@ -64,7 +70,7 @@
                     </label>
                     <input type="text" name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}"
                         value="{{ form.first_name.value|default:'' }}" placeholder="First Name" autocomplete="given-name"
-                        required class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
+                        required class="form-control bg-white {% if form.first_name.errors %}is-invalid{% endif %}"
                         style="border-color: #e2e8f0; border-radius: 10px; min-height: 46px; font-size: 0.9375rem;">
                     {% if form.first_name.errors %}
                     <div class="text-danger small mt-1" style="font-size: 0.75rem;">{{ form.first_name.errors|first }}</div>
@@ -77,7 +83,7 @@
                     </label>
                     <input type="text" name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}"
                         value="{{ form.last_name.value|default:'' }}" placeholder="Last Name" autocomplete="family-name"
-                        required class="form-control {% if form.last_name.errors %}is-invalid{% endif %}"
+                        required class="form-control bg-white {% if form.last_name.errors %}is-invalid{% endif %}"
                         style="border-color: #e2e8f0; border-radius: 10px; min-height: 46px; font-size: 0.9375rem;">
                     {% if form.last_name.errors %}
                     <div class="text-danger small mt-1" style="font-size: 0.75rem;">{{ form.last_name.errors|first }}</div>
@@ -92,13 +98,13 @@
                     Email Address <span class="text-danger">*</span>
                 </label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light text-muted border-end-0 px-3"
-                        style="background-color: #f8fafc; border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
+                    <span class="input-group-text bg-white text-muted border-end-0 px-3"
+                        style="border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
                         <i class="bi bi-envelope text-secondary" style="font-size: 1.05rem;"></i>
                     </span>
                     <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}"
                         value="{{ form.email.value|default:'' }}" placeholder="name@trizenai.studio" autocomplete="email"
-                        required class="form-control border-start-0 ps-1 {% if form.email.errors %}is-invalid{% endif %}"
+                        required class="form-control border-start-0 ps-1 bg-white {% if form.email.errors %}is-invalid{% endif %}"
                         style="border-color: #e2e8f0; border-top-right-radius: 10px; border-bottom-right-radius: 10px; min-height: 46px; font-size: 0.9375rem;">
                 </div>
                 {% if form.email.errors %}
@@ -115,13 +121,13 @@
                     Username / Studio ID <span class="text-danger">*</span>
                 </label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light text-muted border-end-0 px-3"
-                        style="background-color: #f8fafc; border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
+                    <span class="input-group-text bg-white text-muted border-end-0 px-3"
+                        style="border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
                         <i class="bi bi-at text-secondary" style="font-size: 1.05rem;"></i>
                     </span>
                     <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}"
                         value="{{ form.username.value|default:'' }}" placeholder="Choose username" autocomplete="username"
-                        required class="form-control border-start-0 ps-1 {% if form.username.errors %}is-invalid{% endif %}"
+                        required class="form-control border-start-0 ps-1 bg-white {% if form.username.errors %}is-invalid{% endif %}"
                         style="border-color: #e2e8f0; border-top-right-radius: 10px; border-bottom-right-radius: 10px; min-height: 46px; font-size: 0.9375rem;">
                 </div>
                 {% if form.username.errors %}
@@ -138,17 +144,17 @@
                     Password <span class="text-danger">*</span>
                 </label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light text-muted border-end-0 px-3"
-                        style="background-color: #f8fafc; border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
+                    <span class="input-group-text bg-white text-muted border-end-0 px-3"
+                        style="border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
                         <i class="bi bi-lock text-secondary" style="font-size: 1.05rem;"></i>
                     </span>
                     <input type="password" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}"
                         placeholder="••••••••••••" autocomplete="new-password" required
-                        class="form-control border-start-0 border-end-0 px-1 {% if form.password.errors %}is-invalid{% endif %}"
+                        class="form-control border-start-0 border-end-0 px-1 bg-white {% if form.password.errors %}is-invalid{% endif %}"
                         style="border-color: #e2e8f0; min-height: 46px; font-size: 0.9375rem;">
-                    <button class="btn btn-outline-secondary border-start-0 px-3 d-flex align-items-center justify-content-center text-muted"
+                    <button class="btn btn-outline-secondary border-start-0 px-3 d-flex align-items-center justify-content-center text-muted bg-white"
                         type="button" data-password-toggle="{{ form.password.id_for_label }}" aria-label="Show password"
-                        style="border-color: #e2e8f0; background-color: #f8fafc; border-top-right-radius: 10px; border-bottom-right-radius: 10px;">
+                        style="border-color: #e2e8f0; border-top-right-radius: 10px; border-bottom-right-radius: 10px;">
                         <i class="bi bi-eye"></i>
                     </button>
                 </div>
@@ -166,18 +172,18 @@
                     Confirm Password <span class="text-danger">*</span>
                 </label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light text-muted border-end-0 px-3"
-                        style="background-color: #f8fafc; border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
+                    <span class="input-group-text bg-white text-muted border-end-0 px-3"
+                        style="border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
                         <i class="bi bi-check2-circle text-secondary" style="font-size: 1.05rem;"></i>
                     </span>
                     <input type="password" name="{{ form.confirm_password.name }}"
                         id="{{ form.confirm_password.id_for_label }}" placeholder="••••••••••••" autocomplete="new-password"
-                        required class="form-control border-start-0 border-end-0 px-1 {% if form.confirm_password.errors %}is-invalid{% endif %}"
+                        required class="form-control border-start-0 border-end-0 px-1 bg-white {% if form.confirm_password.errors %}is-invalid{% endif %}"
                         style="border-color: #e2e8f0; min-height: 46px; font-size: 0.9375rem;">
-                    <button class="btn btn-outline-secondary border-start-0 px-3 d-flex align-items-center justify-content-center text-muted"
+                    <button class="btn btn-outline-secondary border-start-0 px-3 d-flex align-items-center justify-content-center text-muted bg-white"
                         type="button" data-password-toggle="{{ form.confirm_password.id_for_label }}"
                         aria-label="Show password"
-                        style="border-color: #e2e8f0; background-color: #f8fafc; border-top-right-radius: 10px; border-bottom-right-radius: 10px;">
+                        style="border-color: #e2e8f0; border-top-right-radius: 10px; border-bottom-right-radius: 10px;">
                         <i class="bi bi-eye"></i>
                     </button>
                 </div>
@@ -189,7 +195,7 @@
             </div>
 
             <!-- Requirements Box -->
-            <div class="p-3 mb-4 rounded-3 bg-light border" style="font-size: 0.78rem; border-color: #e2e8f0 !important;">
+            <div class="p-3 mb-4 rounded-3 bg-white border" style="font-size: 0.78rem; border-color: #e2e8f0 !important;">
                 <div class="fw-semibold text-secondary mb-1">Password Requirements:</div>
                 <div class="text-muted d-flex flex-column gap-1">
                     <div><i class="bi bi-check2 text-primary me-1 fw-bold"></i> At least 8 characters long</div>
