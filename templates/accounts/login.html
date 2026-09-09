@@ -11,16 +11,23 @@
 <div class="min-vh-100 d-flex flex-column align-items-center justify-content-center p-4 bg-slate-50"
     style="background: radial-gradient(circle at 50% 10%, #ffffff 0%, #f1f5f9 100%);">
 
-    <!-- Top Brand Logo -->
-    <a href="{% url 'home' %}" class="d-flex align-items-center gap-2.5 text-decoration-none mb-4">
-        <div class="d-flex align-items-center justify-content-center bg-white rounded-3 p-1 shadow-sm border"
-            style="width: 40px; height: 40px; border-color: #e2e8f0;">
-            <img src="{% static 'img/logo-icon.png' %}" alt="TrizenAI" width="28" height="28">
-        </div>
-        <span class="fw-bold text-dark tracking-tight"
-            style="font-size: 1.35rem; font-family: var(--font-family-display);">Trizen<span
-                style="color: #2563eb;">AI</span></span>
-    </a>
+    <!-- Top Navigation & Brand Header -->
+    <div class="w-100 d-flex justify-content-between align-items-center mb-4" style="max-width: 460px;">
+        <a href="{% url 'home' %}" class="d-flex align-items-center gap-2.5 text-decoration-none">
+            <div class="d-flex align-items-center justify-content-center bg-white rounded-3 p-1 shadow-sm border"
+                style="width: 40px; height: 40px; border-color: #e2e8f0;">
+                <img src="{% static 'img/logo-icon.png' %}" alt="TrizenAI" width="28" height="28">
+            </div>
+            <span class="fw-bold text-dark tracking-tight"
+                style="font-size: 1.35rem; font-family: var(--font-family-display);">Trizen<span
+                    style="color: #2563eb;">AI</span></span>
+        </a>
+        <a href="{% url 'accounts:register' %}"
+            class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1.5"
+            style="font-size: 0.825rem;">
+            <i class="bi bi-person-plus"></i> Register
+        </a>
+    </div>
 
     <!-- Auth Card -->
     <div class="card border rounded-4 p-4 p-sm-5 bg-white w-100 shadow-sm"
@@ -138,13 +145,13 @@
             <div class="text-center pt-3 border-top" style="border-color: #f1f5f9 !important;">
                 <p class="text-secondary small mb-1.5" style="font-size: 0.875rem;">
                     Don't have an account?
-                    <a href="{% url 'accounts:register' %}" class="text-decoration-none fw-semibold"
-                        style="color: #2563eb;">Create Account</a>
+                    <a href="{% url 'accounts:register' %}" class="text-decoration-none fw-bold"
+                        style="color: #2563eb;">Register / Create Account</a>
                 </p>
                 <p class="text-secondary small mb-0" style="font-size: 0.825rem;">
-                    Have an invitation?
+                    Have an invitation link?
                     <a href="{% url 'accounts:account_activation' %}" class="text-decoration-none fw-semibold"
-                        style="color: #2563eb;">Activate Account</a>
+                        style="color: #64748b;">Activate Account</a>
                 </p>
             </div>
         </form>
