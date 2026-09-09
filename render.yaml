@@ -3,7 +3,7 @@ services:
     name: trizenai-photo-sharing
     runtime: python
     buildCommand: ./build.sh
-    startCommand: gunicorn config.wsgi:application
+    startCommand: sh -c "python manage.py migrate --no-input && python manage.py ensure_admin && gunicorn config.wsgi:application"
     envVars:
       - key: DEBUG
         value: "False"
