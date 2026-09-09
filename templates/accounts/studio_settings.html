@@ -1,0 +1,960 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Studio Workspace Settings &mdash; TrizenAI Studio{% endblock %}
+
+{% block breadcrumbs %}
+    <a href="{% url 'accounts:dashboard_router' %}" class="text-decoration-none text-secondary">Studio Alpha</a>
+    <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+    <span class="fw-semibold text-dark">Studio Workspace Settings</span>
+{% endblock %}
+
+{% block content %}
+<div class="studio-settings-view pb-5">
+    <!-- Header Banner -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h2 class="fw-bold text-dark mb-0">Studio Workspace Settings</h2>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 font-monospace" style="font-size: 0.75rem;">v2.5 Studio Pro</span>
+            </div>
+            <p class="text-secondary small mb-0">Complete management suite for studio branding, Supabase cloud object storage, live watermark engine, client PIN policies, API keys, and audit exports.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <form method="post" action="{% url 'accounts:studio_settings' %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="export_audit_log">
+                <button type="submit" class="btn btn-outline-secondary btn-sm px-3 shadow-sm bg-white" style="border-radius: 10px;">
+                    <i class="bi bi-download text-success"></i>
+                    <span>Export Audit Log (CSV)</span>
+                </button>
+            </form>
+            <form method="post" action="{% url 'accounts:studio_settings' %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="test_storage">
+                <button type="submit" class="btn btn-primary btn-sm px-3 shadow-sm" style="border-radius: 10px;">
+                    <i class="bi bi-hdd-network"></i>
+                    <span>Run Storage Diagnostic</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quick Metrics Strip -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="metric-card h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-secondary small">Total Storage</span>
+                    <i class="bi bi-cloud-check text-primary"></i>
+                </div>
+                <div class="fs-4 fw-bold text-dark">{{ total_storage_str }}</div>
+                <div class="text-muted small" style="font-size: 0.72rem;">{{ total_photos_count }} assets in bucket</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-secondary small">Studio Events</span>
+                    <i class="bi bi-calendar3 text-warning"></i>
+                </div>
+                <div class="fs-4 fw-bold text-dark">{{ total_events_count }}</div>
+                <div class="text-muted small" style="font-size: 0.72rem;">{{ total_galleries_count }} active galleries</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-secondary small">Database Engine</span>
+                    <i class="bi bi-database-check text-success"></i>
+                </div>
+                <div class="fs-6 fw-bold text-dark text-truncate">{{ db_label }}</div>
+                <div class="text-muted small" style="font-size: 0.72rem;">Schema v5.1 compliant</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-secondary small">Security Engine</span>
+                    <span class="badge rounded-circle p-1 bg-success"></span>
+                </div>
+                <div class="fs-4 fw-bold text-success">HMAC Active</div>
+                <div class="text-muted small" style="font-size: 0.72rem;">Brute-force lockout enabled</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Settings Left Nav Pills -->
+        <div class="col-12 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-2 bg-white sticky-top" style="top: 85px;">
+                <div class="nav flex-column nav-pills" id="settings-tab" role="tablist" aria-orientation="vertical">
+                    <button class="nav-link active text-start py-2.5 px-3 rounded-3 fw-semibold small mb-1 d-flex align-items-center gap-2" id="profile-tab" data-bs-toggle="pill" data-bs-target="#profile-pane" type="button" role="tab">
+                        <i class="bi bi-building text-primary"></i>
+                        <span>Studio Identity</span>
+                    </button>
+                    <button class="nav-link text-start py-2.5 px-3 rounded-3 fw-semibold small mb-1 d-flex align-items-center gap-2" id="storage-tab" data-bs-toggle="pill" data-bs-target="#storage-pane" type="button" role="tab">
+                        <i class="bi bi-cloud-check text-info"></i>
+                        <span>Cloud Storage &amp; Cache</span>
+                    </button>
+                    <button class="nav-link text-start py-2.5 px-3 rounded-3 fw-semibold small mb-1 d-flex align-items-center gap-2" id="proofing-tab" data-bs-toggle="pill" data-bs-target="#proofing-pane" type="button" role="tab">
+                        <i class="bi bi-water text-primary"></i>
+                        <span>Live Watermark Engine</span>
+                    </button>
+                    <button class="nav-link text-start py-2.5 px-3 rounded-3 fw-semibold small mb-1 d-flex align-items-center gap-2" id="delivery-tab" data-bs-toggle="pill" data-bs-target="#delivery-pane" type="button" role="tab">
+                        <i class="bi bi-shield-lock text-warning"></i>
+                        <span>Client PIN &amp; Delivery</span>
+                    </button>
+                    <button class="nav-link text-start py-2.5 px-3 rounded-3 fw-semibold small mb-1 d-flex align-items-center gap-2" id="api-tab" data-bs-toggle="pill" data-bs-target="#api-pane" type="button" role="tab">
+                        <i class="bi bi-code-slash text-danger"></i>
+                        <span>API Keys &amp; Webhooks</span>
+                    </button>
+                    <button class="nav-link text-start py-2.5 px-3 rounded-3 fw-semibold small mb-1 d-flex align-items-center gap-2" id="password-tab" data-bs-toggle="pill" data-bs-target="#password-pane" type="button" role="tab">
+                        <i class="bi bi-key text-secondary"></i>
+                        <span>Account Password</span>
+                    </button>
+                    <button class="nav-link text-start py-2.5 px-3 rounded-3 fw-semibold small mb-1 d-flex align-items-center gap-2" id="notifications-tab" data-bs-toggle="pill" data-bs-target="#notifications-pane" type="button" role="tab">
+                        <i class="bi bi-bell text-secondary"></i>
+                        <span>Alerts &amp; Notifications</span>
+                    </button>
+                    <button class="nav-link text-start py-2.5 px-3 rounded-3 fw-semibold small mb-1 d-flex align-items-center gap-2" id="system-tab" data-bs-toggle="pill" data-bs-target="#system-pane" type="button" role="tab">
+                        <i class="bi bi-cpu text-dark"></i>
+                        <span>System Telemetry</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab Content -->
+        <div class="col-12 col-md-9">
+            <div class="tab-content" id="settings-tabContent">
+                <!-- 1. Studio Profile & Branding Tab -->
+                <div class="tab-pane fade show active" id="profile-pane" role="tabpanel">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                        <div class="border-bottom pb-3 mb-4">
+                            <h5 class="fw-bold text-dark mb-1">Studio Workspace Identity &amp; Branding</h5>
+                            <p class="text-muted small mb-0">Manage primary studio credentials, brand identity, operational timezone, and client invoice defaults.</p>
+                        </div>
+
+                        <form method="post" action="{% url 'accounts:studio_settings' %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="profile_update">
+
+                            <div class="row g-3 mb-4">
+                                <!-- Studio Logo Upload Box -->
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold small text-dark mb-1"><i class="bi bi-image text-primary me-1"></i>Studio Official Logo</label>
+                                    <div class="p-3 bg-light rounded-3 border d-flex align-items-center flex-wrap gap-3">
+                                        {% if studio_logo_url %}
+                                            <div class="position-relative">
+                                                <img src="{{ studio_logo_url }}" alt="Studio Logo" class="rounded-3 border shadow-sm p-1.5 bg-white" style="height: 64px; max-width: 180px; object-fit: contain;">
+                                            </div>
+                                        {% else %}
+                                            <div class="rounded-3 border border-dashed p-2 bg-white text-muted d-flex align-items-center justify-content-center" style="height: 64px; width: 130px;">
+                                                <i class="bi bi-card-image fs-3 me-1 text-secondary"></i>
+                                                <span class="small fw-semibold">No Logo</span>
+                                            </div>
+                                        {% endif %}
+                                        <div class="flex-grow-1" style="min-width: 220px;">
+                                            <input type="file" name="studio_logo" class="form-control form-control-sm bg-white" accept="image/*">
+                                            <div class="form-text small text-muted mt-1" style="font-size: 0.73rem;">Upload PNG, JPG, WEBP, or SVG logo for your studio branding. Transparent PNG recommended.</div>
+                                        </div>
+                                        {% if studio_logo_url %}
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="clear_logo" value="1" id="clearLogoCheck">
+                                                <label class="form-check-label small text-danger fw-semibold" for="clearLogoCheck">Remove Logo</label>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Studio Brand Name *</label>
+                                    <input type="text" name="studio_name" class="form-control" value="{{ studio_name }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Studio Tagline / Specialty</label>
+                                    <input type="text" name="studio_tagline" class="form-control" value="{{ studio_tagline }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">First Name</label>
+                                    <input type="text" name="first_name" class="form-control" value="{{ first_name }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Last Name</label>
+                                    <input type="text" name="last_name" class="form-control" value="{{ last_name }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Lead Username</label>
+                                    <input type="text" class="form-control bg-light text-muted" value="@{{ username }}" readonly disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Studio Contact Email *</label>
+                                    <input type="email" name="contact_email" class="form-control" value="{{ contact_email }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Studio Official Website</label>
+                                    <input type="url" name="studio_website" class="form-control" value="{{ studio_website }}" placeholder="https://trizenai.studio">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Studio Phone / WhatsApp Hotline</label>
+                                    <input type="text" name="studio_phone" class="form-control" value="{{ studio_phone }}" placeholder="+1 (555) 382-9100">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Client Invoicing Currency</label>
+                                    <select class="form-select" name="studio_currency">
+                                        <option value="USD ($)" {% if 'USD' in studio_currency %}selected{% endif %}>USD ($) - United States Dollar</option>
+                                        <option value="EUR (€)" {% if 'EUR' in studio_currency %}selected{% endif %}>EUR (€) - Eurozone</option>
+                                        <option value="GBP (£)" {% if 'GBP' in studio_currency %}selected{% endif %}>GBP (£) - British Pound</option>
+                                        <option value="INR (₹)" {% if 'INR' in studio_currency %}selected{% endif %}>INR (₹) - Indian Rupee</option>
+                                        <option value="CAD ($)" {% if 'CAD' in studio_currency %}selected{% endif %}>CAD ($) - Canadian Dollar</option>
+                                        <option value="AUD ($)" {% if 'AUD' in studio_currency %}selected{% endif %}>AUD ($) - Australian Dollar</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Studio Theme Accent Color</label>
+                                    <select class="form-select" name="studio_accent">
+                                        <option value="indigo" {% if studio_accent == 'indigo' %}selected{% endif %}>Deep Indigo (TrizenAI Standard)</option>
+                                        <option value="emerald" {% if studio_accent == 'emerald' %}selected{% endif %}>Emerald Luxe</option>
+                                        <option value="violet" {% if studio_accent == 'violet' %}selected{% endif %}>Royal Violet</option>
+                                        <option value="amber" {% if studio_accent == 'amber' %}selected{% endif %}>Warm Amber Gold</option>
+                                        <option value="slate" {% if studio_accent == 'slate' %}selected{% endif %}>Midnight Slate</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Shooting &amp; Delivery Timezone</label>
+                                    <select class="form-select" name="timezone">
+                                        <option value="America/Los_Angeles (PST)" {% if 'Los_Angeles' in timezone %}selected{% endif %}>America/Los Angeles (PST / UTC-8)</option>
+                                        <option value="America/New_York (EST)" {% if 'New_York' in timezone %}selected{% endif %}>America/New York (EST / UTC-5)</option>
+                                        <option value="Asia/Kolkata (IST)" {% if 'Kolkata' in timezone %}selected{% endif %}>Asia/Kolkata (IST / UTC+5:30)</option>
+                                        <option value="Europe/London (GMT)" {% if 'London' in timezone %}selected{% endif %}>Europe/London (GMT / UTC+0)</option>
+                                        <option value="UTC" {% if timezone == 'UTC' %}selected{% endif %}>Universal Coordinated Time (UTC)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="pt-3 border-top d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold shadow-sm" style="border-radius: 10px;">
+                                    Save Profile &amp; Branding
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 2. Supabase Storage & Cache Tab -->
+                <div class="tab-pane fade" id="storage-pane" role="tabpanel">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between border-bottom pb-3 mb-4 gap-2">
+                            <div>
+                                <h5 class="fw-bold text-dark mb-1">Supabase Cloud Object Storage &amp; Cache</h5>
+                                <p class="text-muted small mb-0">Direct private bucket integration for RAW photo ingestion, CDN streaming, and signed tokens.</p>
+                            </div>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold">
+                                <span class="badge rounded-circle p-1 bg-success me-1"></span>
+                                Live Connected
+                            </span>
+                        </div>
+
+                        <div class="bg-light p-3 rounded-4 border mb-4">
+                            <div class="row g-3 small">
+                                <div class="col-sm-4 text-muted fw-semibold">Storage Provider:</div>
+                                <div class="col-sm-8 text-dark fw-semibold"><i class="bi bi-cloud text-primary me-1"></i>Supabase Object Storage (AWS S3-backed)</div>
+                                <div class="col-sm-4 text-muted fw-semibold">Storage Bucket:</div>
+                                <div class="col-sm-8 font-monospace text-dark fw-bold">{{ supabase_bucket }}</div>
+                                <div class="col-sm-4 text-muted fw-semibold">Project Endpoint:</div>
+                                <div class="col-sm-8 font-monospace text-dark text-break">{{ supabase_url }}</div>
+                                <div class="col-sm-4 text-muted fw-semibold">Signed URL TTL:</div>
+                                <div class="col-sm-8 text-dark">3,600 seconds (1 Hour Token Expiration)</div>
+                                <div class="col-sm-4 text-muted fw-semibold">Total Cloud Assets:</div>
+                                <div class="col-sm-8 text-dark fw-bold">{{ total_photos_count }} files ({{ total_storage_str }})</div>
+                                <div class="col-sm-4 text-muted fw-semibold">Atomic Rollback:</div>
+                                <div class="col-sm-8 text-success fw-semibold"><i class="bi bi-shield-check me-1"></i>Active (Automatic cloud storage rollback on DB abort)</div>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-4 p-3 bg-light-subtle mb-4">
+                            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-gear-wide-connected text-primary me-1"></i>Storage Maintenance &amp; Optimization Tools</h6>
+                            <p class="text-muted small mb-3">Optimize indexing, clear local thumbnail caches, or prune stale temporary upload buffers.</p>
+                            
+                            <div class="d-flex flex-wrap gap-2">
+                                <form method="post" action="{% url 'accounts:studio_settings' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="clear_cache">
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm px-3 shadow-sm bg-white" style="border-radius: 8px;">
+                                        <i class="bi bi-trash3 text-danger"></i>
+                                        <span>Clear Thumbnail &amp; Temp Cache</span>
+                                    </button>
+                                </form>
+
+                                <form method="post" action="{% url 'accounts:studio_settings' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="test_storage">
+                                    <button type="submit" class="btn btn-outline-primary btn-sm px-3 shadow-sm bg-white" style="border-radius: 8px;">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                        <span>Test Bucket Latency &amp; HMAC Ping</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="text-muted small">
+                            <i class="bi bi-lock-fill text-warning me-1"></i> Bucket is completely private; public unauthenticated downloads are strictly blocked.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Watermark & Live Proofing Engine Tab -->
+                <div class="tab-pane fade" id="proofing-pane" role="tabpanel">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                        <div class="border-bottom pb-3 mb-4">
+                            <h5 class="fw-bold text-dark mb-1">Watermark &amp; Client Proofing Engine</h5>
+                            <p class="text-muted small mb-0">Configure automated watermarks with real-time visual proofing simulation.</p>
+                        </div>
+
+                        <div class="row g-4 mb-4">
+                            <!-- Live Interactive Watermark Preview Box -->
+                            <div class="col-lg-5">
+                                <label class="form-label fw-bold small text-dark mb-2">Live Visual Proofing Preview</label>
+                                <div id="watermarkPreviewContainer" class="position-relative overflow-hidden rounded-4 border shadow-sm" style="height: 250px; background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center;">
+                                    <!-- Sample Photo Background Image -->
+                                    <img src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80" alt="Sample Proofing Photo" class="position-absolute w-100 h-100 object-fit-cover" style="opacity: 0.85;">
+                                    
+                                    <!-- Dynamic Watermark Overlay Element -->
+                                    <div id="liveWatermarkBadge" class="position-absolute user-select-none text-center px-3 py-1 font-monospace fw-bold" style="font-size: 1.15rem; letter-spacing: 2px; text-transform: uppercase; transition: all 0.2s ease; border: 1px solid rgba(255,255,255,0.3); background: rgba(0,0,0,0.3); backdrop-filter: blur(2px); border-radius: 8px;">
+                                        {{ watermark_text }}
+                                    </div>
+                                    <div class="position-absolute bottom-0 start-0 m-2 px-2 py-0.5 bg-dark bg-opacity-75 text-white rounded font-monospace small" style="font-size: 0.65rem;">
+                                        PROOFER SIMULATOR
+                                    </div>
+                                </div>
+                                <p class="text-muted small mt-2 mb-0" style="font-size: 0.75rem;"><i class="bi bi-info-circle me-1"></i> Preview updates dynamically as you adjust parameters below.</p>
+                            </div>
+
+                            <!-- Watermark Controls Form -->
+                            <div class="col-lg-7">
+                                <form method="post" action="{% url 'accounts:studio_settings' %}" id="watermarkForm">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="watermark_update">
+
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <div class="form-check form-switch p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between">
+                                                <div>
+                                                    <label class="form-check-label fw-bold text-dark d-block" for="watermarkSwitch">Enable Proofing Watermark Overlay</label>
+                                                    <span class="text-muted small">Applies a transparent studio branding overlay to unapproved client proofs.</span>
+                                                </div>
+                                                <input class="form-check-input ms-0" type="checkbox" role="switch" id="watermarkSwitch" name="watermark_enabled" {% if watermark_enabled %}checked{% endif %} style="width: 2.5em; height: 1.3em;" onchange="updateLiveWatermark()">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-12">
+                                            <label class="form-label fw-semibold small text-dark mb-1">Watermark Branding Text</label>
+                                            <input type="text" id="watermarkTextInput" name="watermark_text" class="form-control" value="{{ watermark_text }}" oninput="updateLiveWatermark()">
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold small text-dark mb-1">Watermark Position</label>
+                                            <select class="form-select" id="watermarkPositionSelect" name="watermark_position" onchange="updateLiveWatermark()">
+                                                <option value="center" {% if watermark_position == 'center' %}selected{% endif %}>Dead Center (Maximum Security)</option>
+                                                <option value="bottom-right" {% if watermark_position == 'bottom-right' %}selected{% endif %}>Bottom Right Corner</option>
+                                                <option value="bottom-left" {% if watermark_position == 'bottom-left' %}selected{% endif %}>Bottom Left Corner</option>
+                                                <option value="tiled" {% if watermark_position == 'tiled' %}selected{% endif %}>Diagonal Tiled Overlay</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold small text-dark mb-1">Watermark Accent Color</label>
+                                            <select class="form-select" id="watermarkColorSelect" name="watermark_color" onchange="updateLiveWatermark()">
+                                                <option value="white" {% if watermark_color == 'white' %}selected{% endif %}>Pure White (#FFFFFF)</option>
+                                                <option value="charcoal" {% if watermark_color == 'charcoal' %}selected{% endif %}>Charcoal Black (#1E293B)</option>
+                                                <option value="gold" {% if watermark_color == 'gold' %}selected{% endif %}>Luxe Gold (#F59E0B)</option>
+                                                <option value="indigo" {% if watermark_color == 'indigo' %}selected{% endif %}>Trizen Indigo (#6366F1)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-12">
+                                            <label class="form-label fw-semibold small text-dark mb-1 d-flex justify-content-between">
+                                                <span>Watermark Opacity: <strong id="opacityValLabel">{{ watermark_opacity }}%</strong></span>
+                                            </label>
+                                            <input type="range" class="form-range" id="watermarkOpacityRange" name="watermark_opacity" min="15" max="100" value="{{ watermark_opacity }}" oninput="updateLiveWatermark()">
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold small text-dark mb-1">Client Download Permissions</label>
+                                            <select class="form-select" name="download_quality">
+                                                <option value="original" {% if download_quality == 'original' %}selected{% endif %}>Full Resolution Originals (RAW/JPEG)</option>
+                                                <option value="4k" {% if download_quality == '4k' %}selected{% endif %}>4K Web Optimized (3840px)</option>
+                                                <option value="web" {% if download_quality == 'web' %}selected{% endif %}>Web Preview Only (1920px)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold small text-dark mb-1">Photo Ingestion Sort Strategy</label>
+                                            <select class="form-select" name="auto_sort">
+                                                <option value="upload_order" {% if auto_sort == 'upload_order' %}selected{% endif %}>Upload Sequence Order (Default)</option>
+                                                <option value="capture_time" {% if auto_sort == 'capture_time' %}selected{% endif %}>EXIF Capture Timestamp (Chronological)</option>
+                                                <option value="file_name" {% if auto_sort == 'file_name' %}selected{% endif %}>Alphabetical Filename</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-3 border-top d-flex justify-content-end mt-3">
+                                        <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold shadow-sm" style="border-radius: 10px;">
+                                            Save Watermark Settings
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Client PIN Security & Delivery Tab -->
+                <div class="tab-pane fade" id="delivery-pane" role="tabpanel">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                        <div class="border-bottom pb-3 mb-4">
+                            <h5 class="fw-bold text-dark mb-1">Client Gallery Delivery &amp; PIN Security</h5>
+                            <p class="text-muted small mb-0">Configure brute-force lockout thresholds, PIN generators, customer favorites, and session invalidation.</p>
+                        </div>
+
+                        <form method="post" action="{% url 'accounts:studio_settings' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="security_update">
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Default PIN Generator Format</label>
+                                    <select class="form-select" name="pin_format">
+                                        <option value="numeric" selected>6-Digit Numeric Only (e.g. 482917)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Brute-Force Lockout Threshold</label>
+                                    <select class="form-select" name="lockout_threshold">
+                                        <option value="5" {% if lockout_threshold == '5' %}selected{% endif %}>5 Failed Attempts (Recommended)</option>
+                                        <option value="3" {% if lockout_threshold == '3' %}selected{% endif %}>3 Failed Attempts (Strict High Security)</option>
+                                        <option value="10" {% if lockout_threshold == '10' %}selected{% endif %}>10 Failed Attempts (Relaxed)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Lockout Duration Period</label>
+                                    <select class="form-select" name="lockout_duration">
+                                        <option value="60" {% if lockout_duration == '60' %}selected{% endif %}>60 Seconds Temporary Lockout</option>
+                                        <option value="120" {% if lockout_duration == '120' %}selected{% endif %}>2 Minutes Lockout</option>
+                                        <option value="300" {% if lockout_duration == '300' %}selected{% endif %}>5 Minutes Lockout</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Client Verification Session Duration</label>
+                                    <select class="form-select" name="session_expiry">
+                                        <option value="24" {% if session_expiry == '24' %}selected{% endif %}>24 Hours Post-Verification</option>
+                                        <option value="168" {% if session_expiry == '168' %}selected{% endif %}>7 Days Persistent Access</option>
+                                        <option value="720" {% if session_expiry == '720' %}selected{% endif %}>30 Days Persistent Access</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Default Gallery Expiration Period</label>
+                                    <select class="form-select" name="gallery_expiry_days">
+                                        <option value="30" {% if gallery_expiry_days == '30' %}selected{% endif %}>30 Days after creation</option>
+                                        <option value="60" {% if gallery_expiry_days == '60' %}selected{% endif %}>60 Days after creation</option>
+                                        <option value="90" {% if gallery_expiry_days == '90' %}selected{% endif %}>90 Days after creation</option>
+                                        <option value="never" {% if gallery_expiry_days == 'never' %}selected{% endif %}>Never Expire (Permanent Gallery)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <div class="form-check form-switch p-2 bg-light rounded-3 border w-100 d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label class="form-check-label fw-semibold text-dark d-block" for="favoritesCheck">Client Proof Favorites</label>
+                                            <span class="text-muted small" style="font-size: 0.72rem;">Allow clients to star/heart favorites.</span>
+                                        </div>
+                                        <input class="form-check-input ms-0" type="checkbox" id="favoritesCheck" name="enable_favorites" {% if enable_favorites %}checked{% endif %}>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch p-2 bg-light rounded-3 border w-100 d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label class="form-check-label fw-semibold text-dark d-block" for="zipDownloadCheck">Batch ZIP Download</label>
+                                            <span class="text-muted small" style="font-size: 0.72rem;">Allow 1-click ZIP package download.</span>
+                                        </div>
+                                        <input class="form-check-input ms-0" type="checkbox" id="zipDownloadCheck" name="allow_zip_download" {% if allow_zip_download %}checked{% endif %}>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch p-2 bg-light rounded-3 border w-100 d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label class="form-check-label fw-semibold text-dark d-block" for="socialShareCheck">Social Sharing Links</label>
+                                            <span class="text-muted small" style="font-size: 0.72rem;">Show WhatsApp/Email sharing buttons.</span>
+                                        </div>
+                                        <input class="form-check-input ms-0" type="checkbox" id="socialShareCheck" name="enable_social_share" {% if enable_social_share %}checked{% endif %}>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-3 border-top d-flex justify-content-between align-items-center">
+                                <button type="button" class="btn btn-outline-danger btn-sm px-3" data-bs-toggle="modal" data-bs-target="#flushSessionsModal">
+                                    <i class="bi bi-shield-x"></i>
+                                    <span>Revoke All Client Sessions</span>
+                                </button>
+                                <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold shadow-sm" style="border-radius: 10px;">
+                                    Save Delivery Policies
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 5. API Keys & Webhooks Tab -->
+                <div class="tab-pane fade" id="api-pane" role="tabpanel">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                        <div class="border-bottom pb-3 mb-4">
+                            <h5 class="fw-bold text-dark mb-1">Developer API Keys &amp; Webhook Gateways</h5>
+                            <p class="text-muted small mb-0">Integrate Lightroom Classic, Capture One, automated ingestion scripts, and outbound event webhooks.</p>
+                        </div>
+
+                        <!-- API Key Box -->
+                        <div class="bg-light p-3.5 rounded-4 border mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="fw-bold small text-dark mb-0">Studio Live REST API Token</label>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill font-monospace" style="font-size: 0.7rem;">Active (Read / Write)</span>
+                            </div>
+                            <div class="input-group mb-2">
+                                <input type="password" id="studioApiKeyInput" class="form-control font-monospace bg-white" value="{{ studio_api_key }}" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="toggleApiKeyVisibility(this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-primary" type="button" onclick="copyApiKey()">
+                                    <i class="bi bi-clipboard"></i>
+                                    <span id="copyKeyText">Copy</span>
+                                </button>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small" style="font-size: 0.72rem;">Use this Bearer token in the <code>Authorization: Bearer &lt;KEY&gt;</code> header.</span>
+                                <form method="post" action="{% url 'accounts:studio_settings' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="api_generate_key">
+                                    <button type="submit" class="btn btn-link text-danger p-0 small fw-semibold text-decoration-none" onclick="return confirm('Regenerating this API key will immediately invalidate the current key in all integrations. Proceed?')">
+                                        <i class="bi bi-arrow-clockwise"></i> Regenerate Key
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Webhooks Form -->
+                        <form method="post" action="{% url 'accounts:studio_settings' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="webhooks_update">
+
+                            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-broadcast text-danger me-1"></i>Outbound Webhook Dispatcher</h6>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <div class="form-check form-switch p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label class="form-check-label fw-bold text-dark d-block" for="webhookSwitch">Enable Real-Time Webhook Notifications</label>
+                                            <span class="text-muted small">Dispatches JSON payloads on <code>photo.uploaded</code>, <code>gallery.unlocked</code>, and <code>client.proof_selected</code>.</span>
+                                        </div>
+                                        <input class="form-check-input ms-0" type="checkbox" role="switch" id="webhookSwitch" name="webhook_enabled" {% if webhook_enabled %}checked{% endif %} style="width: 2.5em; height: 1.3em;">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-8">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Webhook Endpoint URL</label>
+                                    <input type="url" name="webhook_url" class="form-control font-monospace" value="{{ webhook_url }}" placeholder="https://api.yourdomain.com/webhooks">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold small text-dark mb-1">HMAC Signature Secret</label>
+                                    <input type="text" name="webhook_secret" class="form-control font-monospace bg-light" value="{{ webhook_secret }}" readonly>
+                                </div>
+                            </div>
+
+                            <div class="pt-3 border-top d-flex justify-content-between align-items-center">
+                                <form method="post" action="{% url 'accounts:studio_settings' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="test_webhook">
+                                    <input type="hidden" name="webhook_url" value="{{ webhook_url }}">
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm px-3 shadow-sm bg-white" style="border-radius: 8px;">
+                                        <i class="bi bi-send-check text-primary"></i>
+                                        <span>Dispatch Test Webhook Ping</span>
+                                    </button>
+                                </form>
+
+                                <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold shadow-sm" style="border-radius: 10px;">
+                                    Save Webhook Settings
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Integration Badges -->
+                        <div class="row g-3 mt-3 pt-3 border-top">
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded-3 border h-100">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold small text-dark">Lightroom Classic</span>
+                                        <span class="badge bg-success-subtle text-success">Connected</span>
+                                    </div>
+                                    <span class="text-muted small" style="font-size: 0.72rem;">Direct export publish service plugin active.</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded-3 border h-100">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold small text-dark">Capture One Pro</span>
+                                        <span class="badge bg-info-subtle text-info">Ready</span>
+                                    </div>
+                                    <span class="text-muted small" style="font-size: 0.72rem;">Tethered shoot ingest watcher configured.</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded-3 border h-100">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold small text-dark">Supabase Realtime</span>
+                                        <span class="badge bg-primary-subtle text-primary">Active</span>
+                                    </div>
+                                    <span class="text-muted small" style="font-size: 0.72rem;">WebSocket event streaming channel live.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Account Password Tab -->
+                <div class="tab-pane fade" id="password-pane" role="tabpanel">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                        <div class="border-bottom pb-3 mb-4">
+                            <h5 class="fw-bold text-dark mb-1">Change Account Password</h5>
+                            <p class="text-muted small mb-0">Update your studio lead account credentials with strong encryption verification.</p>
+                        </div>
+
+                        <form method="post" action="{% url 'accounts:studio_settings' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="password_change">
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Current Password *</label>
+                                    <div class="input-group">
+                                        <input type="password" id="currentPwdInput" name="current_password" class="form-control" placeholder="Enter current password" required>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('currentPwdInput', this)">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">New Password *</label>
+                                    <div class="input-group">
+                                        <input type="password" id="newPwdInput" name="new_password" class="form-control" placeholder="Min 8 chars, uppercase, digit" minlength="8" required oninput="checkPasswordStrength(this.value)">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('newPwdInput', this)">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="progress mt-2" style="height: 4px;">
+                                        <div id="pwdStrengthBar" class="progress-bar bg-danger" role="progressbar" style="width: 0%;"></div>
+                                    </div>
+                                    <span id="pwdStrengthText" class="text-muted small mt-1 d-block" style="font-size: 0.72rem;">Enter at least 8 characters.</span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small text-dark mb-1">Confirm New Password *</label>
+                                    <div class="input-group">
+                                        <input type="password" id="confirmPwdInput" name="confirm_password" class="form-control" placeholder="Re-enter new password" minlength="8" required>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('confirmPwdInput', this)">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-3 border-top d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold shadow-sm" style="border-radius: 10px;">
+                                    Update Password Securely
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 7. Notifications Tab -->
+                <div class="tab-pane fade" id="notifications-pane" role="tabpanel">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                        <div class="border-bottom pb-3 mb-4">
+                            <h5 class="fw-bold text-dark mb-1">Studio Alert &amp; Notification Channels</h5>
+                            <p class="text-muted small mb-0">Control automated email notifications, client delivery receipts, and security alerts.</p>
+                        </div>
+
+                        <form method="post" action="{% url 'accounts:studio_settings' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="notifications_update">
+
+                            <div class="d-flex flex-column gap-3 mb-4">
+                                <div class="form-check form-switch p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <label class="form-check-label fw-semibold text-dark d-block" for="notifyUpload">Photographer Batch Ingestion Completed</label>
+                                        <span class="text-muted small">Sends notification when a team shooter finishes uploading a batch of photos.</span>
+                                    </div>
+                                    <input class="form-check-input ms-0" type="checkbox" id="notifyUpload" name="notify_upload" {% if notify_upload %}checked{% endif %} style="width: 2.5em; height: 1.3em;">
+                                </div>
+
+                                <div class="form-check form-switch p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <label class="form-check-label fw-semibold text-dark d-block" for="notifyView">Client Gallery Opened &amp; PIN Verified</label>
+                                        <span class="text-muted small">Sends notification on first verified client PIN entry for a published gallery.</span>
+                                    </div>
+                                    <input class="form-check-input ms-0" type="checkbox" id="notifyView" name="notify_view" {% if notify_view %}checked{% endif %} style="width: 2.5em; height: 1.3em;">
+                                </div>
+
+                                <div class="form-check form-switch p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <label class="form-check-label fw-semibold text-dark d-block" for="notifyLockout">Brute-Force PIN Lockout Triggered</label>
+                                        <span class="text-muted small">Immediate security alert when failed PIN attempts trigger a temporary gallery lockout.</span>
+                                    </div>
+                                    <input class="form-check-input ms-0" type="checkbox" id="notifyLockout" name="notify_lockout" {% if notify_lockout %}checked{% endif %} style="width: 2.5em; height: 1.3em;">
+                                </div>
+
+                                <div class="form-check form-switch p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <label class="form-check-label fw-semibold text-dark d-block" for="notifyDigest">Studio Daily Operations Digest</label>
+                                        <span class="text-muted small">Receive an aggregated morning summary of new photos, uploads, and client proof downloads.</span>
+                                    </div>
+                                    <input class="form-check-input ms-0" type="checkbox" id="notifyDigest" name="notify_digest" {% if notify_digest %}checked{% endif %} style="width: 2.5em; height: 1.3em;">
+                                </div>
+                            </div>
+
+                            <div class="pt-3 border-top d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold shadow-sm" style="border-radius: 10px;">
+                                    Save Alert Preferences
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 8. System Telemetry & Audit Tab -->
+                <div class="tab-pane fade" id="system-pane" role="tabpanel">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                        <div class="border-bottom pb-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <h5 class="fw-bold text-dark mb-1">System Health &amp; Runtime Telemetry</h5>
+                                <p class="text-muted small mb-0">Platform environment information, database engine, runtime specifications, and audit logs.</p>
+                            </div>
+                            <form method="post" action="{% url 'accounts:studio_settings' %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="export_audit_log">
+                                <button type="submit" class="btn btn-outline-success btn-sm px-3 shadow-sm bg-white" style="border-radius: 8px;">
+                                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                                    <span>Download Audit CSV</span>
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle small mb-4">
+                                <tbody>
+                                    <tr>
+                                        <td class="bg-light fw-semibold text-muted" style="width: 35%;">Django Framework</td>
+                                        <td class="font-monospace text-dark">{{ django_version }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="bg-light fw-semibold text-muted">Python Runtime</td>
+                                        <td class="font-monospace text-dark">{{ python_version }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="bg-light fw-semibold text-muted">Active Database Engine</td>
+                                        <td class="text-dark fw-bold">{{ db_label }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="bg-light fw-semibold text-muted">Cloud Object Storage</td>
+                                        <td class="text-dark"><span class="badge bg-success-subtle text-success">Supabase Private S3 Storage (Connected)</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="bg-light fw-semibold text-muted">Total Registered Crew</td>
+                                        <td class="text-dark fw-bold">{{ total_users_count }} team members</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="bg-light fw-semibold text-muted">Total Photo Assets</td>
+                                        <td class="text-dark fw-bold">{{ total_photos_count }} records ({{ total_storage_str }})</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="bg-light fw-semibold text-muted">Total Studio Events</td>
+                                        <td class="text-dark fw-bold">{{ total_events_count }} events</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="bg-light fw-semibold text-muted">Active Client Galleries</td>
+                                        <td class="text-dark fw-bold">{{ total_galleries_count }} galleries</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Flushing Client Sessions -->
+<div class="modal fade" id="flushSessionsModal" tabindex="-1" aria-labelledby="flushSessionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom pb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle p-2 bg-danger-subtle text-danger d-inline-flex">
+                        <i class="bi bi-shield-x fs-5"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark" id="flushSessionsModalLabel">Revoke Client Sessions?</h5>
+                        <p class="text-muted small mb-0">Emergency security flush</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-3">
+                <p class="text-secondary small mb-2">This action will immediately invalidate all active client gallery access tokens and clear temporary PIN verification states. Clients will be prompted to re-enter their event PIN on their next page load.</p>
+                <div class="alert alert-warning small mb-0 py-2">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Use this if a gallery PIN was compromised or if you modified security policies.
+                </div>
+            </div>
+            <div class="modal-footer border-top pt-3">
+                <button type="button" class="btn btn-light btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'accounts:studio_settings' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="flush_client_sessions">
+                    <button type="submit" class="btn btn-danger btn-sm px-4 fw-semibold shadow-sm">Confirm Revocation</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+    }
+}
+
+function toggleApiKeyVisibility(btn) {
+    const input = document.getElementById('studioApiKeyInput');
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+    }
+}
+
+function copyApiKey() {
+    const input = document.getElementById('studioApiKeyInput');
+    navigator.clipboard.writeText(input.value).then(() => {
+        const copyText = document.getElementById('copyKeyText');
+        copyText.innerText = 'Copied!';
+        setTimeout(() => {
+            copyText.innerText = 'Copy';
+        }, 2000);
+    });
+}
+
+function checkPasswordStrength(val) {
+    const bar = document.getElementById('pwdStrengthBar');
+    const label = document.getElementById('pwdStrengthText');
+    let strength = 0;
+    if (val.length >= 8) strength += 30;
+    if (/[A-Z]/.test(val)) strength += 25;
+    if (/[0-9]/.test(val)) strength += 25;
+    if (/[^A-Za-z0-9]/.test(val)) strength += 20;
+
+    bar.style.width = strength + '%';
+    if (strength < 40) {
+        bar.className = 'progress-bar bg-danger';
+        label.innerText = 'Weak password';
+    } else if (strength < 75) {
+        bar.className = 'progress-bar bg-warning';
+        label.innerText = 'Moderate strength';
+    } else {
+        bar.className = 'progress-bar bg-success';
+        label.innerText = 'Strong password!';
+    }
+}
+
+// Interactive Live Watermark Engine Script
+function updateLiveWatermark() {
+    const enabled = document.getElementById('watermarkSwitch')?.checked;
+    const text = document.getElementById('watermarkTextInput')?.value || 'TrizenAI Studio • Proof';
+    const position = document.getElementById('watermarkPositionSelect')?.value || 'center';
+    const color = document.getElementById('watermarkColorSelect')?.value || 'white';
+    const opacity = document.getElementById('watermarkOpacityRange')?.value || '50';
+    
+    document.getElementById('opacityValLabel').innerText = opacity + '%';
+
+    const badge = document.getElementById('liveWatermarkBadge');
+    if (!badge) return;
+
+    if (!enabled) {
+        badge.style.display = 'none';
+        return;
+    }
+    badge.style.display = 'block';
+    badge.innerText = text;
+    badge.style.opacity = (opacity / 100);
+
+    // Color mapper
+    if (color === 'white') {
+        badge.style.color = '#ffffff';
+        badge.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+    } else if (color === 'charcoal') {
+        badge.style.color = '#1e293b';
+        badge.style.borderColor = 'rgba(30, 41, 59, 0.4)';
+    } else if (color === 'gold') {
+        badge.style.color = '#f59e0b';
+        badge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+    } else if (color === 'indigo') {
+        badge.style.color = '#6366f1';
+        badge.style.borderColor = 'rgba(99, 102, 241, 0.4)';
+    }
+
+    // Position mapper
+    badge.style.top = '';
+    badge.style.bottom = '';
+    badge.style.left = '';
+    badge.style.right = '';
+    badge.style.transform = '';
+
+    if (position === 'center') {
+        badge.style.top = '50%';
+        badge.style.left = '50%';
+        badge.style.transform = 'translate(-50%, -50%) rotate(-10deg)';
+    } else if (position === 'bottom-right') {
+        badge.style.bottom = '15px';
+        badge.style.right = '15px';
+    } else if (position === 'bottom-left') {
+        badge.style.bottom = '15px';
+        badge.style.left = '15px';
+    } else if (position === 'tiled') {
+        badge.style.top = '50%';
+        badge.style.left = '50%';
+        badge.style.transform = 'translate(-50%, -50%) rotate(-35deg) scale(1.15)';
+    }
+}
+
+// Initial trigger on load
+document.addEventListener('DOMContentLoaded', () => {
+    updateLiveWatermark();
+});
+</script>
+{% endblock %}

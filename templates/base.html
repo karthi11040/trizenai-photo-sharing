@@ -6,125 +6,355 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}TrizenAI Photo Sharing Platform{% endblock %}</title>
     
-    <!-- Google Fonts: Inter -->
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Bootstrap 5.3 CSS for responsive layout primitives -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+    
     <!-- Design System Tokens & Custom Stylesheet -->
     <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
-<body class="d-flex flex-column min-vh-100">
-    <!-- Site Header (design.md Section 4.1) -->
-    <header class="site-header d-flex align-items-center">
-        <div class="container d-flex align-items-center justify-content-between">
-            <a href="{% url 'home' %}" class="d-flex align-items-center gap-2 text-decoration-none">
-                <span class="brand-mark"><i class="bi bi-camera-fill"></i></span>
-                <span class="brand-name">Trizen<span style="color: var(--color-primary);">AI</span> Photos</span>
-            </a>
-            
-            <nav class="d-none d-md-flex align-items-center gap-4" aria-label="Primary navigation">
-                {% if user.is_authenticated %}
-                    <a href="{% url 'accounts:dashboard_router' %}" class="text-decoration-none fw-medium text-secondary hover-primary">
-                        <i class="bi bi-speedometer2 me-1"></i> Dashboard
-                    </a>
-                    {% if user.profile.role == 'ADMIN' or user.is_superuser %}
-                        <a href="{% url 'events:event_list' %}" class="text-decoration-none fw-medium text-secondary hover-primary">
-                            <i class="bi bi-calendar-event me-1"></i> Events
-                        </a>
-                    {% else %}
-                        <a href="{% url 'events:assigned_events' %}" class="text-decoration-none fw-medium text-secondary hover-primary">
-                            <i class="bi bi-calendar-check me-1"></i> My Events
-                        </a>
-                    {% endif %}
-                {% endif %}
-            </nav>
-            
-            <div class="d-flex align-items-center gap-3">
-                {% if user.is_authenticated %}
-                    <div class="dropdown">
-                        <button class="btn btn-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle fs-6"></i>
-                            <span class="fw-semibold">{{ user.username }}</span>
-                            {% if user.profile.role == 'ADMIN' or user.is_superuser %}
-                                <span class="badge-status badge-admin ms-1">Admin</span>
-                            {% else %}
-                                <span class="badge-status badge-team ms-1">Team</span>
-                            {% endif %}
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border" style="border-radius: var(--radius-md);">
-                            <li><h6 class="dropdown-header text-uppercase text-muted" style="font-size: 0.75rem;">Role: {{ user.profile.get_role_display|default:"User" }}</h6></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form method="post" action="{% url 'accounts:logout' %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="dropdown-item text-danger d-flex align-items-center gap-2">
-                                        <i class="bi bi-box-arrow-right"></i> Log out
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
-                {% else %}
-                    <a href="{% url 'accounts:login' %}" class="btn btn-secondary btn-sm">
-                        <i class="bi bi-box-arrow-in-right me-1"></i> Log In
-                    </a>
-                    <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">
-                        <i class="bi bi-person-plus me-1"></i> Register
-                    </a>
-                {% endif %}
-            </div>
-        </div>
-    </header>
+<body class="{% if user.is_authenticated %}app-workspace-body{% else %}public-site-body d-flex flex-column min-vh-100{% endif %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
-    <!-- Global Alert / Messages Container -->
-    <div class="container mt-3">
+    <!-- Global Floating Toast Notification Container -->
+    <div class="app-toast-container" aria-live="polite" aria-atomic="true">
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show border shadow-sm d-flex align-items-center gap-2" style="border-radius: var(--radius-md);" role="alert">
-                    {% if message.tags == 'success' %}
-                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
-                    {% elif message.tags == 'error' or message.tags == 'danger' %}
-                        <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
-                    {% elif message.tags == 'warning' %}
-                        <i class="bi bi-exclamation-circle-fill text-warning fs-5"></i>
-                    {% else %}
-                        <i class="bi bi-info-circle-fill text-info fs-5"></i>
-                    {% endif %}
-                    <div>{{ message }}</div>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div class="toast align-items-center bg-white border-start border-4 border-{{ message.tags|default:'primary' }} shadow-sm" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="10000" data-bs-autohide="true">
+                    <div class="d-flex p-2">
+                        <div class="toast-body d-flex align-items-center gap-2 small text-dark">
+                            {% if message.tags == 'success' %}
+                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                            {% elif message.tags == 'error' or message.tags == 'danger' %}
+                                <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+                            {% elif message.tags == 'warning' %}
+                                <i class="bi bi-exclamation-circle-fill text-warning fs-5"></i>
+                            {% else %}
+                                <i class="bi bi-info-circle-fill text-primary fs-5"></i>
+                            {% endif %}
+                            <span>{{ message }}</span>
+                        </div>
+                        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
                 </div>
             {% endfor %}
         {% endif %}
     </div>
 
-    <!-- Main Content Container -->
-    <main class="flex-grow-1">
-        {% block content %}{% endblock %}
-    </main>
+    {% if not user.is_authenticated %}
+        {% block guest_header %}
+        <!-- Public Guest Header Navigation -->
+        <header class="site-header d-flex align-items-center">
+            <div class="container d-flex align-items-center justify-content-between">
+                <a href="{% url 'home' %}" class="d-flex align-items-center gap-2 text-decoration-none">
+                    <img src="{% static 'img/logo-icon.png' %}" alt="Photo Sharing Platform Logo" class="brand-logo" width="34" height="34" style="object-fit: contain; border-radius: 6px;">
+                    <span class="brand-name">Trizen<span style="color: var(--color-primary);">AI</span> Photos</span>
+                </a>
+                
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-sm px-3.5 py-1.5 fw-semibold shadow-sm rounded-pill d-flex align-items-center gap-1.5" style="background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%); border: none;">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        <span>Sign In</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+        {% endblock guest_header %}
+    {% endif %}
 
-    <!-- Site Footer (design.md Section 4.2) -->
-    <footer class="site-footer mt-auto py-4 border-top" style="background: var(--color-surface);">
-        <div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div class="small" style="color: var(--color-text-muted);">
-                &copy; 2026 <strong>TrizenAI Technologies</strong> &mdash; Production Photo Sharing Platform.
+    <!-- Master Layout Wrapper -->
+    <div class="{% if user.is_authenticated %}app-workspace{% else %}public-body-wrapper flex-grow-1{% endif %}">
+        {% if user.is_authenticated %}
+            <!-- 1. Desktop Left Sidebar -->
+            <aside class="app-sidebar d-none d-lg-flex">
+                <div>
+                    <!-- Brand Workspace Header -->
+                    <a href="{% url 'accounts:dashboard_router' %}" class="d-flex align-items-center gap-3 text-decoration-none px-2 mb-4 sidebar-brand">
+                        <img src="{% if user.profile.studio_logo_url %}{{ user.profile.studio_logo_url }}{% else %}{% static 'img/logo-icon.png' %}{% endif %}" alt="Studio Logo" width="36" height="36" style="border-radius: 8px; flex-shrink: 0; object-fit: contain;">
+                        <div class="sidebar-brand-text">
+                            <div class="fw-bold text-dark lh-sm text-truncate" style="font-size: 1.05rem; letter-spacing: -0.01em; max-width: 140px;">{% if user.profile.studio_name %}{{ user.profile.studio_name }}{% else %}TrizenAI{% endif %}</div>
+                            <div class="text-uppercase text-muted fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.08em;">Studio Workspace</div>
+                        </div>
+                    </a>
+
+                    <!-- Sidebar Navigation Links -->
+                    <nav class="app-sidebar-nav">
+                        {% if user.profile.role == 'ADMIN' or user.is_superuser %}
+                            <a href="{% url 'accounts:dashboard_router' %}" class="nav-link {% if request.resolver_match.url_name in 'admin_dashboard,admin_dashboard_token,dashboard_router' %}active{% endif %}">
+                                <i class="bi bi-grid-fill"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="{% url 'events:event_list' %}" class="nav-link {% if request.resolver_match.app_name == 'events' and request.resolver_match.url_name != 'event_create' %}active{% endif %}">
+                                <i class="bi bi-calendar3"></i>
+                                <span>Events</span>
+                            </a>
+                            <a href="{% url 'photos:photo_review_hub' %}" class="nav-link {% if request.resolver_match.app_name == 'photos' %}active{% endif %}">
+                                <i class="bi bi-images"></i>
+                                <span>Photos</span>
+                            </a>
+                            <a href="{% url 'galleries:gallery_list' %}" class="nav-link {% if request.resolver_match.app_name == 'galleries' %}active{% endif %}">
+                                <i class="bi bi-collection-play"></i>
+                                <span>Galleries</span>
+                            </a>
+                            <a href="{% url 'accounts:team_management' %}" class="nav-link {% if request.resolver_match.url_name == 'team_management' %}active{% endif %}">
+                                <i class="bi bi-people"></i>
+                                <span>Team</span>
+                            </a>
+                            <a href="{% url 'accounts:administrators_list' %}" class="nav-link {% if request.resolver_match.url_name == 'administrators_list' %}active{% endif %}">
+                                <i class="bi bi-shield-lock"></i>
+                                <span>Administrators</span>
+                            </a>
+                            <a href="{% url 'accounts:studio_settings' %}" class="nav-link {% if request.resolver_match.url_name == 'studio_settings' %}active{% endif %}">
+                                <i class="bi bi-gear"></i>
+                                <span>Settings</span>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'accounts:team_dashboard' %}" class="nav-link {% if request.resolver_match.url_name in 'team_dashboard,dashboard_router' %}active{% endif %}">
+                                <i class="bi bi-grid-fill"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="{% url 'events:assigned_events' %}" class="nav-link {% if request.resolver_match.url_name == 'assigned_events' %}active{% endif %}">
+                                <i class="bi bi-calendar3"></i>
+                                <span>Assigned Events</span>
+                            </a>
+                            <a href="{% url 'photos:photo_review_hub' %}" class="nav-link {% if request.resolver_match.app_name == 'photos' %}active{% endif %}">
+                                <i class="bi bi-images"></i>
+                                <span>My Photos</span>
+                            </a>
+                            <a href="{% url 'accounts:my_profile' %}" class="nav-link {% if request.resolver_match.url_name == 'my_profile' %}active{% endif %}">
+                                <i class="bi bi-person-circle"></i>
+                                <span>Profile</span>
+                            </a>
+                            <a href="{% url 'accounts:security_settings' %}" class="nav-link {% if request.resolver_match.url_name == 'security_settings' %}active{% endif %}">
+                                <i class="bi bi-shield-check"></i>
+                                <span>Security</span>
+                            </a>
+                        {% endif %}
+                    </nav>
+                </div>
+
+                <!-- Sidebar Bottom Support & Sign Out -->
+                <div class="pt-3 border-top d-flex flex-column gap-1">
+                    <form method="post" action="{% url 'accounts:logout' %}" class="m-0 p-0 w-100">
+                        {% csrf_token %}
+                        <button type="submit" class="sidebar-footer-link text-danger w-100 border-0 bg-transparent text-start">
+                            <i class="bi bi-box-arrow-left"></i>
+                            <span>Sign Out</span>
+                        </button>
+                    </form>
+                </div>
+            </aside>
+
+            <!-- 2. Responsive Mobile Sidebar Offcanvas Drawer (for screens < 992px) -->
+            <div class="offcanvas offcanvas-start app-sidebar-offcanvas d-lg-none" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+                <div class="offcanvas-header pb-2 border-bottom">
+                    <a href="{% url 'accounts:dashboard_router' %}" class="d-flex align-items-center gap-2 text-decoration-none" id="mobileSidebarLabel">
+                        <img src="{% static 'img/logo-icon.png' %}" alt="TrizenAI" width="32" height="32" style="border-radius: 6px;">
+                        <span class="fw-bold text-dark">TrizenAI Studio</span>
+                    </a>
+                    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body d-flex flex-column justify-content-between p-3">
+                    <nav class="app-sidebar-nav">
+                        {% if user.profile.role == 'ADMIN' or user.is_superuser %}
+                            <a href="{% url 'accounts:dashboard_router' %}" class="nav-link {% if request.resolver_match.url_name in 'admin_dashboard,admin_dashboard_token,dashboard_router' %}active{% endif %}">
+                                <i class="bi bi-grid-fill"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="{% url 'events:event_list' %}" class="nav-link {% if request.resolver_match.app_name == 'events' %}active{% endif %}">
+                                <i class="bi bi-calendar3"></i>
+                                <span>Events</span>
+                            </a>
+                            <a href="{% url 'photos:photo_review_hub' %}" class="nav-link {% if request.resolver_match.app_name == 'photos' %}active{% endif %}">
+                                <i class="bi bi-images"></i>
+                                <span>Photos</span>
+                            </a>
+                            <a href="{% url 'galleries:gallery_list' %}" class="nav-link {% if request.resolver_match.app_name == 'galleries' %}active{% endif %}">
+                                <i class="bi bi-collection-play"></i>
+                                <span>Galleries</span>
+                            </a>
+                            <a href="{% url 'accounts:team_management' %}" class="nav-link {% if request.resolver_match.url_name == 'team_management' %}active{% endif %}">
+                                <i class="bi bi-people"></i>
+                                <span>Team</span>
+                            </a>
+                            <a href="{% url 'accounts:administrators_list' %}" class="nav-link {% if request.resolver_match.url_name == 'administrators_list' %}active{% endif %}">
+                                <i class="bi bi-shield-lock"></i>
+                                <span>Administrators</span>
+                            </a>
+                            <a href="{% url 'accounts:studio_settings' %}" class="nav-link {% if request.resolver_match.url_name == 'studio_settings' %}active{% endif %}">
+                                <i class="bi bi-gear"></i>
+                                <span>Settings</span>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'accounts:team_dashboard' %}" class="nav-link {% if request.resolver_match.url_name in 'team_dashboard,dashboard_router' %}active{% endif %}">
+                                <i class="bi bi-grid-fill"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="{% url 'events:assigned_events' %}" class="nav-link {% if request.resolver_match.url_name == 'assigned_events' %}active{% endif %}">
+                                <i class="bi bi-calendar3"></i>
+                                <span>Assigned Events</span>
+                            </a>
+                            <a href="{% url 'photos:photo_review_hub' %}" class="nav-link {% if request.resolver_match.app_name == 'photos' %}active{% endif %}">
+                                <i class="bi bi-images"></i>
+                                <span>My Photos</span>
+                            </a>
+                            <a href="{% url 'accounts:my_profile' %}" class="nav-link {% if request.resolver_match.url_name == 'my_profile' %}active{% endif %}">
+                                <i class="bi bi-person-circle"></i>
+                                <span>Profile</span>
+                            </a>
+                            <a href="{% url 'accounts:security_settings' %}" class="nav-link {% if request.resolver_match.url_name == 'security_settings' %}active{% endif %}">
+                                <i class="bi bi-shield-check"></i>
+                                <span>Security</span>
+                            </a>
+                        {% endif %}
+                    </nav>
+                    <div class="pt-3 border-top">
+                        <form method="post" action="{% url 'accounts:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger w-100 btn-sm">
+                                <i class="bi bi-box-arrow-left me-1"></i> Sign Out
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
-            <div class="small" style="color: var(--color-text-muted); font-size: 0.8rem;">
-                Near-Neutral Design &bull; Supabase Storage &bull; PIN-Protected Public Galleries
-            </div>
+        {% endif %}
+
+        <!-- Content Area Wrapper -->
+        <div class="{% if user.is_authenticated %}app-main-wrapper{% else %}w-100{% endif %}">
+            {% if user.is_authenticated %}
+                <!-- Studio Top Header Bar -->
+                <header class="app-topbar">
+                    <div class="d-flex align-items-center gap-2">
+                        <!-- Universal Sidebar Toggle Button (Desktop & Mobile) -->
+                        <button class="btn btn-light btn-sm py-1 px-2 border rounded-3 text-secondary shadow-xs sidebar-toggle-btn" type="button" id="sidebarToggleBtn" aria-label="Toggle navigation">
+                            <i class="bi bi-list fs-5"></i>
+                        </button>
+                        
+                        <!-- Workspace Breadcrumb Bar -->
+                        <div class="d-flex align-items-center gap-2 small text-secondary">
+                            {% block breadcrumbs %}
+                                <span>Studio Alpha</span>
+                                <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+                                <span class="fw-semibold text-dark">Active Production</span>
+                                {% if user.profile.role == 'ADMIN' or user.is_superuser %}
+                                    <span class="badge bg-dark text-white rounded-pill px-2 py-0.5 ms-1" style="font-size: 0.68rem;">Studio Lead</span>
+                                {% else %}
+                                    <span class="badge bg-secondary text-white rounded-pill px-2 py-0.5 ms-1" style="font-size: 0.68rem;">Photographer</span>
+                                {% endif %}
+                            {% endblock %}
+                        </div>
+                    </div>
+
+                    <!-- Right Top Bar Actions -->
+                    <div class="d-flex align-items-center gap-3">
+                        <!-- Status Badge (Desktop only) -->
+                        <div class="d-none d-md-flex align-items-center gap-2 bg-light px-3 py-1 rounded-pill border small text-muted">
+                            <span class="badge rounded-circle p-1 bg-success"></span>
+                            <span style="font-size: 0.75rem;">100% Cloud Connected</span>
+                        </div>
+
+                        <!-- Notification Bell Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-light btn-sm rounded-circle p-2 border position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
+                                <i class="bi bi-bell text-secondary"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border p-2" style="width: 280px; border-radius: 12px;">
+                                <li><h6 class="dropdown-header fw-bold text-dark px-2">Studio Notifications</h6></li>
+                                <li><hr class="dropdown-divider my-1"></li>
+                                <li class="p-3 text-center text-muted small">
+                                    <i class="bi bi-bell-slash fs-4 d-block mb-1 text-muted"></i>
+                                    <span>All caught up. Studio cloud connected.</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- User Profile Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-white border px-2 py-1 rounded-pill d-flex align-items-center gap-2 shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                    {{ user.first_name|default:user.username|slice:":1"|upper }}
+                                </div>
+                                <div class="text-start d-none d-sm-block pe-1">
+                                    <div class="fw-bold text-dark lh-1" style="font-size: 0.8rem;">{{ user.get_full_name|default:user.username }}</div>
+                                    <div class="text-muted" style="font-size: 0.65rem;">
+                                        {% if user.profile.role == 'ADMIN' or user.is_superuser %}Lead Photographer{% else %}Team Shooter{% endif %}
+                                    </div>
+                                </div>
+                                <i class="bi bi-chevron-down text-muted small ms-1" style="font-size: 0.7rem;"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border p-2" style="border-radius: 12px;">
+                                <li>
+                                    <div class="px-3 py-2 border-bottom mb-2">
+                                        <div class="fw-bold text-dark small">{{ user.username }}</div>
+                                        <div class="text-muted small" style="font-size: 0.75rem;">{{ user.email|default:"user@trizenai.studio" }}</div>
+                                    </div>
+                                </li>
+                                <li><a class="dropdown-item rounded small" href="{% url 'accounts:my_profile' %}"><i class="bi bi-person-circle me-2"></i>Profile</a></li>
+                                <li><a class="dropdown-item rounded small" href="{% url 'accounts:security_settings' %}"><i class="bi bi-shield-check me-2"></i>Security</a></li>
+                                <li><hr class="dropdown-divider my-1"></li>
+                                <li>
+                                    <form method="post" action="{% url 'accounts:logout' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item rounded small text-danger">
+                                            <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </header>
+            {% endif %}
+
+            <!-- Dynamic Workspace / Public Main Content -->
+            <main class="{% if user.is_authenticated %}app-main-content{% else %}{% block public_main_class %}container py-4{% endblock %}{% endif %}">
+                {% block content %}{% endblock %}
+            </main>
         </div>
-    </footer>
+    </div>
+
+    {% if not user.is_authenticated %}
+        {% block guest_footer %}
+        <!-- Public Footer -->
+        <footer class="site-footer mt-auto py-4 border-top bg-white">
+            <div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 small text-muted">
+                    <img src="{% static 'img/logo-icon.png' %}" alt="Logo" width="22" height="22" style="object-fit: contain; border-radius: 4px;">
+                    <span>&copy; 2026 <strong>TrizenAI Technologies</strong> &mdash; Production Photo Sharing Platform.</span>
+                </div>
+                <div class="small text-muted" style="font-size: 0.8rem;">
+                    Near-Neutral Studio Design &bull; Supabase Storage &bull; PIN-Protected Public Galleries
+                </div>
+            </div>
+        </footer>
+        {% endblock guest_footer %}
+    {% endif %}
 
     <!-- Bootstrap 5.3 JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- HTMX 1.9.10 for Live Dynamic UI Partial Updates -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
     <script src="{% static 'js/main.js' %}"></script>
     {% block extra_js %}{% endblock %}
+
+    <!-- Reusable Global Modal Container for HTMX Modals -->
+    <div class="modal fade" id="global-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" id="global-modal-dialog">
+            <div class="modal-content rounded-4 border-0 shadow" id="global-modal-content">
+                <!-- HTMX Swaps Form / Partial Content Here -->
+            </div>
+        </div>
+    </div>
 </body>
 </html>

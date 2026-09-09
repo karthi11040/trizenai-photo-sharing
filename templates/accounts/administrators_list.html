@@ -1,0 +1,530 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Administrators &mdash; TrizenAI Studio{% endblock %}
+
+{% block breadcrumbs %}
+    <a href="{% url 'accounts:dashboard_router' %}" class="text-decoration-none text-secondary">Studio Alpha</a>
+    <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+    <span class="fw-semibold text-dark">Administrators</span>
+{% endblock %}
+
+{% block content %}
+<div class="administrators-management-view pb-5">
+
+    <!-- Top Header & Primary CTA -->
+    <div class="d-flex flex-wrap justify-content-between align-items-start mb-4 gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h2 class="fw-bold text-dark mb-0">Administrators</h2>
+                <span class="badge bg-dark text-white rounded-pill px-3 py-1" style="font-size: 0.75rem; font-weight: 600;">
+                    <i class="bi bi-shield-lock-fill me-1"></i>Admin Workspace Access
+                </span>
+            </div>
+            <p class="text-secondary small mb-0">Manage Admin accounts with access to this workspace.</p>
+        </div>
+        <div>
+            <button class="btn btn-primary px-3 shadow-sm d-flex align-items-center gap-2" style="border-radius: 10px; min-height: 44px;" data-bs-toggle="modal" data-bs-target="#addAdminModal">
+                <i class="bi bi-shield-plus"></i>
+                <span>+ Add Administrator</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Metrics Row -->
+    <div class="row g-3 mb-4">
+        <!-- Card 1: Total Administrators -->
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 p-3 p-md-4 border-0 shadow-sm" style="border-radius: 16px;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-semibold">Total Admins</span>
+                    <div class="d-flex align-items-center justify-content-center rounded-3 bg-dark text-white" style="width: 36px; height: 36px;">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                </div>
+                <div class="fs-2 fw-bold text-dark mb-1">{{ total_admins_count }}</div>
+                <div class="text-muted small pt-2 border-top" style="font-size: 0.75rem;">Workspace curators & leads</div>
+            </div>
+        </div>
+
+        <!-- Card 2: Active Admins -->
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 p-3 p-md-4 border-0 shadow-sm" style="border-radius: 16px;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-semibold">Active Admins</span>
+                    <div class="d-flex align-items-center justify-content-center rounded-3 bg-success-subtle text-success" style="width: 36px; height: 36px;">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                </div>
+                <div class="fs-2 fw-bold text-dark mb-1">{{ active_admins_count }}</div>
+                <div class="text-muted small pt-2 border-top" style="font-size: 0.75rem;">Full administrative privileges</div>
+            </div>
+        </div>
+
+        <!-- Card 3: Pending Invitations -->
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 p-3 p-md-4 border-0 shadow-sm" style="border-radius: 16px;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-semibold">Pending Invites</span>
+                    <div class="d-flex align-items-center justify-content-center rounded-3 bg-warning-subtle text-warning" style="width: 36px; height: 36px;">
+                        <i class="bi bi-envelope-paper-fill"></i>
+                    </div>
+                </div>
+                <div class="fs-2 fw-bold text-dark mb-1">{{ pending_admins_count }}</div>
+                <div class="text-muted small pt-2 border-top" style="font-size: 0.75rem;">Awaiting onboarding acceptance</div>
+            </div>
+        </div>
+
+        <!-- Card 4: Suspended Admins -->
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 p-3 p-md-4 border-0 shadow-sm" style="border-radius: 16px;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-semibold">Suspended</span>
+                    <div class="d-flex align-items-center justify-content-center rounded-3 bg-danger-subtle text-danger" style="width: 36px; height: 36px;">
+                        <i class="bi bi-pause-circle-fill"></i>
+                    </div>
+                </div>
+                <div class="fs-2 fw-bold text-dark mb-1">{{ suspended_admins_count }}</div>
+                <div class="text-muted small pt-2 border-top" style="font-size: 0.75rem;">Access temporarily revoked</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Administrators Data Table / Mobile Cards -->
+    <div class="card border-0 shadow-sm bg-white mb-4" style="border-radius: 16px;">
+        
+        <!-- Desktop Table -->
+        <div class="d-none d-md-block table-responsive" style="min-height: 280px; overflow-y: visible;">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light border-bottom">
+                    <tr>
+                        <th class="ps-4 py-3 small text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">Administrator</th>
+                        <th class="py-3 small text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">Status</th>
+                        <th class="py-3 small text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">Created Date</th>
+                        <th class="py-3 small text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">Last Active</th>
+                        <th class="pe-4 py-3 small text-uppercase text-muted fw-bold text-end" style="font-size: 0.75rem;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in administrators %}
+                        <tr>
+                            <!-- Avatar, Name, Email -->
+                            <td class="ps-4 py-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="rounded-circle text-white fw-bold d-flex align-items-center justify-content-center shadow-xs flex-shrink-0" 
+                                         style="width: 42px; height: 42px; font-size: 0.95rem; background: #0f172a; cursor: pointer;"
+                                         onclick="openAdminDrawer({{ a.id }})">
+                                        {{ a.full_name|slice:":1"|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <a href="javascript:void(0)" onclick="openAdminDrawer({{ a.id }})" class="fw-bold text-dark text-decoration-none hover-primary">
+                                                {{ a.full_name }}
+                                            </a>
+                                            {% if a.is_self %}
+                                                <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-0.5 small" style="font-size: 0.68rem;">You</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-muted small" style="font-size: 0.75rem;">@{{ a.username }} &bull; {{ a.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Status Badge -->
+                            <td>
+                                <span class="badge rounded-pill px-2.5 py-1 small fw-semibold {{ a.status_badge }}">
+                                    <span class="d-inline-block rounded-circle me-1" style="width: 6px; height: 6px; background-color: currentColor;"></span>
+                                    {{ a.status_label }}
+                                </span>
+                            </td>
+
+                            <!-- Created Date -->
+                            <td>
+                                <span class="text-secondary small">{{ a.created_at }}</span>
+                            </td>
+
+                            <!-- Last Active -->
+                            <td>
+                                <span class="text-secondary small">{{ a.last_active }}</span>
+                            </td>
+
+                            <!-- Actions Menu -->
+                            <td class="pe-4 text-end">
+                                <div class="d-flex justify-content-end align-items-center gap-1.5">
+                                    <button type="button" class="btn btn-light btn-sm px-2.5 py-1 text-dark border shadow-xs" onclick="openAdminDrawer({{ a.id }})" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                        <span class="d-none d-xl-inline ms-1">Details</span>
+                                    </button>
+
+                                    {% if not a.is_self %}
+                                        <div class="dropdown">
+                                            <button class="btn btn-light btn-sm px-2 py-1 text-secondary border dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" style="font-size: 0.85rem;">
+                                                {% if a.status == 'PENDING' %}
+                                                    <li>
+                                                        <form method="post" action="{% url 'accounts:administrators_list' %}">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="action" value="resend_admin_invitation">
+                                                            <input type="hidden" name="user_id" value="{{ a.id }}">
+                                                            <button type="submit" class="dropdown-item py-2">
+                                                                <i class="bi bi-send-fill me-2 text-warning"></i>Resend Invitation
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                {% elif a.status == 'ACTIVE' %}
+                                                    <li>
+                                                        <a class="dropdown-item py-2 text-warning" href="javascript:void(0)" onclick="openDeactivateAdminModal({{ a.id }}, '{{ a.full_name|escapejs }}')">
+                                                            <i class="bi bi-pause-circle me-2"></i>Deactivate Administrator
+                                                        </a>
+                                                    </li>
+                                                {% elif a.status == 'SUSPENDED' %}
+                                                    <li>
+                                                        <form method="post" action="{% url 'accounts:administrators_list' %}">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="action" value="activate_admin">
+                                                            <input type="hidden" name="user_id" value="{{ a.id }}">
+                                                            <button type="submit" class="dropdown-item py-2 text-success">
+                                                                <i class="bi bi-play-circle me-2"></i>Activate Administrator
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                {% endif %}
+                                                <li><hr class="dropdown-divider my-1"></li>
+                                                <li>
+                                                    <a class="dropdown-item py-2 text-danger" href="javascript:void(0)" onclick="openRemoveAdminModal({{ a.id }}, '{{ a.full_name|escapejs }}')">
+                                                        <i class="bi bi-trash3-fill me-2"></i>Remove from Workspace
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile Cards List -->
+        <div class="d-block d-md-none p-3">
+            {% for a in administrators %}
+                <div class="card border rounded-3 p-3 mb-3 shadow-xs">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center gap-2.5">
+                            <div class="rounded-circle text-white fw-bold d-flex align-items-center justify-content-center shadow-xs flex-shrink-0" style="width: 40px; height: 40px; font-size: 0.9rem; background: #0f172a;">
+                                {{ a.full_name|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">{{ a.full_name }}</div>
+                                <div class="text-muted small" style="font-size: 0.72rem;">{{ a.email }}</div>
+                            </div>
+                        </div>
+                        <span class="badge rounded-pill px-2 py-0.5 small {{ a.status_badge }}">
+                            {{ a.status_label }}
+                        </span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top" style="font-size: 0.75rem;">
+                        <span class="text-muted">Active: {{ a.last_active }}</span>
+                        <button type="button" class="btn btn-outline-primary btn-sm px-3 py-1" onclick="openAdminDrawer({{ a.id }})" style="font-size: 0.78rem; min-height: 36px;">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+    <!-- Admin Permission Information Card -->
+    <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded-circle bg-dark text-white" style="width: 32px; height: 32px;">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <div>
+                <h6 class="fw-bold text-dark mb-0">Administrator Role Permissions</h6>
+                <p class="text-muted small mb-0">Full workspace administrative capabilities.</p>
+            </div>
+        </div>
+
+        <div class="p-3 rounded-3 bg-light border">
+            <div class="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+                <span class="badge bg-dark text-white rounded-pill px-2.5 py-0.5">ADMINISTRATOR</span>
+                <span>Can:</span>
+            </div>
+            <div class="row g-2 small text-secondary">
+                <div class="col-12 col-md-6"><span class="text-success fw-bold me-1.5">✓</span>Manage workspace &amp; studio settings</div>
+                <div class="col-12 col-md-6"><span class="text-success fw-bold me-1.5">✓</span>Create &amp; invite administrators</div>
+                <div class="col-12 col-md-6"><span class="text-success fw-bold me-1.5">✓</span>Create &amp; manage team members</div>
+                <div class="col-12 col-md-6"><span class="text-success fw-bold me-1.5">✓</span>Create and manage events</div>
+                <div class="col-12 col-md-6"><span class="text-success fw-bold me-1.5">✓</span>Assign team members to events</div>
+                <div class="col-12 col-md-6"><span class="text-success fw-bold me-1.5">✓</span>Review uploaded photographs</div>
+                <div class="col-12 col-md-6"><span class="text-success fw-bold me-1.5">✓</span>Select &amp; curate photographs</div>
+                <div class="col-12 col-md-6"><span class="text-success fw-bold me-1.5">✓</span>Create &amp; publish galleries</div>
+                <div class="col-12 col-md-6"><span class="text-success fw-bold me-1.5">✓</span>Configure client gallery PIN protection</div>
+                <div class="col-12 col-md-6"><span class="text-success fw-bold me-1.5">✓</span>Full database &amp; cloud storage controls</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal: Add Administrator -->
+<div class="modal fade" id="addAdminModal" tabindex="-1" aria-labelledby="addAdminModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark" id="addAdminModalLabel">Create Administrator</h5>
+                    <p class="text-muted small mb-0">Add an administrator account with access to this workspace.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form method="post" action="{% url 'accounts:administrators_list' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_admin">
+
+                <div class="modal-body px-4 py-3">
+                    
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small text-dark mb-1">First Name *</label>
+                            <input type="text" name="first_name" class="form-control" placeholder="e.g. Maya" required style="border-radius: 10px; min-height: 44px;">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small text-dark mb-1">Last Name *</label>
+                            <input type="text" name="last_name" class="form-control" placeholder="e.g. Lin" required style="border-radius: 10px; min-height: 44px;">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-dark mb-1">Email Address *</label>
+                        <input type="email" name="email" class="form-control" placeholder="maya@trizenai.studio" required style="border-radius: 10px; min-height: 44px;">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-dark mb-1">Phone Number <span class="text-muted fw-normal">(Optional)</span></label>
+                        <input type="tel" name="phone_number" class="form-control" placeholder="+1 (555) 000-0000" style="border-radius: 10px; min-height: 44px;">
+                    </div>
+
+                    <!-- Fixed Role Box -->
+                    <div class="p-3 mb-2 rounded-3 bg-light border">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-semibold small text-dark">Assigned Role</span>
+                            <span class="badge bg-dark text-white rounded-pill px-2.5 py-1 small fw-semibold">Administrator</span>
+                        </div>
+                        <div class="text-muted small" style="font-size: 0.75rem;">
+                            Administrators can manage workspace members, events, photographs and galleries.
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 44px;">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold" style="border-radius: 10px; min-height: 44px;">Send Invitation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Invitation Sent State -->
+<div class="modal fade" id="adminInviteSuccessModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 rounded-circle bg-success-subtle text-success mb-3">
+                    <i class="bi bi-shield-check" style="font-size: 2.2rem;"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-1">Invitation sent</h4>
+                <p class="text-secondary small mb-3">
+                    An administrator invitation has been sent to <strong>{{ just_invited_admin.email|default:"the administrator" }}</strong>.
+                </p>
+
+                <div class="mb-3 text-start">
+                    <label class="form-label small fw-semibold text-muted mb-1">Direct Invitation Link</label>
+                    <div class="input-group">
+                        <input type="text" id="adminInviteLinkInput" class="form-control bg-light small" value="{{ just_invited_admin.invite_link|default:'' }}" readonly style="font-size: 0.8rem; border-radius: 10px 0 0 10px;">
+                        <button class="btn btn-primary btn-sm px-3" type="button" onclick="copyAdminInviteLink()" style="border-radius: 0 10px 10px 0;">
+                            <i class="bi bi-clipboard" id="adminCopyIcon"></i>
+                            <span id="adminCopyText">Copy</span>
+                        </button>
+                    </div>
+                    <div class="form-text text-muted" style="font-size: 0.72rem;">
+                        Invitation link expires in 7 days ({{ just_invited_admin.expires_at|default:"7 days" }}).
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-primary px-4 fw-semibold w-100" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 44px;">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Administrator Details Drawer -->
+<div class="modal fade" id="adminDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle text-white fw-bold d-flex align-items-center justify-content-center shadow-sm" id="admDetailAvatar" style="width: 50px; height: 50px; font-size: 1.2rem; background: #0f172a;">
+                        A
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="modal-title fw-bold text-dark mb-0" id="admDetailName">Administrator</h5>
+                            <span class="badge bg-dark text-white rounded-pill px-2.5 py-0.5 small">Admin</span>
+                        </div>
+                        <div class="text-muted small" id="admDetailEmailPhone">-</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body px-4 py-3">
+                <div class="card border rounded-3 p-3 mb-3 bg-light">
+                    <h6 class="fw-bold text-dark small mb-2">Account Metadata</h6>
+                    <div class="row g-2 small">
+                        <div class="col-6"><span class="text-muted">Status:</span> <span class="fw-semibold" id="admDetailStatus">-</span></div>
+                        <div class="col-6"><span class="text-muted">Username:</span> <span class="fw-semibold" id="admDetailUsername">-</span></div>
+                        <div class="col-6"><span class="text-muted">Created:</span> <span class="fw-semibold" id="admDetailCreated">-</span></div>
+                        <div class="col-6"><span class="text-muted">Last Active:</span> <span class="fw-semibold" id="admDetailActive">-</span></div>
+                    </div>
+                </div>
+
+                <div class="card border rounded-3 p-3 small text-muted">
+                    <div class="fw-semibold text-dark mb-1">Administrative Privileges</div>
+                    This administrator has full access to workspace settings, event curation, shooter roster management, and client gallery publishing.
+                </div>
+            </div>
+
+            <div class="modal-footer border-top px-4 py-3">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 44px;">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Deactivate Admin Confirmation -->
+<div class="modal fade" id="deactivateAdminModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 rounded-circle bg-warning-subtle text-warning mb-3">
+                    <i class="bi bi-pause-circle-fill" style="font-size: 2.2rem;"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1" id="deactAdmTitle">Deactivate Administrator?</h5>
+                <p class="text-secondary small mb-4">
+                    This account will no longer be able to sign in or manage workspace events.
+                </p>
+
+                <form method="post" action="{% url 'accounts:administrators_list' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="deactivate_admin">
+                    <input type="hidden" name="user_id" id="deactAdmUserId">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-light px-3 flex-fill" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 44px;">Cancel</button>
+                        <button type="submit" class="btn btn-danger px-3 flex-fill fw-semibold" style="border-radius: 10px; min-height: 44px;">Deactivate</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Remove Admin Confirmation -->
+<div class="modal fade" id="removeAdminModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 rounded-circle bg-danger-subtle text-danger mb-3">
+                    <i class="bi bi-exclamation-triangle-fill" style="font-size: 2.2rem;"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-1" id="removeAdmTitle">Remove Administrator?</h4>
+                <p class="text-secondary small mb-4 px-2">
+                    This removes the administrator's workspace access.
+                </p>
+
+                <form method="post" action="{% url 'accounts:administrators_list' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove_admin">
+                    <input type="hidden" name="user_id" id="removeAdmUserId">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-light px-4 flex-fill" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 44px;">Cancel</button>
+                        <button type="submit" class="btn btn-danger px-4 flex-fill fw-semibold" style="border-radius: 10px; min-height: 44px;">Remove Admin</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openAdminDrawer(adminId) {
+    fetch(`/accounts/administrators/${adminId}/details/`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            document.getElementById('admDetailAvatar').innerText = data.full_name.charAt(0).toUpperCase();
+            document.getElementById('admDetailName').innerText = data.full_name;
+            document.getElementById('admDetailEmailPhone').innerText = `${data.email} • ${data.phone_number}`;
+            document.getElementById('admDetailStatus').innerText = data.status_label;
+            document.getElementById('admDetailUsername').innerText = `@${data.username}`;
+            document.getElementById('admDetailCreated').innerText = data.created_at;
+            document.getElementById('admDetailActive').innerText = data.last_active;
+
+            const modal = new bootstrap.Modal(document.getElementById('adminDetailsModal'));
+            modal.show();
+        })
+        .catch(err => console.error(err));
+}
+
+function openDeactivateAdminModal(userId, fullName) {
+    document.getElementById('deactAdmUserId').value = userId;
+    document.getElementById('deactAdmTitle').innerText = `Deactivate ${fullName}?`;
+    const modal = new bootstrap.Modal(document.getElementById('deactivateAdminModal'));
+    modal.show();
+}
+
+function openRemoveAdminModal(userId, fullName) {
+    document.getElementById('removeAdmUserId').value = userId;
+    document.getElementById('removeAdmTitle').innerText = `Remove ${fullName}?`;
+    const modal = new bootstrap.Modal(document.getElementById('removeAdminModal'));
+    modal.show();
+}
+
+function copyAdminInviteLink() {
+    const input = document.getElementById('adminInviteLinkInput');
+    input.select();
+    navigator.clipboard.writeText(input.value);
+    const icon = document.getElementById('adminCopyIcon');
+    const text = document.getElementById('adminCopyText');
+    icon.className = 'bi bi-check2';
+    text.innerText = 'Copied!';
+    setTimeout(() => {
+        icon.className = 'bi bi-clipboard';
+        text.innerText = 'Copy';
+    }, 2500);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    {% if just_invited_admin %}
+        const inviteModal = new bootstrap.Modal(document.getElementById('adminInviteSuccessModal'));
+        inviteModal.show();
+    {% endif %}
+});
+</script>
+{% endblock %}

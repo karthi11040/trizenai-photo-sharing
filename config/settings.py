@@ -18,7 +18,9 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-fallback-key-2026')
 
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't', 'yes')
 
-ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com').split(',') if h.strip()]
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com,testserver').split(',') if h.strip()]
+if 'testserver' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('testserver')
 
 # CSRF Trusted Origins for Render and local development
 CSRF_TRUSTED_ORIGINS = [
@@ -51,6 +53,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'config.middleware.RequestIDMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -59,6 +62,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'config.middleware.ProductionSecurityHeadersMiddleware',
+    'config.middleware.RateLimitMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -122,6 +127,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        'NAME': 'accounts.validators.StrongPasswordValidator',
+    },
 ]
 
 # Internationalization
@@ -158,8 +166,20 @@ LOGOUT_REDIRECT_URL = 'accounts:login'
 
 # Supabase Storage Configuration (Server-Side Only - Private Object Storage)
 SUPABASE_URL = os.getenv('SUPABASE_URL', '').rstrip('/')
-SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY', '')
+SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('SUPABASE_SECRET_KEY', '')
 SUPABASE_STORAGE_BUCKET = os.getenv('SUPABASE_STORAGE_BUCKET', 'event-photos')
+SUPABASE_PUBLISHABLE_KEY = (
+    os.getenv('SUPABASE_PUBLISHABLE_KEY') or
+    os.getenv('SUPABASE_ANON_KEY') or
+    os.getenv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', '')
+)
+SUPABASE_ANON_KEY = SUPABASE_PUBLISHABLE_KEY
+
+# Unrestricted Large File & Multi-Photo Batch Upload Settings (N images, N sizes)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024 * 5  # 5 GB max upload request body
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 200  # 200 MB in-memory buffer before streaming to temp disk
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
+DATA_UPLOAD_MAX_NUMBER_FILES = 10000  # Support N arbitrary number of batch images
 
 # Django REST Framework Configuration
 REST_FRAMEWORK = {
@@ -172,12 +192,30 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'config.exceptions.custom_exception_handler',
 }
 
-# Security and Production Hardening
+# Security and Session Persistence Hardening (Stay logged in until explicit logout)
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days default persistent session
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+# Email Configuration (SMTP)
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 't')
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 't')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'karthigeyan.s11@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '').replace(' ', '')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', f"TrizenAI Studio <{EMAIL_HOST_USER}>")
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SESSION_COOKIE_HTTPONLY = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
     SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
@@ -185,7 +223,6 @@ if not DEBUG:
 else:
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
-    SESSION_COOKIE_HTTPONLY = True
     X_FRAME_OPTIONS = 'DENY'
 
 # Operational Logging

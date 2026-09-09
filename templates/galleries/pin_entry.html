@@ -1,0 +1,210 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Security PIN &mdash; {{ gallery.event.name }}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5.3 & Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+
+    <style>
+        :root {
+            --bg-canvas: #f8fafc;
+            --bg-surface: #ffffff;
+            --border-subtle: #e2e8f0;
+            --text-heading: #0f172a;
+            --text-body: #334155;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-canvas);
+            color: var(--text-body);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .ambient-mesh {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 30%, rgba(37, 99, 235, 0.08), rgba(99, 102, 241, 0.04), transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .pin-glass-card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 460px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 2.75rem 2.25rem;
+            box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.08), 0 0 30px rgba(37, 99, 235, 0.06);
+            text-align: center;
+        }
+
+        .lock-badge-icon {
+            width: 68px;
+            height: 68px;
+            border-radius: 20px;
+            background: rgba(37, 99, 235, 0.08);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            color: #2563eb;
+            font-size: 1.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem auto;
+        }
+
+        .gallery-title-tag {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.65rem;
+            font-weight: 700;
+            color: var(--text-heading);
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+
+        .pin-input-luxury {
+            background: #ffffff !important;
+            border: 1.5px solid #cbd5e1 !important;
+            color: #2563eb !important;
+            font-family: monospace;
+            font-size: 2.2rem !important;
+            font-weight: 800;
+            letter-spacing: 0.35em;
+            padding: 0.85rem 1rem;
+            border-radius: 14px;
+            text-align: center;
+            max-width: 280px;
+            margin: 0 auto;
+            transition: all 0.25s;
+        }
+
+        .pin-input-luxury:focus {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
+            color: #1d4ed8 !important;
+        }
+
+        .btn-unlock {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: 1px solid #3b82f6;
+            color: #ffffff;
+            font-weight: 700;
+            padding: 0.85rem;
+            border-radius: 14px;
+            font-size: 1rem;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+            transition: all 0.25s;
+        }
+
+        .btn-unlock:hover {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(37, 99, 235, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+<div class="ambient-mesh"></div>
+
+<!-- Toast Messages -->
+{% if messages %}
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+        {% for message in messages %}
+            <div class="toast show align-items-center bg-white text-dark border shadow" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body small fw-medium">
+                        {{ message }}
+                    </div>
+                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="pin-glass-card">
+    {% if cover_thumbnail_url %}
+    <div class="overflow-hidden rounded-4 mb-3 border shadow-sm" style="height: 160px;">
+        <img src="{{ cover_thumbnail_url }}" alt="{{ gallery.event.name }}" class="w-100 h-100 object-fit-cover">
+    </div>
+    {% else %}
+    <div class="lock-badge-icon">
+        <i class="bi bi-shield-lock-fill"></i>
+    </div>
+    {% endif %}
+
+    <div class="badge rounded-pill px-3 py-1 mb-2 d-inline-flex align-items-center gap-1.5" style="background: rgba(37, 99, 235, 0.08); color: #2563eb; font-size: 0.72rem; border: 1px solid rgba(37, 99, 235, 0.2);">
+        {% if studio_logo_url %}
+            <img src="{{ studio_logo_url }}" alt="{{ studio_name }}" style="height: 18px; max-width: 40px; object-fit: contain; border-radius: 3px;">
+        {% else %}
+            <i class="bi bi-camera-fill me-1"></i>
+        {% endif %}
+        <span>Delivered by <strong>{{ studio_name }}</strong></span>
+    </div>
+
+    <h2 class="gallery-title-tag">{{ gallery.event.name }}</h2>
+    <p class="text-muted small mb-3">
+        Uploaded & Curated by <strong>{{ uploader_name }}</strong>
+    </p>
+    <p class="text-muted small mb-4" style="font-size: 0.8rem;">
+        Please enter the 6-digit numeric security PIN provided by your photographer to view and download your delivered collection.
+    </p>
+
+    <form method="post" action="{% url 'galleries:customer_gallery_verify_pin' slug=gallery.slug %}">
+        {% csrf_token %}
+
+        <div class="mb-4">
+            <input type="text" id="pinInput" name="pin" 
+                   class="form-control pin-input-luxury" 
+                   placeholder="••••••" 
+                   inputmode="numeric" 
+                   pattern="[0-9]{6}" 
+                   maxlength="6" 
+                   minlength="6" 
+                   autofocus required 
+                   oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6);">
+            <div class="text-muted small mt-2" style="font-size: 0.75rem;">
+                6-digit numeric security code
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-unlock w-100 mb-3 d-flex align-items-center justify-content-center gap-2">
+            <i class="bi bi-unlock-fill"></i>
+            <span>Unlock Gallery</span>
+        </button>
+    </form>
+
+    <div class="pt-3 mt-3 border-top" style="font-size: 0.75rem; color: #64748b;">
+        <i class="bi bi-shield-check text-success me-1"></i>Protected by TrizenAI Cloud Security &bull; Zero client registration required
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

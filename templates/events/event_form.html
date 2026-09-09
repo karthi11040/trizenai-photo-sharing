@@ -1,39 +1,49 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{{ action_title }} &mdash; TrizenAI Photos{% endblock %}
+{% block title %}{{ action_title }} &mdash; TrizenAI Studio{% endblock %}
+
+{% block breadcrumbs %}
+    <a href="{% url 'events:event_list' %}" class="text-decoration-none text-secondary">Events</a>
+    <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+    <span class="fw-semibold text-dark">{{ action_title }}</span>
+{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="event-form-view pb-5">
     <div class="row justify-content-center">
-        <div class="col-lg-7">
-            <!-- Breadcrumb -->
-            <nav aria-label="breadcrumb" class="mb-3">
-                <ol class="breadcrumb small">
-                    <li class="breadcrumb-item"><a href="{% url 'events:event_list' %}" class="text-decoration-none text-muted">Events</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">{{ action_title }}</li>
-                </ol>
-            </nav>
-
-            <div class="card neutral-card p-4">
-                <div class="mb-4">
-                    <h3 class="fw-bold text-dark mb-1">{{ action_title }}</h3>
-                    <p class="text-muted small mb-0">Specify event date, location, and photography instructions.</p>
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm p-4 p-md-5 bg-white" style="border-radius: 16px;">
+                <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom">
+                    <div>
+                        <h3 class="fw-bold text-dark mb-1">{{ action_title }}</h3>
+                        <p class="text-muted small mb-0">Specify event date, location, photography notes, and cover thumbnail.</p>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary" style="width: 44px; height: 44px;">
+                        <i class="bi bi-calendar-plus-fill fs-4"></i>
+                    </div>
                 </div>
 
-                <form method="post" novalidate>
+                <form method="post" enctype="multipart/form-data" novalidate>
                     {% csrf_token %}
 
-                    <div class="mb-3">
-                        <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold small text-dark">Event Name *</label>
+                    <!-- Event Name -->
+                    <div class="mb-3.5">
+                        <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5">
+                            Event Name <span class="text-danger">*</span>
+                        </label>
                         {{ form.name }}
                         {% if form.name.errors %}
                             <div class="text-danger small mt-1">{{ form.name.errors|first }}</div>
                         {% endif %}
                     </div>
 
-                    <div class="row g-3 mb-3">
+                    <!-- Date & Location Row -->
+                    <div class="row g-3 mb-3.5">
                         <div class="col-md-6">
-                            <label for="{{ form.event_date.id_for_label }}" class="form-label fw-semibold small text-dark">Event Date *</label>
+                            <label for="{{ form.event_date.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5">
+                                Event Date <span class="text-danger">*</span>
+                            </label>
                             {{ form.event_date }}
                             {% if form.event_date.errors %}
                                 <div class="text-danger small mt-1">{{ form.event_date.errors|first }}</div>
@@ -41,7 +51,9 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label for="{{ form.location.id_for_label }}" class="form-label fw-semibold small text-dark">Location</label>
+                            <label for="{{ form.location.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5">
+                                Location / Venue
+                            </label>
                             {{ form.location }}
                             {% if form.location.errors %}
                                 <div class="text-danger small mt-1">{{ form.location.errors|first }}</div>
@@ -49,8 +61,40 @@
                         </div>
                     </div>
 
+                    <!-- Event Cover / Thumbnail Photo Upload -->
                     <div class="mb-4">
-                        <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold small text-dark">Description &amp; Schedule Notes</label>
+                        <label class="form-label fw-semibold small text-dark mb-1.5 d-flex justify-content-between align-items-center">
+                            <span>Event Thumbnail / Cover Photo</span>
+                            <span class="text-muted fw-normal small">(Optional &bull; JPG, PNG, WEBP)</span>
+                        </label>
+                        
+                        <div class="p-3.5 rounded-3 border bg-light" style="border-color: #e2e8f0 !important;">
+                            <div class="d-flex flex-column flex-sm-row align-items-center gap-3">
+                                <div class="rounded-3 border bg-white d-flex align-items-center justify-content-center overflow-hidden flex-shrink-0" style="width: 120px; height: 80px; border-color: #e2e8f0;">
+                                    <img id="coverImagePreview" src="{% if form.instance.cover_image and form.instance.cover_image.name %}{{ form.instance.cover_image.url }}{% endif %}" alt="Event Cover" class="w-100 h-100 object-fit-cover {% if not form.instance.cover_image or not form.instance.cover_image.name %}d-none{% endif %}">
+                                    <div id="coverPlaceholder" class="text-center text-muted small {% if form.instance.cover_image and form.instance.cover_image.name %}d-none{% endif %}">
+                                        <i class="bi bi-camera fs-3 d-block text-secondary opacity-50"></i>
+                                    </div>
+                                </div>
+
+                                <div class="flex-grow-1 w-100">
+                                    {{ form.cover_image }}
+                                    <div class="text-muted small mt-1" style="font-size: 0.75rem;">
+                                        Shown on dashboard cards, client directory, and event overview.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if form.cover_image.errors %}
+                            <div class="text-danger small mt-1">{{ form.cover_image.errors|first }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Description & Notes -->
+                    <div class="mb-4">
+                        <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5">
+                            Description &amp; Schedule Notes
+                        </label>
                         {{ form.description }}
                         {% if form.description.errors %}
                             <div class="text-danger small mt-1">{{ form.description.errors|first }}</div>
@@ -58,10 +102,10 @@
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                        <a href="{% url 'events:event_list' %}" class="btn btn-secondary">
+                        <a href="{% url 'events:event_list' %}" class="btn btn-light px-4" style="border-radius: 10px; min-height: 44px;">
                             Cancel
                         </a>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm" style="border-radius: 10px; min-height: 44px; background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%); border: none;">
                             <i class="bi bi-check-lg me-1"></i> {{ button_text }}
                         </button>
                     </div>
@@ -70,4 +114,27 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const coverInput = document.getElementById('eventCoverInput');
+    const previewImg = document.getElementById('coverImagePreview');
+    const placeholder = document.getElementById('coverPlaceholder');
+
+    if (coverInput && previewImg && placeholder) {
+        coverInput.addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    previewImg.src = evt.target.result;
+                    previewImg.classList.remove('d-none');
+                    placeholder.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

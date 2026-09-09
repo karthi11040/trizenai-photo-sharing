@@ -37,3 +37,24 @@ def home(request):
     if request.user.is_authenticated:
         return redirect('accounts:dashboard_router')
     return render(request, 'home.html')
+
+
+def custom_bad_request(request, exception=None):
+    """Production 400 Bad Request view."""
+    return render(request, '400.html', status=400)
+
+
+def custom_permission_denied(request, exception=None):
+    """Production 403 Permission Denied view."""
+    return render(request, '403.html', status=403)
+
+
+def custom_page_not_found(request, exception=None):
+    """Production 404 Page Not Found view."""
+    return render(request, '404.html', status=404)
+
+
+def custom_server_error(request):
+    """Production 500 Server Error view."""
+    return render(request, '500.html', status=500)
+

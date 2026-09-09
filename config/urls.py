@@ -7,11 +7,13 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from config.views import health_check, home
+from accounts.views import login_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('health/', health_check, name='health_check'),
     path('', home, name='home'),
+    path('login/', login_view, name='login'),
 
     # Modular Applications
     path('accounts/', include('accounts.urls', namespace='accounts')),
@@ -26,5 +28,11 @@ urlpatterns = [
     path('api/galleries/', include(('galleries.api_urls', 'galleries_api'), namespace='api_galleries')),
 ]
 
+handler400 = 'config.views.custom_bad_request'
+handler403 = 'config.views.custom_permission_denied'
+handler404 = 'config.views.custom_page_not_found'
+handler500 = 'config.views.custom_server_error'
+
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

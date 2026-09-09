@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    @keyframes pulseGlow {
+        0% { transform: scale(1); filter: brightness(1); }
+        50% { transform: scale(1.15); filter: brightness(1.35); }
+        100% { transform: scale(1); filter: brightness(1); }
+    }
+    .badge-pulse-update {
+        animation: pulseGlow 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: all 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+    <a href="{% url 'accounts:dashboard_router' %}" class="text-decoration-none text-secondary">Studio Alpha</a>
+    <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+    <span class="fw-semibold text-dark">Client Galleries Manager</span>
+{% endblock %}
+
+{% block content %}
+<div class="galleries-manager-view pb-5">
+    <!-- Header Banner -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h2 class="fw-bold text-dark mb-0">Client Galleries Manager</h2>
+                <span class="badge rounded-pill px-3 py-1" style="background: #f3e8ff; color: #9333ea; font-size: 0.75rem;">PIN-Protected Delivery</span>
+            </div>
+            <p class="text-secondary small mb-0">Manage published client galleries, monitor hit rates, configure security PINs, and generate shareable links.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary btn-sm px-3 shadow-sm d-flex align-items-center gap-1.5" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#newGalleryModal">
+                <i class="bi bi-plus-lg"></i>
+                <span>New Client Gallery</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 3 Metrics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+            <div class="metric-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-medium">Active Galleries</span>
+                    <div class="metric-icon-sq" style="background: #f3e8ff; color: #9333ea;">
+                        <i class="bi bi-collection-play"></i>
+                    </div>
+                </div>
+                <div class="fs-2 fw-bold text-dark" id="stat-total-galleries">{{ total_galleries }}</div>
+                <div class="text-muted small pt-2 border-top" style="font-size: 0.75rem;"><span id="stat-published-count">{{ published_count }}</span> published to clients</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="metric-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-medium">Total Client Hits</span>
+                    <div class="metric-icon-sq bg-primary-subtle text-primary">
+                        <i class="bi bi-eye"></i>
+                    </div>
+                </div>
+                <div class="fs-2 fw-bold text-dark" id="stat-total-views">{{ total_views }}</div>
+                <div class="text-muted small pt-2 border-top" style="font-size: 0.75rem;">Across <strong id="stat-total-unique-ips">{{ total_unique_ips }}</strong> unique visitor IP addresses</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="metric-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-medium">Gallery Delivery Security</span>
+                    <div class="metric-icon-sq bg-success-subtle text-success">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                </div>
+                <div class="fs-2 fw-bold text-dark">100% Secured</div>
+                <div class="text-muted small pt-2 border-top" style="font-size: 0.75rem;">Zero unauthorized leaks across field units</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Galleries Grid -->
+    <div class="row g-4" id="galleries-grid">
+        {% for g in galleries %}
+            {% include 'galleries/partials/gallery_card.html' %}
+        {% empty %}
+            <div class="col-12" id="no-galleries-placeholder">
+                <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white">
+                    <i class="bi bi-collection-play text-muted fs-1 mb-2"></i>
+                    <h5 class="fw-bold">No Client Galleries Yet</h5>
+                    <p class="text-muted small mb-3">Publish a customer gallery from any curated event photo shoot.</p>
+                    <button class="btn btn-primary btn-sm px-4" data-bs-toggle="modal" data-bs-target="#newGalleryModal">Create Gallery</button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal: New Client Gallery -->
+<div class="modal fade" id="newGalleryModal" tabindex="-1" aria-labelledby="newGalleryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" id="newGalleryModalLabel">Publish New Client Gallery</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            {% if available_events %}
+                <form method="post"
+                      action="{% url 'galleries:gallery_create_default' %}"
+                      hx-post="{% url 'galleries:gallery_create_default' %}"
+                      hx-target="#galleries-grid"
+                      hx-swap="afterbegin">
+                    {% csrf_token %}
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small text-dark">Select Photography Event *</label>
+                            <select class="form-select" name="event_id">
+                                {% for ev in available_events %}
+                                    <option value="{{ ev.id }}">{{ ev.name }} ({{ ev.photos.count }} photos)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small text-dark">Set 6-Digit Numeric Security PIN *</label>
+                            <input type="text" name="pin" class="form-control font-monospace text-center fs-5 fw-bold" value="482917" pattern="[0-9]{6}" maxlength="6" minlength="6" inputmode="numeric" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6);" required>
+                            <span class="text-muted small">Clients will need to enter this 6-digit numeric PIN to open the gallery.</span>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top">
+                        <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary btn-sm px-4">
+                            <span class="htmx-indicator spinner-border spinner-border-sm me-1" role="status"></span>
+                            Publish Gallery
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="modal-body p-4 text-center">
+                    <p class="text-muted small mb-0">All existing events have active galleries published!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function updateLiveGalleryTelemetry() {
+        fetch("{% url 'galleries:live_gallery_stats' %}")
+            .then(res => res.json())
+            .then(data => {
+                const totalGalleriesEl = document.getElementById('stat-total-galleries');
+                const publishedCountEl = document.getElementById('stat-published-count');
+                const totalViewsEl = document.getElementById('stat-total-views');
+                const totalUniqueIpsEl = document.getElementById('stat-total-unique-ips');
+
+                if (totalGalleriesEl) totalGalleriesEl.textContent = data.total_galleries;
+                if (publishedCountEl) publishedCountEl.textContent = data.published_count;
+                
+                if (totalViewsEl && totalViewsEl.textContent !== String(data.total_views)) {
+                    totalViewsEl.textContent = data.total_views;
+                    totalViewsEl.classList.add('badge-pulse-update');
+                    setTimeout(() => totalViewsEl.classList.remove('badge-pulse-update'), 800);
+                }
+
+                if (totalUniqueIpsEl && totalUniqueIpsEl.textContent !== String(data.total_unique_ips)) {
+                    totalUniqueIpsEl.textContent = data.total_unique_ips;
+                    totalUniqueIpsEl.classList.add('badge-pulse-update');
+                    setTimeout(() => totalUniqueIpsEl.classList.remove('badge-pulse-update'), 800);
+                }
+
+                if (data.galleries) {
+                    for (const [gid, stats] of Object.entries(data.galleries)) {
+                        const viewsCountEl = document.getElementById(`gallery-views-count-${gid}`);
+                        const ipsCountEl = document.getElementById(`gallery-ips-count-${gid}`);
+                        const viewsBadgeEl = document.getElementById(`gallery-views-badge-${gid}`);
+                        const ipsBadgeEl = document.getElementById(`gallery-ips-badge-${gid}`);
+
+                        if (viewsCountEl && viewsCountEl.textContent !== String(stats.views_count)) {
+                            viewsCountEl.textContent = stats.views_count;
+                            if (viewsBadgeEl) {
+                                viewsBadgeEl.classList.add('badge-pulse-update');
+                                setTimeout(() => viewsBadgeEl.classList.remove('badge-pulse-update'), 800);
+                            }
+                        }
+
+                        if (ipsCountEl && ipsCountEl.textContent !== String(stats.unique_ips_count)) {
+                            ipsCountEl.textContent = stats.unique_ips_count;
+                            if (ipsBadgeEl) {
+                                ipsBadgeEl.classList.add('badge-pulse-update');
+                                setTimeout(() => ipsBadgeEl.classList.remove('badge-pulse-update'), 800);
+                            }
+                        }
+                    }
+                }
+            })
+            .catch(err => console.debug("Gallery live polling exception:", err));
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Poll live stats every 3 seconds
+        setInterval(updateLiveGalleryTelemetry, 3000);
+    });
+</script>
+{% endblock %}

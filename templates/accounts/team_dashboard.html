@@ -1,71 +1,368 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Photographer Dashboard &mdash; TrizenAI Photos{% endblock %}
+{% block title %}Photographer Dashboard — {{ studio_brand }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.tm-hero{background:linear-gradient(135deg,#0f172a 0%,#1e293b 55%,#1a2233 100%);border-radius:20px;padding:1.75rem 2.25rem;color:#fff;position:relative;overflow:hidden;margin-bottom:1.75rem}
+.tm-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:260px;height:260px;background:radial-gradient(circle,rgba(16,185,129,.18) 0%,transparent 70%);pointer-events:none}
+.tm-hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,.18);border:1px solid rgba(16,185,129,.35);color:#6ee7b7;padding:4px 14px;border-radius:99px;font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.75rem}
+.tm-hero h1{font-size:1.85rem;font-weight:800;color:#fff;letter-spacing:-.03em;margin-bottom:.3rem}
+.tm-hero p{color:#94a3b8;font-size:.9rem;margin-bottom:0}
+.tm-stat-pill{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.6rem 1rem;text-align:center;min-width:80px}
+.tm-stat-pill .val{font-size:1.45rem;font-weight:800;color:#fff;line-height:1}
+.tm-stat-pill .lbl{font-size:.65rem;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.tm-card{border-radius:18px;padding:1.35rem 1.5rem;color:#fff;position:relative;overflow:hidden;transition:transform .22s ease,box-shadow .22s ease;border:none}
+.tm-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px -8px rgba(0,0,0,.22)}
+.tm-card::after{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.07);pointer-events:none}
+.tm-card-emerald{background:linear-gradient(135deg,#059669,#10b981);box-shadow:0 8px 24px -6px rgba(5,150,105,.4)}
+.tm-card-blue{background:linear-gradient(135deg,#1d4ed8,#3b82f6);box-shadow:0 8px 24px -6px rgba(29,78,216,.4)}
+.tm-card-violet{background:linear-gradient(135deg,#7c3aed,#a855f7);box-shadow:0 8px 24px -6px rgba(124,58,237,.4)}
+.tm-card .card-icon{width:46px;height:46px;background:rgba(255,255,255,.15);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;margin-bottom:.75rem;backdrop-filter:blur(4px)}
+.tm-card .card-val{font-size:2rem;font-weight:800;letter-spacing:-.03em;line-height:1;margin-bottom:4px}
+.tm-card .card-lbl{font-size:.75rem;font-weight:600;opacity:.82;text-transform:uppercase;letter-spacing:.06em}
+.tm-card .card-foot{margin-top:.75rem;padding-top:.7rem;border-top:1px solid rgba(255,255,255,.15);font-size:.74rem;opacity:.85;display:flex;justify-content:space-between;align-items:center}
+.tm-panel{background:#fff;border:1px solid #e2e8f0;border-radius:18px;box-shadow:0 2px 12px rgba(15,23,42,.04)}
+.tm-panel-header{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.5rem;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;gap:.5rem}
+.tm-panel-header h6{font-size:.9rem;font-weight:700;color:#0f172a;margin:0}
+.tm-panel-body{padding:1.2rem 1.5rem}
+.ev-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;transition:all .2s;display:flex;flex-direction:column}
+.ev-card:hover{transform:translateY(-3px);box-shadow:0 12px 30px -8px rgba(15,23,42,.12);border-color:#c7d2fe}
+.ev-thumb{width:100%;height:120px;object-fit:cover;background:linear-gradient(135deg,#1e293b,#334155)}
+.ev-thumb-placeholder{width:100%;height:120px;background:linear-gradient(135deg,#1e293b,#334155);display:flex;align-items:center;justify-content:center}
+.ev-body{padding:.9rem 1rem;flex:1;display:flex;flex-direction:column}
+.ev-foot{padding:.75rem 1rem;border-top:1px solid #f1f5f9}
+.upload-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:.5rem}
+.upload-thumb{aspect-ratio:1;border-radius:10px;overflow:hidden;position:relative;background:linear-gradient(135deg,#1e293b,#334155);transition:transform .15s}
+.upload-thumb:hover{transform:scale(1.04)}
+.upload-thumb img{width:100%;height:100%;object-fit:cover}
+.upload-thumb-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.upload-thumb-label{position:absolute;bottom:0;left:0;right:0;background:rgba(15,23,42,.75);color:#e2e8f0;font-size:.6rem;padding:3px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;backdrop-filter:blur(4px)}
+.vel-chart{display:flex;align-items:flex-end;gap:5px;height:56px}
+.vel-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end}
+.vel-bar{width:100%;background:#e2e8f0;border-radius:3px 3px 0 0;min-height:4px;transition:height .35s ease}
+.vel-bar.today-bar{background:linear-gradient(180deg,#34d399,#059669)}
+.vel-label{font-size:.6rem;color:#94a3b8;font-weight:600;text-transform:uppercase}
+.vel-label.today{color:#059669;font-weight:700}
+.next-event-banner{background:linear-gradient(135deg,#1e3a5f,#1d4ed8);border-radius:14px;padding:1rem 1.25rem;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+@keyframes pulseRing{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.8);opacity:0}}
+.live-dot{position:relative;width:9px;height:9px;border-radius:50%;background:#10b981;flex-shrink:0;display:inline-block}
+.live-dot::before{content:'';position:absolute;inset:0;border-radius:50%;background:#10b981;animation:pulseRing 1.6s ease-out infinite}
+@media(max-width:767px){.tm-hero h1{font-size:1.45rem}.tm-card .card-val{font-size:1.7rem}}
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<span>{{ studio_brand|default:"Studio" }}</span>
+<i class="bi bi-chevron-right mx-1 text-muted" style="font-size:.7rem;"></i>
+<span class="fw-semibold text-dark">My Workspace</span>
+<span class="badge bg-secondary text-white rounded-pill px-2 ms-1" style="font-size:.65rem;">Photographer</span>
+{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <!-- Header -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-        <div>
-            <div class="d-flex align-items-center gap-2">
-                <h2 class="fw-bold text-dark mb-0">Photographer Dashboard</h2>
-                <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-1">Team Member</span>
-            </div>
-            <p class="text-muted small mb-0 mt-1">View your assigned events and upload event photography.</p>
-        </div>
-        <div>
-            <a href="{% url 'events:assigned_events' %}" class="btn btn-primary btn-sm px-3 shadow-sm">
-                <i class="bi bi-calendar-check me-1"></i> View Assigned Events
-            </a>
-        </div>
-    </div>
 
-    <!-- Instructions / Rules Banner -->
-    <div class="alert alert-light border shadow-sm rounded-4 p-4 mb-4">
-        <h5 class="fw-bold text-dark mb-2"><i class="bi bi-info-circle text-primary me-2"></i>Team Member Guidelines</h5>
-        <div class="row g-3 mt-1">
-            <div class="col-md-4">
-                <div class="d-flex gap-2">
-                    <i class="bi bi-check-circle-fill text-success fs-5"></i>
-                    <div>
-                        <strong class="d-block small text-dark">Assigned Events Only</strong>
-                        <span class="small text-muted">You can view details and upload photos only for events to which you have been assigned by a Lead.</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="d-flex gap-2">
-                    <i class="bi bi-cloud-arrow-up-fill text-primary fs-5"></i>
-                    <div>
-                        <strong class="d-block small text-dark">Multi-Photo Upload</strong>
-                        <span class="small text-muted">Upload high-resolution JPEG, PNG, or WebP images up to 15MB each directly to object storage.</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="d-flex gap-2">
-                    <i class="bi bi-shield-lock-fill text-warning fs-5"></i>
-                    <div>
-                        <strong class="d-block small text-dark">Lead Curation</strong>
-                        <span class="small text-muted">Admins curate photos and manage customer gallery publication. Team members cannot publish galleries.</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- HERO -->
+<div class="tm-hero mb-4">
+  <div class="row align-items-center g-3">
+    <div class="col-12 col-md-7">
+      <div class="tm-hero-badge"><span class="live-dot me-1"></span>Photographer Workspace Active</div>
+      <h1 id="tmGreeting">Good morning, {{ user.first_name|default:user.username }}</h1>
+      <p>Your assigned shoots, photo uploads, and studio activity — all in one place.</p>
+      <div class="d-flex gap-2 mt-3 flex-wrap">
+        <a href="{% url 'events:assigned_events' %}" class="btn btn-sm btn-light fw-semibold d-flex align-items-center gap-2" style="border-radius:10px;color:#0f172a;">
+          <i class="bi bi-cloud-arrow-up"></i>Upload Photos
+        </a>
+        <a href="{% url 'events:assigned_events' %}" class="btn btn-sm fw-semibold d-flex align-items-center gap-2" style="background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.4);color:#6ee7b7;border-radius:10px;">
+          <i class="bi bi-calendar-check"></i>My Events
+        </a>
+      </div>
     </div>
-
-    <!-- Quick Assigned Events Link Card -->
-    <div class="card border-0 shadow-sm rounded-4 bg-white p-4 text-center">
-        <div class="py-4">
-            <i class="bi bi-calendar-heart text-primary display-4 mb-3 d-block"></i>
-            <h4 class="fw-bold text-dark">Ready to Upload Photos?</h4>
-            <p class="text-muted small mx-auto" style="max-width: 500px;">
-                Open your assigned events list to select an active shoot and begin uploading event images.
-            </p>
-            <a href="{% url 'events:assigned_events' %}" class="btn btn-outline-primary px-4 py-2 mt-2 fw-semibold">
-                <i class="bi bi-arrow-right-circle me-1"></i> Go to My Assigned Events
-            </a>
-        </div>
+    <div class="col-12 col-md-5">
+      <div class="d-flex gap-2 flex-wrap justify-content-md-end">
+        <div class="tm-stat-pill"><div class="val">{{ assigned_events_count }}</div><div class="lbl">Assigned</div></div>
+        <div class="tm-stat-pill"><div class="val">{{ photos_uploaded_count }}</div><div class="lbl">Photos</div></div>
+        <div class="tm-stat-pill"><div class="val">{{ photos_today }}</div><div class="lbl">Today</div></div>
+      </div>
     </div>
+  </div>
 </div>
+
+<!-- STAT CARDS -->
+<div class="row g-3 mb-4">
+  <div class="col-12 col-md-4">
+    <div class="tm-card tm-card-blue h-100">
+      <div class="card-icon"><i class="bi bi-calendar-check"></i></div>
+      <div class="card-val">{{ assigned_events_count }}</div>
+      <div class="card-lbl">Assigned Events</div>
+      <div class="card-foot">
+        <span>Upcoming</span>
+        <strong>{% if next_event %}{{ next_event.event_date|date:"M d" }}{% else %}None{% endif %}</strong>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="tm-card tm-card-emerald h-100">
+      <div class="card-icon"><i class="bi bi-camera-fill"></i></div>
+      <div class="card-val">{{ photos_uploaded_count }}</div>
+      <div class="card-lbl">Photos Uploaded</div>
+      <div class="card-foot">
+        <span>Today</span>
+        <strong>+{{ photos_today }}</strong>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="tm-card tm-card-violet h-100">
+      <div class="card-icon"><i class="bi bi-hdd-network-fill"></i></div>
+      <div class="card-val d-flex align-items-center gap-2">
+        <span class="badge rounded-circle p-1 bg-success" style="width:10px;height:10px;"></span>
+        <span style="font-size:1.25rem;">Live</span>
+      </div>
+      <div class="card-lbl">Cloud Storage</div>
+      <div class="card-foot">
+        <span>Supabase</span>
+        <strong>Connected</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NEXT EVENT BANNER -->
+{% if next_event %}
+<div class="next-event-banner mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <div style="width:44px;height:44px;background:rgba(255,255,255,.12);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <i class="bi bi-calendar-event" style="font-size:1.25rem;"></i>
+    </div>
+    <div>
+      <div style="font-size:.72rem;color:#93c5fd;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Next Upcoming Shoot</div>
+      <div class="fw-bold" style="font-size:1.05rem;">{{ next_event.name }}</div>
+      <div style="font-size:.8rem;color:#93c5fd;">
+        <i class="bi bi-calendar3 me-1"></i>{{ next_event.event_date|date:"F d, Y" }}
+        {% if next_event.location %}<span class="ms-2"><i class="bi bi-geo-alt me-1"></i>{{ next_event.location }}</span>{% endif %}
+      </div>
+    </div>
+  </div>
+  <a href="{% url 'photos:upload_photos' next_event.id %}" class="btn btn-sm fw-bold" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:10px;white-space:nowrap;">
+    <i class="bi bi-cloud-arrow-up me-1"></i>Upload Photos
+  </a>
+</div>
+{% endif %}
+
+<!-- MAIN GRID -->
+<div class="row g-4">
+
+  <!-- LEFT: Assigned Events -->
+  <div class="col-12 col-xl-8">
+
+    <!-- ASSIGNED EVENTS CARDS -->
+    <div class="tm-panel mb-4">
+      <div class="tm-panel-header">
+        <div class="d-flex align-items-center gap-2">
+          <div style="width:32px;height:32px;background:#eff6ff;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-camera-reels text-primary" style="font-size:1rem;"></i>
+          </div>
+          <h6 style="margin:0;">My Assigned Events</h6>
+        </div>
+        <a href="{% url 'events:assigned_events' %}" class="btn btn-sm btn-outline-secondary fw-semibold bg-white" style="border-radius:10px;font-size:.78rem;">
+          View All <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+      <div class="tm-panel-body">
+        {% if events_data %}
+        <div class="row g-3">
+          {% for item in events_data %}
+          <div class="col-12 col-sm-6 col-lg-4">
+            <div class="ev-card h-100">
+              {% if item.thumb_url %}
+              <img src="{{ item.thumb_url }}" alt="{{ item.event.name }}" class="ev-thumb">
+              {% else %}
+              <div class="ev-thumb-placeholder"><i class="bi bi-camera text-white-50 fs-2"></i></div>
+              {% endif %}
+              <div class="ev-body">
+                <span class="fw-bold text-dark mb-1 d-block" style="font-size:.88rem;line-height:1.3;">{{ item.event.name }}</span>
+                <div class="text-muted mb-2" style="font-size:.74rem;">
+                  <i class="bi bi-calendar3 me-1"></i>{{ item.event.event_date|date:"M d, Y" }}
+                  {% if item.event.location %}
+                  <span class="d-block mt-1"><i class="bi bi-geo-alt me-1"></i>{{ item.event.location }}</span>
+                  {% endif %}
+                </div>
+                <div class="mt-auto">
+                  <div class="d-flex justify-content-between text-muted mb-1" style="font-size:.72rem;">
+                    <span>My uploads</span>
+                    <span class="fw-semibold text-dark">{{ item.my_photos }} / {{ item.total_photos }}</span>
+                  </div>
+                  <div class="progress" style="height:5px;background:#e2e8f0;border-radius:99px;">
+                    <div class="progress-bar bg-primary" style="width:{{ item.pct }}%;"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="ev-foot">
+                <a href="{% url 'photos:upload_photos' item.event.id %}" class="btn btn-primary btn-sm w-100 fw-semibold" style="border-radius:10px;font-size:.78rem;">
+                  <i class="bi bi-cloud-arrow-up me-1"></i>Upload Photos
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+          <i class="bi bi-calendar-x text-muted fs-1 d-block mb-2"></i>
+          <h6 class="fw-bold">No Events Assigned</h6>
+          <p class="text-muted small">An administrator will assign you to upcoming event shoots.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- RECENT UPLOADS GRID -->
+    <div class="tm-panel">
+      <div class="tm-panel-header">
+        <div class="d-flex align-items-center gap-2">
+          <div style="width:32px;height:32px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-images" style="font-size:1rem;color:#059669;"></i>
+          </div>
+          <h6 style="margin:0;">Recent Uploads</h6>
+        </div>
+        <a href="{% url 'photos:photo_review_hub' %}" class="btn btn-sm btn-outline-secondary fw-semibold bg-white" style="border-radius:10px;font-size:.78rem;">
+          View All <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+      <div class="tm-panel-body">
+        {% if recent_uploads %}
+        <div class="upload-grid">
+          {% for item in recent_uploads %}
+          <div class="upload-thumb">
+            {% if item.thumbnail_url %}
+            <img src="{{ item.thumbnail_url }}" alt="{{ item.photo.filename }}">
+            {% else %}
+            <div class="upload-thumb-placeholder"><i class="bi bi-image text-white-50" style="font-size:1.5rem;"></i></div>
+            {% endif %}
+            <div class="upload-thumb-label">{{ item.photo.filename }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+          <i class="bi bi-cloud-slash text-muted fs-1 d-block mb-2"></i>
+          <h6 class="fw-bold">No Photos Yet</h6>
+          <p class="text-muted small">Upload photos to assigned events to see your history here.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Velocity + Status -->
+  <div class="col-12 col-xl-4">
+
+    <!-- UPLOAD VELOCITY -->
+    <div class="tm-panel mb-4">
+      <div class="tm-panel-header">
+        <div class="d-flex align-items-center gap-2">
+          <div style="width:32px;height:32px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-bar-chart-fill" style="font-size:1rem;color:#059669;"></i>
+          </div>
+          <div>
+            <h6 style="margin:0;">My Upload Activity</h6>
+            <div class="text-muted" style="font-size:.72rem;">Photos uploaded last 7 days</div>
+          </div>
+        </div>
+      </div>
+      <div class="tm-panel-body">
+        <div class="vel-chart mb-2" id="velChart">
+          {% for dv in daily_velocity %}
+          <div class="vel-bar-wrap" title="{{ dv.day_name }}: {{ dv.count }} photos">
+            <div class="vel-bar {% if dv.is_today %}today-bar{% endif %}" data-count="{{ dv.count }}" style="height:6px;"></div>
+            <span class="vel-label {% if dv.is_today %}today{% endif %}">{{ dv.day_name|slice:":2" }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="d-flex justify-content-between text-muted pt-2 border-top" style="font-size:.76rem;">
+          <span>Total uploaded</span>
+          <strong class="text-dark">{{ photos_uploaded_count }}</strong>
+        </div>
+        <div class="d-flex justify-content-between text-muted mt-1" style="font-size:.76rem;">
+          <span>Uploaded today</span>
+          <strong class="text-dark">+{{ photos_today }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK LINKS -->
+    <div class="tm-panel mb-4">
+      <div class="tm-panel-header">
+        <h6><i class="bi bi-lightning-charge text-warning me-2"></i>Quick Links</h6>
+      </div>
+      <div class="tm-panel-body" style="padding-top:.75rem;">
+        <a href="{% url 'events:assigned_events' %}" class="d-flex align-items-center justify-content-between p-3 border border-transparent rounded-3 text-decoration-none text-dark fw-semibold mb-2 bg-white" style="font-size:.85rem;transition:all .15s;border-color:#e2e8f0!important;" onmouseover="this.style.borderColor='#6366f1';this.style.background='#f5f3ff';this.style.color='#4f46e5'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff';this.style.color='#0f172a'">
+          <span class="d-flex align-items-center gap-2"><i class="bi bi-calendar-event text-primary"></i>My Assigned Events</span>
+          <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+        <a href="{% url 'photos:photo_review_hub' %}" class="d-flex align-items-center justify-content-between p-3 border border-transparent rounded-3 text-decoration-none text-dark fw-semibold mb-2 bg-white" style="font-size:.85rem;transition:all .15s;border-color:#e2e8f0!important;" onmouseover="this.style.borderColor='#6366f1';this.style.background='#f5f3ff';this.style.color='#4f46e5'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff';this.style.color='#0f172a'">
+          <span class="d-flex align-items-center gap-2"><i class="bi bi-grid text-warning"></i>My Photo Library</span>
+          <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+        <a href="{% url 'accounts:my_profile' %}" class="d-flex align-items-center justify-content-between p-3 border border-transparent rounded-3 text-decoration-none text-dark fw-semibold mb-0 bg-white" style="font-size:.85rem;transition:all .15s;border-color:#e2e8f0!important;" onmouseover="this.style.borderColor='#6366f1';this.style.background='#f5f3ff';this.style.color='#4f46e5'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff';this.style.color='#0f172a'">
+          <span class="d-flex align-items-center gap-2"><i class="bi bi-person-circle text-info"></i>My Profile</span>
+          <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- STORAGE STATUS -->
+    <div class="tm-panel">
+      <div class="tm-panel-header">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-hdd-network text-primary"></i>
+          <h6 style="margin:0;">Storage Status</h6>
+        </div>
+        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 fw-semibold" style="font-size:.7rem;">Online</span>
+      </div>
+      <div class="tm-panel-body">
+        <div class="d-flex align-items-center gap-2 mb-3 p-3 rounded-3" style="background:#f0fdf4;">
+          <span class="live-dot"></span>
+          <div>
+            <div class="fw-semibold text-dark" style="font-size:.85rem;">Supabase Object Storage</div>
+            <div class="text-muted" style="font-size:.72rem;">Direct cloud ingestion ready</div>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between text-muted mb-2" style="font-size:.76rem;">
+          <span>Photos contributed</span><strong class="text-dark">{{ photos_uploaded_count }}</strong>
+        </div>
+        <div class="d-flex justify-content-between text-muted mb-2" style="font-size:.76rem;">
+          <span>Active events</span><strong class="text-dark">{{ assigned_events_count }}</strong>
+        </div>
+        <div class="d-flex justify-content-between text-muted" style="font-size:.76rem;">
+          <span>Workspace</span><strong class="text-dark">{{ studio_brand }}</strong>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var greetEl = document.getElementById('tmGreeting');
+  if (greetEl) {
+    var hr = new Date().getHours();
+    var name = '{{ user.first_name|default:user.username|escapejs }}';
+    var g = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+    greetEl.textContent = g + ', ' + name;
+  }
+  var bars = document.querySelectorAll('#velChart .vel-bar');
+  if (bars.length) {
+    var counts = Array.from(bars).map(function(b){ return parseInt(b.dataset.count,10)||0; });
+    var mx = Math.max.apply(null, counts.concat([1]));
+    bars.forEach(function(b){ b.style.height = Math.max((parseInt(b.dataset.count,10)/mx)*100, 6)+'%'; });
+  }
+});
+</script>
 {% endblock %}

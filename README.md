@@ -155,6 +155,25 @@ python manage.py test
 
 ---
 
+## Operational & Security Documentation
+
+Detailed documentation is available in the [`docs/`](file:///d:/Photo_Sharing_Platform/docs) directory:
+- [Operations & Maintenance Runbook](file:///d:/Photo_Sharing_Platform/docs/operations.md): Health monitoring, log correlation via Request ID, backup strategies, and incident runbooks.
+- [Security Architecture & Hardening](file:///d:/Photo_Sharing_Platform/docs/security.md): Server-side RBAC, IDOR protection, private media storage, PIN security, and rate limiting controls.
+
+---
+
+## Production Security & Deployment Verification
+
+Before executing a production deployment on Render, run the Django system deployment check:
+```bash
+python manage.py check --deploy
+python manage.py check
+python manage.py test
+```
+
+---
+
 ## Demo Credentials (Submission Placeholder)
 
 > *Note: Live deployment details will be filled upon completion of deployment in Phase 9.*
@@ -173,5 +192,6 @@ python manage.py test
 ---
 
 ## Known Limitations & Planned Enhancements
-- Rate limiting on PIN verification is session/IP-based.
-- Image processing (thumbnails) will be evaluated as a Phase 9 bonus feature.
+- Rate limiting on PIN verification and Login is IP/Session window based (`RateLimitMiddleware`).
+- Storage fallback handles transient Supabase downtime with user-safe alerts and zero data corruption.
+

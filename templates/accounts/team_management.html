@@ -1,0 +1,1340 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Team Members &mdash; TrizenAI Studio{% endblock %}
+
+{% block breadcrumbs %}
+    <a href="{% url 'accounts:dashboard_router' %}" class="text-decoration-none text-secondary">Studio Alpha</a>
+    <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+    <span class="fw-semibold text-dark">Team Members</span>
+{% endblock %}
+
+{% block content %}
+<div class="team-management-view pb-5" id="teamManagementRoot">
+
+    <!-- Screen 1: Top Header & Primary Action -->
+    <div class="d-flex flex-wrap justify-content-between align-items-start mb-4 gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h2 class="fw-bold text-dark mb-0">Team Members</h2>
+                <span class="badge rounded-pill px-3 py-1" style="background: #eff6ff; color: #1d4ed8; font-size: 0.75rem; font-weight: 600; border: 1px solid #bfdbfe;">
+                    Workspace Access &amp; Security
+                </span>
+            </div>
+            <p class="text-secondary small mb-0">Manage the people who collaborate on your events.</p>
+        </div>
+        <div class="d-flex gap-2 w-100-mobile">
+            <button class="btn btn-primary px-3.5 shadow-sm d-flex align-items-center gap-2 w-100-mobile" style="border-radius: 10px; min-height: 42px;" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+                <i class="bi bi-person-plus-fill"></i>
+                <span>+ Add Team Member</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Screen 1: 4 Top Summary Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Card 1: Total Members -->
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 p-3 p-md-4 border-0 shadow-sm bg-white" style="border-radius: 16px;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-semibold">Total Members</span>
+                    <div class="d-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary" style="width: 38px; height: 38px;">
+                        <i class="bi bi-people-fill fs-5"></i>
+                    </div>
+                </div>
+                <div class="fs-2 fw-bold text-dark mb-1">{{ total_members_count }}</div>
+                <div class="text-muted small pt-2 border-top" style="font-size: 0.75rem;">In this studio workspace</div>
+            </div>
+        </div>
+
+        <!-- Card 2: Active Members -->
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 p-3 p-md-4 border-0 shadow-sm bg-white" style="border-radius: 16px;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-semibold">Active Members</span>
+                    <div class="d-flex align-items-center justify-content-center rounded-3 bg-success-subtle text-success" style="width: 38px; height: 38px;">
+                        <i class="bi bi-check-circle-fill fs-5"></i>
+                    </div>
+                </div>
+                <div class="fs-2 fw-bold text-dark mb-1">{{ active_members_count }}</div>
+                <div class="text-muted small pt-2 border-top" style="font-size: 0.75rem;">Can sign in and access events</div>
+            </div>
+        </div>
+
+        <!-- Card 3: Pending Invitations -->
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 p-3 p-md-4 border-0 shadow-sm bg-white" style="border-radius: 16px;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-semibold">Pending Invitations</span>
+                    <div class="d-flex align-items-center justify-content-center rounded-3 bg-warning-subtle text-warning" style="width: 38px; height: 38px;">
+                        <i class="bi bi-envelope-paper-fill fs-5"></i>
+                    </div>
+                </div>
+                <div class="fs-2 fw-bold text-dark mb-1">{{ pending_members_count }}</div>
+                <div class="text-muted small pt-2 border-top" style="font-size: 0.75rem;">Awaiting onboarding activation</div>
+            </div>
+        </div>
+
+        <!-- Card 4: Events Covered -->
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 p-3 p-md-4 border-0 shadow-sm bg-white" style="border-radius: 16px;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-semibold">Events Covered</span>
+                    <div class="d-flex align-items-center justify-content-center rounded-3 bg-info-subtle text-info" style="width: 38px; height: 38px;">
+                        <i class="bi bi-calendar-event-fill fs-5"></i>
+                    </div>
+                </div>
+                <div class="fs-2 fw-bold text-dark mb-1">{{ events_covered_count }}</div>
+                <div class="text-muted small pt-2 border-top" style="font-size: 0.75rem;">Events with assigned shooters</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="card border-0 shadow-sm p-3 mb-4 bg-white" style="border-radius: 16px;">
+        <div class="row g-2 align-items-center">
+            <!-- Search input -->
+            <div class="col-12 col-md-5 col-lg-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted" style="border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" id="memberSearchInput" class="form-control border-start-0 bg-light" placeholder="Search by name or email..." style="border-top-right-radius: 10px; border-bottom-right-radius: 10px;" oninput="applyMemberFilters()">
+                </div>
+            </div>
+
+            <!-- Filter Status Pills -->
+            <div class="col-12 col-md-7 col-lg-5">
+                <div class="d-flex gap-1 overflow-x-auto pb-1 pb-md-0" id="statusFilterPills">
+                    <button type="button" class="btn btn-sm btn-filter-pill active px-3" data-status="ALL" onclick="setStatusFilter('ALL', this)">
+                        All <span class="badge bg-secondary text-white rounded-pill ms-1">{{ team_members|length }}</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-filter-pill px-3" data-status="ACTIVE" onclick="setStatusFilter('ACTIVE', this)">
+                        Active <span class="badge bg-success text-white rounded-pill ms-1">{{ active_members_count }}</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-filter-pill px-3" data-status="PENDING" onclick="setStatusFilter('PENDING', this)">
+                        Pending <span class="badge bg-warning text-dark rounded-pill ms-1">{{ pending_members_count }}</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-filter-pill px-3" data-status="SUSPENDED" onclick="setStatusFilter('SUSPENDED', this)">
+                        Suspended
+                    </button>
+                </div>
+            </div>
+
+            <!-- Event Filter Dropdown -->
+            <div class="col-12 col-lg-3 text-lg-end">
+                <select id="eventFilterSelect" class="form-select form-select-sm" style="border-radius: 10px;" onchange="applyMemberFilters()">
+                    <option value="ALL">All Events (Any)</option>
+                    {% for ev in events %}
+                        <option value="{{ ev.name }}">{{ ev.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 1 & 14: Team Member List Table + Mobile Cards + Empty State -->
+    <div class="card border-0 shadow-sm bg-white mb-4" style="border-radius: 16px;">
+        
+        {% if team_members %}
+            <!-- Desktop Table (hidden on small screens) -->
+            <div class="d-none d-md-block table-responsive" style="min-height: 280px; overflow-y: visible;">
+                <table class="table table-hover align-middle mb-0" id="teamMemberTable">
+                    <thead class="bg-light border-bottom">
+                        <tr>
+                            <th class="ps-4 py-3 small text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">Name</th>
+                            <th class="py-3 small text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">Email</th>
+                            <th class="py-3 small text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">Status</th>
+                            <th class="py-3 small text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">Assigned Events</th>
+                            <th class="py-3 small text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">Photos Uploaded</th>
+                            <th class="py-3 small text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">Last Active</th>
+                            <th class="pe-4 py-3 small text-uppercase text-muted fw-bold text-end" style="font-size: 0.75rem;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="memberTableBody">
+                        {% for m in team_members %}
+                            <tr class="member-row" 
+                                data-name="{{ m.full_name|lower }}" 
+                                data-email="{{ m.email|lower }}" 
+                                data-status="{{ m.status }}" 
+                                data-events="{% for ev in m.assigned_events %}{{ ev }}|{% endfor %}"
+                                data-id="{{ m.id }}">
+                                
+                                <!-- Name + Avatar -->
+                                <td class="ps-4 py-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="avatar-circle rounded-circle text-white fw-bold d-flex align-items-center justify-content-center shadow-sm flex-shrink-0" 
+                                             style="width: 40px; height: 40px; font-size: 0.95rem; background: {% if m.status == 'PENDING' %}#d97706{% elif m.status == 'SUSPENDED' %}#dc2626{% else %}#3b82f6{% endif %}; cursor: pointer;"
+                                             onclick="openMemberDrawer({{ m.id }})">
+                                            {{ m.full_name|slice:":1"|upper }}
+                                        </div>
+                                        <div>
+                                            <a href="{% url 'accounts:team_member_detail' member_id=m.id %}" class="fw-bold text-dark text-decoration-none hover-primary d-block">
+                                                {{ m.full_name }}
+                                            </a>
+                                            <div class="text-muted small" style="font-size: 0.72rem;">@{{ m.username }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Email + Verification Badge -->
+                                <td>
+                                    <div class="d-flex align-items-center gap-1.5">
+                                        <span class="text-dark small">{{ m.email }}</span>
+                                        {% if m.is_email_verified %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle p-1 rounded-circle" title="Email Verified" style="width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center;">
+                                                <i class="bi bi-check" style="font-size: 0.75rem;"></i>
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle p-1 rounded-circle" title="Verification Pending" style="width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center;">
+                                                <i class="bi bi-clock" style="font-size: 0.65rem;"></i>
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+
+                                <!-- Status Badge -->
+                                <td>
+                                    <span class="badge rounded-pill px-2.5 py-1 small fw-semibold {{ m.status_badge }}">
+                                        <span class="d-inline-block rounded-circle me-1" style="width: 6px; height: 6px; background-color: currentColor;"></span>
+                                        {{ m.status_label }}
+                                    </span>
+                                </td>
+
+                                <!-- Assigned Events -->
+                                <td>
+                                    {% if m.assigned_events %}
+                                        <div class="d-flex flex-wrap gap-1">
+                                            {% for ev_name in m.assigned_events|slice:":2" %}
+                                                <span class="badge bg-light text-dark border small" style="font-size: 0.72rem;">
+                                                    <i class="bi bi-calendar-event me-1 text-primary"></i>{{ ev_name|truncatechars:18 }}
+                                                </span>
+                                            {% endfor %}
+                                            {% if m.assigned_events|length > 2 %}
+                                                <span class="badge bg-light text-muted border small" style="font-size: 0.72rem;">
+                                                    +{{ m.assigned_events|length|add:"-2" }} more
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted small fst-italic">0 events assigned</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Photos Uploaded -->
+                                <td>
+                                    <span class="fw-bold text-dark small">{{ m.upload_count }}</span>
+                                    <span class="text-muted small" style="font-size: 0.75rem;">photos</span>
+                                </td>
+
+                                <!-- Last Active -->
+                                <td>
+                                    <span class="text-muted small">{{ m.last_active }}</span>
+                                </td>
+
+                                <!-- Actions Dropdown / Direct Buttons -->
+                                <td class="pe-4 text-end">
+                                    <div class="d-flex align-items-center justify-content-end gap-1">
+                                        <a href="{% url 'accounts:team_member_detail' member_id=m.id %}" class="btn btn-outline-secondary btn-sm px-2.5 py-1" style="border-radius: 8px;" title="View Details">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                        <button type="button" class="btn btn-outline-primary btn-sm px-2.5 py-1" style="border-radius: 8px;" title="Edit Member & Access"
+                                                onclick="openEditModal({{ m.id }})">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </button>
+                                        
+                                        <!-- Actions Menu -->
+                                        <div class="dropdown">
+                                            <button class="btn btn-light btn-sm p-1.5 rounded border-0" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border p-1" style="border-radius: 10px;">
+                                                <li>
+                                                    <button class="dropdown-item small rounded py-1.5" onclick="openResetPasswordModal({{ m.id }}, '{{ m.full_name }}', '{{ m.email }}')">
+                                                        <i class="bi bi-key me-2 text-primary"></i>Send Password Reset
+                                                    </button>
+                                                </li>
+                                                {% if m.status == 'PENDING' %}
+                                                    <li>
+                                                        <form method="post" action="{% url 'accounts:team_management' %}" class="m-0">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="action" value="resend_invitation">
+                                                            <input type="hidden" name="user_id" value="{{ m.id }}">
+                                                            <button type="submit" class="dropdown-item small rounded py-1.5">
+                                                                <i class="bi bi-envelope-check me-2 text-warning"></i>Resend Invitation
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                {% endif %}
+                                                <li><hr class="dropdown-divider my-1"></li>
+                                                {% if m.status == 'ACTIVE' %}
+                                                    <li>
+                                                        <button class="dropdown-item small rounded py-1.5 text-warning" onclick="openSuspendModal({{ m.id }}, '{{ m.full_name }}')">
+                                                            <i class="bi bi-pause-circle me-2"></i>Suspend Account
+                                                        </button>
+                                                    </li>
+                                                {% else %}
+                                                    <li>
+                                                        <button class="dropdown-item small rounded py-1.5 text-success" onclick="openReactivateModal({{ m.id }}, '{{ m.full_name }}')">
+                                                            <i class="bi bi-play-circle me-2"></i>Reactivate Account
+                                                        </button>
+                                                    </li>
+                                                {% endif %}
+                                                <li>
+                                                    <button class="dropdown-item small rounded py-1.5 text-danger" onclick="openRemoveModal({{ m.id }}, '{{ m.full_name }}')">
+                                                        <i class="bi bi-person-x me-2"></i>Remove from Workspace
+                                                    </button>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile Cards View (< 768px) -->
+            <div class="d-md-none p-3 space-y-3" id="memberMobileCards">
+                {% for m in team_members %}
+                    <div class="card border p-3 bg-white mb-3 shadow-xs member-card-mobile" 
+                         style="border-radius: 12px;"
+                         data-name="{{ m.full_name|lower }}" 
+                         data-email="{{ m.email|lower }}" 
+                         data-status="{{ m.status }}" 
+                         data-events="{% for ev in m.assigned_events %}{{ ev }}|{% endfor %}">
+                        
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-circle rounded-circle text-white fw-bold d-flex align-items-center justify-content-center shadow-sm" 
+                                     style="width: 38px; height: 38px; font-size: 0.9rem; background: {% if m.status == 'PENDING' %}#d97706{% elif m.status == 'SUSPENDED' %}#dc2626{% else %}#3b82f6{% endif %};">
+                                    {{ m.full_name|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">{{ m.full_name }}</div>
+                                    <div class="text-muted small" style="font-size: 0.72rem;">{{ m.email }}</div>
+                                </div>
+                            </div>
+                            <span class="badge rounded-pill px-2 py-0.5 small {{ m.status_badge }}">{{ m.status_label }}</span>
+                        </div>
+
+                        <div class="row g-2 small mb-3 border-top pt-2">
+                            <div class="col-6"><span class="text-muted">Assigned Events:</span> <span class="fw-semibold text-dark">{{ m.assigned_events_count }}</span></div>
+                            <div class="col-6"><span class="text-muted">Photos:</span> <span class="fw-semibold text-dark">{{ m.upload_count }}</span></div>
+                            <div class="col-12"><span class="text-muted">Last Active:</span> <span class="text-dark">{{ m.last_active }}</span></div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'accounts:team_member_detail' member_id=m.id %}" class="btn btn-outline-secondary btn-sm flex-fill py-1.5" style="border-radius: 8px;">
+                                View
+                            </a>
+                            <button type="button" class="btn btn-primary btn-sm flex-fill py-1.5" onclick="openEditModal({{ m.id }})" style="border-radius: 8px;">
+                                Edit Access
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+        {% else %}
+            <!-- Screen 14: Clean Empty Team State -->
+            <div class="p-5 text-center text-muted">
+                <div class="d-inline-flex p-3 rounded-circle bg-light text-secondary mb-3">
+                    <i class="bi bi-people fs-1"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-1">No Team Members Yet</h4>
+                <p class="text-muted small mx-auto mb-4" style="max-width: 440px;">
+                    Collaborate with assistant photographers and shooters. Team Members can access assigned events and upload photographs, while studio management and gallery publishing remain Admin-only.
+                </p>
+                <button class="btn btn-primary px-4 py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#addMemberModal" style="border-radius: 10px;">
+                    <i class="bi bi-person-plus-fill me-1"></i> + Add Team Member
+                </button>
+            </div>
+        {% endif %}
+
+        <!-- No Filter Results State (Hidden by default) -->
+        <div id="noFilterResults" class="p-5 text-center text-muted d-none">
+            <i class="bi bi-search fs-2 d-block mb-2 text-muted"></i>
+            <h5 class="fw-bold text-dark mb-1">No matching team members</h5>
+            <p class="text-muted small mb-3">No member matched your active search and filter criteria.</p>
+            <button class="btn btn-outline-secondary btn-sm px-3" onclick="resetFilters()" style="border-radius: 8px;">
+                Reset Filters
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- Screen 2: Enriched "Edit Team Member" Modal (12 Structured Sections)      -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="editMemberModal" tabindex="-1" aria-labelledby="editMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            
+            <div class="modal-header border-bottom px-4 pt-4 pb-3">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark mb-0" id="editMemberModalLabel">Edit Team Member</h5>
+                    <p class="text-muted small mb-0">Update member details, access and event assignments.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form method="post" action="{% url 'accounts:team_management' %}" id="editMemberForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_member">
+                <input type="hidden" name="user_id" id="editUserId">
+
+                <div class="modal-body px-4 py-3" style="max-height: 70vh; overflow-y: auto;">
+                    
+                    <!-- SECTION 1 — PROFILE -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                            <span class="badge bg-primary text-white rounded-circle p-1" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem;">1</span>
+                            <h6 class="fw-bold text-dark mb-0">Profile</h6>
+                        </div>
+                        
+                        <div class="row g-3 mb-2">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold small text-dark mb-1">First Name</label>
+                                <input type="text" name="first_name" id="editFirstName" class="form-control" style="border-radius: 10px; min-height: 42px;">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold small text-dark mb-1">Last Name</label>
+                                <input type="text" name="last_name" id="editLastName" class="form-control" style="border-radius: 10px; min-height: 42px;">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold small text-dark mb-1 d-flex justify-content-between">
+                                    <span>Email Address *</span>
+                                    <span id="editEmailVerificationBadge" class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.68rem;">[Verified]</span>
+                                </label>
+                                <input type="email" name="email" id="editEmail" class="form-control" required style="border-radius: 10px; min-height: 42px;">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold small text-dark mb-1">Username *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted fw-semibold" style="border-radius: 10px 0 0 10px;">@</span>
+                                    <input type="text" name="username" id="editUsername" class="form-control" required style="border-radius: 0 10px 10px 0; min-height: 42px;">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small text-dark mb-1">Phone Number <span class="text-muted fw-normal">(Optional)</span></label>
+                                <input type="tel" name="phone_number" id="editPhone" class="form-control" placeholder="+1 (555) 000-0000" style="border-radius: 10px; min-height: 42px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2 — ACCOUNT ACCESS -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                            <span class="badge bg-primary text-white rounded-circle p-1" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem;">2</span>
+                            <h6 class="fw-bold text-dark mb-0">Account Access</h6>
+                        </div>
+
+                        <div class="p-3 rounded-3 bg-light border">
+                            <div class="row g-2 small">
+                                <div class="col-6 col-md-3">
+                                    <span class="text-muted d-block">Role:</span>
+                                    <span class="badge rounded-pill px-2 py-0.5 fw-semibold" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">TEAM MEMBER</span>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <span class="text-muted d-block">Workspace:</span>
+                                    <span class="fw-semibold text-dark">Studio Alpha</span>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <span class="text-muted d-block">Account Status:</span>
+                                    <span class="fw-semibold text-dark" id="editModalStatusDisplay">Active</span>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <span class="text-muted d-block">Login Status:</span>
+                                    <span class="fw-semibold text-dark" id="editModalLoginStatusDisplay">Last login: Today</span>
+                                </div>
+                            </div>
+                            <div class="text-muted small pt-2 mt-2 border-top" style="font-size: 0.72rem;">
+                                <i class="bi bi-shield-check text-success me-1"></i>Protected workspace authorization. Role is locked to TEAM_MEMBER.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3 — INVITATION MANAGEMENT (Visible when pending) -->
+                    <div class="mb-4" id="editInvitationSection">
+                        <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                            <span class="badge bg-warning text-dark rounded-circle p-1" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem;">3</span>
+                            <h6 class="fw-bold text-dark mb-0">Invitation Management</h6>
+                        </div>
+
+                        <div class="p-3 rounded-3 bg-warning-subtle border border-warning-subtle mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-envelope-paper-fill text-warning fs-5"></i>
+                                    <div>
+                                        <div class="fw-bold text-dark small" id="editInviteStatusHeading">Invitation Pending</div>
+                                        <div class="text-muted small" style="font-size: 0.72rem;" id="editInviteSentDate">Sent: Sep 08, 2026</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-warning btn-sm fw-semibold px-3" onclick="triggerResendFromModal()" style="border-radius: 8px;">
+                                    <i class="bi bi-arrow-repeat me-1"></i> Resend Invitation
+                                </button>
+                                <button type="button" class="btn btn-outline-dark btn-sm px-3" onclick="triggerCancelInviteFromModal()" style="border-radius: 8px;">
+                                    <i class="bi bi-x-circle me-1"></i> Cancel Invitation
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 4 — PASSWORD / SECURITY ACTIONS -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                            <span class="badge bg-primary text-white rounded-circle p-1" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem;">4</span>
+                            <h6 class="fw-bold text-dark mb-0">Security</h6>
+                        </div>
+
+                        <div class="card border p-3 bg-white" style="border-radius: 12px;">
+                            <div class="row g-2 small mb-3">
+                                <div class="col-4 text-muted">Email: <span class="fw-semibold text-dark" id="secEmailVerified">Verified</span></div>
+                                <div class="col-4 text-muted">Password: <span class="fw-semibold text-success">Configured</span></div>
+                                <div class="col-4 text-muted">Last Changed: <span class="fw-semibold text-dark" id="secLastPwdChange">Sep 07, 2026</span></div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-sm px-3" onclick="triggerPasswordResetFromModal()" style="border-radius: 8px;">
+                                    <i class="bi bi-key me-1"></i> Send Password Reset
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm px-3" onclick="triggerSignOutSessionsFromModal()" style="border-radius: 8px;">
+                                    <i class="bi bi-shield-x me-1"></i> Sign out all active sessions
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 5 — LOGIN ACTIVITY -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                            <span class="badge bg-primary text-white rounded-circle p-1" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem;">5</span>
+                            <h6 class="fw-bold text-dark mb-0">Login Activity</h6>
+                        </div>
+
+                        <div class="row g-2 small">
+                            <div class="col-6 col-md-3">
+                                <div class="p-2.5 rounded-3 bg-light border">
+                                    <span class="text-muted d-block" style="font-size: 0.72rem;">Last Login</span>
+                                    <span class="fw-bold text-dark" id="actLastLogin">Today, 10:42 AM</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-2.5 rounded-3 bg-light border">
+                                    <span class="text-muted d-block" style="font-size: 0.72rem;">Last Active</span>
+                                    <span class="fw-bold text-dark" id="actLastActive">5 minutes ago</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-2.5 rounded-3 bg-light border">
+                                    <span class="text-muted d-block" style="font-size: 0.72rem;">Login Count</span>
+                                    <span class="fw-bold text-dark" id="actLoginCount">24</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-2.5 rounded-3 bg-light border">
+                                    <span class="text-muted d-block" style="font-size: 0.72rem;">Last Device</span>
+                                    <span class="fw-bold text-dark text-truncate d-block" id="actLastDevice">Chrome on Windows</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 6 — ACCOUNT STATUS -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                            <span class="badge bg-primary text-white rounded-circle p-1" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem;">6</span>
+                            <h6 class="fw-bold text-dark mb-0">Account Status</h6>
+                        </div>
+
+                        <select name="status" id="editStatusSelect" class="form-select mb-2" style="border-radius: 10px; min-height: 42px;">
+                            <option value="ACTIVE">Active &mdash; Can sign in and access assigned events</option>
+                            <option value="PENDING">Pending &mdash; Invitation sent, account not activated</option>
+                            <option value="SUSPENDED">Suspended &mdash; Access temporarily revoked</option>
+                        </select>
+                    </div>
+
+                    <!-- SECTION 7 — EVENT ASSIGNMENT MANAGEMENT -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary text-white rounded-circle p-1" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem;">7</span>
+                                <h6 class="fw-bold text-dark mb-0">Assigned Events</h6>
+                            </div>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle small" id="editAssignedBadge">0 events assigned</span>
+                        </div>
+
+                        <!-- Event Search & Filters Toolbar -->
+                        <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+                            <input type="text" id="modalEventSearch" class="form-control form-control-sm flex-fill" placeholder="Search events..." oninput="filterModalEvents()" style="border-radius: 8px;">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-secondary active" id="filterAllEventsBtn" onclick="setModalEventFilter('ALL')">All</button>
+                                <button type="button" class="btn btn-outline-secondary" id="filterAssignedEventsBtn" onclick="setModalEventFilter('ASSIGNED')">Assigned</button>
+                                <button type="button" class="btn btn-outline-secondary" id="filterUnassignedEventsBtn" onclick="setModalEventFilter('UNASSIGNED')">Not Assigned</button>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <button type="button" class="btn btn-light btn-sm border" onclick="selectAllModalEvents()" style="border-radius: 6px;">Select All</button>
+                                <button type="button" class="btn btn-light btn-sm border" onclick="clearAllModalEvents()" style="border-radius: 6px;">Clear All</button>
+                            </div>
+                        </div>
+
+                        <!-- Events Checklist -->
+                        <div class="border rounded-3 p-2.5 bg-light overflow-y-auto" style="max-height: 160px;" id="modalEventsChecklist">
+                            {% for ev in events %}
+                                <div class="form-check py-1.5 modal-event-item" data-event-name="{{ ev.name|lower }}">
+                                    <input class="form-check-input edit-event-checkbox" type="checkbox" name="event_ids" value="{{ ev.id }}" id="eventCheckEdit{{ ev.id }}" onchange="updateAssignedBadge()">
+                                    <label class="form-check-label small text-dark d-flex justify-content-between align-items-center w-100" for="eventCheckEdit{{ ev.id }}">
+                                        <div>
+                                            <span class="fw-semibold">{{ ev.name }}</span>
+                                            <span class="text-muted ms-1" style="font-size: 0.72rem;">&bull; {{ ev.location|default:"Studio / Location" }}</span>
+                                        </div>
+                                        <span class="badge bg-white text-muted border" style="font-size: 0.7rem;">{{ ev.event_date|date:"M d, Y"|default:"Date not set" }}</span>
+                                    </label>
+                                </div>
+                            {% empty %}
+                                <div class="text-muted small fst-italic p-2 text-center">No workspace events found.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- SECTION 8 — EVENT ACCESS EXPLANATION -->
+                    <div class="mb-4">
+                        <div class="card border p-3 bg-light" style="border-radius: 12px;">
+                            <h6 class="fw-bold text-dark small mb-1">Event Access</h6>
+                            <p class="text-muted small mb-2" style="font-size: 0.78rem;">Team Members can access only the events assigned to them.</p>
+                            <div class="d-flex align-items-center gap-2 fw-semibold small text-primary">
+                                <span>Workspace membership</span>
+                                <span>+</span>
+                                <span>Event assignment</span>
+                                <span>=</span>
+                                <span>Event access</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 9 — PERMISSIONS READ-ONLY MATRIX -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                            <span class="badge bg-primary text-white rounded-circle p-1" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem;">9</span>
+                            <h6 class="fw-bold text-dark mb-0">Permissions (Read-Only)</h6>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0 small">
+                                <thead>
+                                    <tr class="text-muted">
+                                        <th class="border-0">Can:</th>
+                                        <th class="border-0 text-muted">Cannot:</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-success py-1"><i class="bi bi-check-lg me-1"></i> Sign in</td>
+                                        <td class="text-danger py-1"><i class="bi bi-x-lg me-1"></i> Create events</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-success py-1"><i class="bi bi-check-lg me-1"></i> Access assigned events</td>
+                                        <td class="text-danger py-1"><i class="bi bi-x-lg me-1"></i> Manage team members</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-success py-1"><i class="bi bi-check-lg me-1"></i> Upload photos</td>
+                                        <td class="text-danger py-1"><i class="bi bi-x-lg me-1"></i> Create administrators</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-success py-1"><i class="bi bi-check-lg me-1"></i> View own uploaded photos</td>
+                                        <td class="text-danger py-1"><i class="bi bi-x-lg me-1"></i> Publish galleries</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-success py-1"><i class="bi bi-check-lg me-1"></i> Update own profile</td>
+                                        <td class="text-danger py-1"><i class="bi bi-x-lg me-1"></i> Configure gallery PINs</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 11 — DANGER ZONE -->
+                    <div class="mb-2">
+                        <div class="card border border-danger-subtle p-3 bg-white" style="border-radius: 12px;">
+                            <h6 class="fw-bold text-danger mb-2 small"><i class="bi bi-exclamation-triangle me-1"></i> Danger Zone</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-outline-warning btn-sm" id="modalSuspendBtn" onclick="triggerSuspendFromModal()" style="border-radius: 8px;">
+                                    Suspend Account
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="triggerRemoveFromModal()" style="border-radius: 8px;">
+                                    Remove from Workspace
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SECTION 12 — MODAL FOOTER -->
+                <div class="modal-footer border-top px-4 py-3 justify-content-between">
+                    <div class="text-muted small" style="font-size: 0.75rem;">
+                        <i class="bi bi-clock-history me-1"></i>Last updated recently
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 42px;">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold" style="border-radius: 10px; min-height: 42px;">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Screen 4: Add Team Member Modal (Admin-only)                              -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark" id="addMemberModalLabel">Add Team Member</h5>
+                    <p class="text-muted small mb-0">Invite a photographer to collaborate in Studio Alpha.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form method="post" action="{% url 'accounts:team_management' %}" id="addMemberForm"
+                  hx-post="{% url 'accounts:team_management' %}"
+                  hx-target="#memberTableBody"
+                  hx-swap="afterbegin">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_member">
+
+                <div class="modal-body px-4 py-3">
+                    
+                    <!-- First Name & Last Name -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small text-dark mb-1">First Name *</label>
+                            <input type="text" name="first_name" class="form-control" placeholder="Alex" required style="border-radius: 10px; min-height: 42px;">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small text-dark mb-1">Last Name *</label>
+                            <input type="text" name="last_name" class="form-control" placeholder="Kumar" required style="border-radius: 10px; min-height: 42px;">
+                        </div>
+                    </div>
+
+                    <!-- Email Address -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-dark mb-1">Email Address *</label>
+                        <input type="email" name="email" class="form-control" placeholder="alex@example.com" required style="border-radius: 10px; min-height: 42px;">
+                        <div class="form-text text-muted" style="font-size: 0.75rem;">
+                            A secure account activation link will be sent to this email.
+                        </div>
+                    </div>
+
+                    <!-- Username (Optional) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-dark mb-1">Username <span class="text-muted fw-normal">(Optional &mdash; auto-generated if left blank)</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted fw-semibold" style="border-radius: 10px 0 0 10px;">@</span>
+                            <input type="text" name="username" class="form-control" placeholder="alex_kumar" style="border-radius: 0 10px 10px 0; min-height: 42px;">
+                        </div>
+                    </div>
+
+                    <!-- Phone Number (Optional) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small text-dark mb-1">Phone Number <span class="text-muted fw-normal">(Optional)</span></label>
+                        <input type="tel" name="phone_number" class="form-control" placeholder="+1 (555) 000-0000" style="border-radius: 10px; min-height: 42px;">
+                    </div>
+
+                    <!-- Role (Locked to TEAM MEMBER) -->
+                    <div class="mb-3 p-3 rounded-3 bg-light border">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-semibold small text-dark">Role</span>
+                            <span class="badge rounded-pill px-2.5 py-1 small fw-semibold" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
+                                TEAM MEMBER
+                            </span>
+                        </div>
+                        <div class="text-muted small" style="font-size: 0.72rem;">
+                            Team Members can access assigned events and upload photographs. They cannot manage workspace users or publish galleries.
+                        </div>
+                    </div>
+
+                    <!-- Event Assignment (Optional) -->
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small text-dark mb-1 d-flex justify-content-between">
+                            <span>Assign Events</span>
+                            <span class="text-muted fw-normal">(Optional)</span>
+                        </label>
+                        <div class="border rounded-3 p-2.5 bg-light overflow-y-auto" style="max-height: 140px;">
+                            {% for ev in events %}
+                                <div class="form-check py-1">
+                                    <input class="form-check-input" type="checkbox" name="event_ids" value="{{ ev.id }}" id="eventCheckAdd{{ ev.id }}">
+                                    <label class="form-check-label small text-dark d-flex justify-content-between w-100" for="eventCheckAdd{{ ev.id }}">
+                                        <span class="fw-medium">{{ ev.name }}</span>
+                                        <span class="text-muted" style="font-size: 0.72rem;">{{ ev.event_date|date:"M d, Y"|default:"Date not set" }}</span>
+                                    </label>
+                                </div>
+                            {% empty %}
+                                <div class="text-muted small fst-italic p-2">No active events found. You can assign events later.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 42px;">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold" style="border-radius: 10px; min-height: 42px;">Send Invitation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Screen 5: Invitation Sent Modal                                           -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="invitationSuccessModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 rounded-circle bg-success-subtle text-success mb-3">
+                    <i class="bi bi-envelope-check-fill" style="font-size: 2.2rem;"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-1">Invitation sent</h4>
+                <p class="text-secondary small mb-3">
+                    An invitation has been sent to <strong id="invitedEmailSpan">{{ just_invited.email|default:"the member" }}</strong>.
+                </p>
+
+                <!-- Invitation Link Copy Box -->
+                <div class="mb-3 text-start">
+                    <label class="form-label small fw-semibold text-muted mb-1">Direct Invitation Link</label>
+                    <div class="input-group">
+                        <input type="text" id="inviteLinkInput" class="form-control bg-light small" value="{{ just_invited.invite_link|default:'' }}" readonly style="font-size: 0.8rem; border-radius: 10px 0 0 10px;">
+                        <button class="btn btn-primary btn-sm px-3" type="button" onclick="copyInviteLink()" style="border-radius: 0 10px 10px 0;">
+                            <i class="bi bi-clipboard" id="copyBtnIcon"></i>
+                            <span id="copyBtnText">Copy Invitation Link</span>
+                        </button>
+                    </div>
+                    <div class="form-text text-muted" style="font-size: 0.72rem;">
+                        <i class="bi bi-clock-history me-1"></i>One-time activation link expires in 7 days.
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-center mt-4">
+                    <button type="button" class="btn btn-primary px-4 fw-semibold w-100" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 42px;">
+                        Done
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Screen 7: Password Reset Confirmation Modal                               -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="confirmPasswordResetModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 rounded-circle bg-primary-subtle text-primary mb-3">
+                    <i class="bi bi-key-fill" style="font-size: 2.2rem;"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">Send password reset email?</h5>
+                <p class="text-secondary small mb-4" id="confirmPasswordResetText">
+                    A secure password reset link will be sent to this team member's email address.
+                </p>
+                <form method="post" action="{% url 'accounts:team_management' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="send_password_reset">
+                    <input type="hidden" name="user_id" id="resetUserId">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-light px-4 flex-fill" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 42px;">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4 flex-fill fw-semibold" style="border-radius: 10px; min-height: 42px;">Send Reset Link</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Screen 8: Suspend Confirmation Modal                                      -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="confirmSuspendModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 rounded-circle bg-warning-subtle text-warning mb-3">
+                    <i class="bi bi-pause-circle-fill" style="font-size: 2.2rem;"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1" id="suspendModalTitle">Suspend Team Member?</h5>
+                <p class="text-secondary small mb-4">
+                    This will prevent the Team Member from signing in and accessing assigned workspace resources.
+                </p>
+                <form method="post" action="{% url 'accounts:team_management' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="suspend_member">
+                    <input type="hidden" name="user_id" id="suspendUserId">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-light px-4 flex-fill" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 42px;">Cancel</button>
+                        <button type="submit" class="btn btn-danger px-4 flex-fill fw-semibold" style="border-radius: 10px; min-height: 42px;">Suspend Account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Screen 9: Reactivate Confirmation Modal                                   -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="confirmReactivateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 rounded-circle bg-success-subtle text-success mb-3">
+                    <i class="bi bi-play-circle-fill" style="font-size: 2.2rem;"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1" id="reactivateModalTitle">Restore access for Team Member?</h5>
+                <p class="text-secondary small mb-4">
+                    The Team Member will be able to sign in again and access their assigned events.
+                </p>
+                <form method="post" action="{% url 'accounts:team_management' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reactivate_member">
+                    <input type="hidden" name="user_id" id="reactivateUserId">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-light px-4 flex-fill" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 42px;">Cancel</button>
+                        <button type="submit" class="btn btn-success px-4 flex-fill fw-semibold text-white" style="border-radius: 10px; min-height: 42px;">Reactivate</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Screen 10: Remove from Workspace Confirmation Modal                       -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="confirmRemoveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 rounded-circle bg-danger-subtle text-danger mb-3">
+                    <i class="bi bi-exclamation-triangle-fill" style="font-size: 2.2rem;"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-1" id="removeModalTitle">Remove Team Member?</h4>
+                <p class="text-secondary small mb-4 px-2">
+                    This will revoke workspace access. Existing uploaded photos will remain associated with the account unless explicitly deleted by an authorized administrator.
+                </p>
+                <form method="post" action="{% url 'accounts:team_management' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove_member">
+                    <input type="hidden" name="user_id" id="removeUserId">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-light px-4 flex-fill" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 42px;">Cancel</button>
+                        <button type="submit" class="btn btn-danger px-4 flex-fill fw-semibold" style="border-radius: 10px; min-height: 42px;">Remove Member</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- Screen 11: Sign Out All Sessions Confirmation Modal                       -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="confirmSignOutModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 rounded-circle bg-secondary-subtle text-secondary mb-3">
+                    <i class="bi bi-shield-x" style="font-size: 2.2rem;"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">Sign out all active sessions?</h5>
+                <p class="text-secondary small mb-4">
+                    This will sign the Team Member out of all currently active devices. They will need to sign in again.
+                </p>
+                <form method="post" action="{% url 'accounts:team_management' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="sign_out_sessions">
+                    <input type="hidden" name="user_id" id="signOutUserId">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-light px-4 flex-fill" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 42px;">Cancel</button>
+                        <button type="submit" class="btn btn-secondary px-4 flex-fill fw-semibold" style="border-radius: 10px; min-height: 42px;">Sign Out All Sessions</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Filter Pills Styling */
+.btn-filter-pill {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+.btn-filter-pill:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+.btn-filter-pill.active {
+    background-color: #3b82f6 !important;
+    color: #ffffff !important;
+    border-color: #3b82f6 !important;
+}
+.btn-filter-pill.active .badge {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+}
+.w-100-mobile {
+    width: auto;
+}
+@media (max-width: 575.98px) {
+    .w-100-mobile {
+        width: 100% !important;
+    }
+}
+.hover-primary:hover {
+    color: #3b82f6 !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Filter State
+let currentStatusFilter = 'ALL';
+let currentMemberData = null;
+
+function setStatusFilter(status, btn) {
+    currentStatusFilter = status;
+    document.querySelectorAll('.btn-filter-pill').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    applyMemberFilters();
+}
+
+function resetFilters() {
+    document.getElementById('memberSearchInput').value = '';
+    document.getElementById('eventFilterSelect').value = 'ALL';
+    setStatusFilter('ALL', document.querySelector('.btn-filter-pill[data-status="ALL"]'));
+}
+
+function applyMemberFilters() {
+    const query = document.getElementById('memberSearchInput').value.toLowerCase().trim();
+    const eventFilter = document.getElementById('eventFilterSelect').value;
+
+    const rows = document.querySelectorAll('.member-row');
+    const mobileCards = document.querySelectorAll('.member-card-mobile');
+    let visibleCount = 0;
+
+    // Filter desktop rows
+    rows.forEach(row => {
+        const name = row.getAttribute('data-name') || '';
+        const email = row.getAttribute('data-email') || '';
+        const status = row.getAttribute('data-status') || '';
+        const events = row.getAttribute('data-events') || '';
+
+        const matchesQuery = !query || name.includes(query) || email.includes(query);
+        const matchesStatus = (currentStatusFilter === 'ALL') || (status === currentStatusFilter);
+        const matchesEvent = (eventFilter === 'ALL') || events.includes(eventFilter);
+
+        if (matchesQuery && matchesStatus && matchesEvent) {
+            row.classList.remove('d-none');
+            visibleCount++;
+        } else {
+            row.classList.add('d-none');
+        }
+    });
+
+    // Filter mobile cards
+    mobileCards.forEach(card => {
+        const name = card.getAttribute('data-name') || '';
+        const email = card.getAttribute('data-email') || '';
+        const status = card.getAttribute('data-status') || '';
+        const events = card.getAttribute('data-events') || '';
+
+        const matchesQuery = !query || name.includes(query) || email.includes(query);
+        const matchesStatus = (currentStatusFilter === 'ALL') || (status === currentStatusFilter);
+        const matchesEvent = (eventFilter === 'ALL') || events.includes(eventFilter);
+
+        if (matchesQuery && matchesStatus && matchesEvent) {
+            card.classList.remove('d-none');
+        } else {
+            card.classList.add('d-none');
+        }
+    });
+
+    const noResults = document.getElementById('noFilterResults');
+    if (visibleCount === 0 && (rows.length > 0)) {
+        noResults.classList.remove('d-none');
+    } else {
+        noResults.classList.add('d-none');
+    }
+}
+
+// Open Enriched Edit Team Member Modal (Screen 2)
+function openEditModal(userId) {
+    fetch(`/accounts/team/member/${userId}/details/`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            currentMemberData = data;
+
+            document.getElementById('editUserId').value = data.id;
+            document.getElementById('editFirstName').value = data.first_name || '';
+            document.getElementById('editLastName').value = data.last_name || '';
+            document.getElementById('editUsername').value = data.username || '';
+            document.getElementById('editEmail').value = data.email || '';
+            document.getElementById('editPhone').value = data.phone_number !== 'Not provided' ? data.phone_number : '';
+            
+            // Email verification badge
+            const vBadge = document.getElementById('editEmailVerificationBadge');
+            if (data.is_email_verified) {
+                vBadge.className = 'badge bg-success-subtle text-success border border-success-subtle';
+                vBadge.innerText = '[Verified]';
+            } else {
+                vBadge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle';
+                vBadge.innerText = '[Email verification pending]';
+            }
+
+            // Section 2: Account Access display
+            document.getElementById('editModalStatusDisplay').innerText = data.status_label;
+            document.getElementById('editModalLoginStatusDisplay').innerText = data.last_login !== 'Never logged in' ? `Last login: ${data.last_login}` : 'Never logged in';
+
+            // Section 3: Invitation management display
+            const inviteSec = document.getElementById('editInvitationSection');
+            if (data.status === 'PENDING') {
+                inviteSec.classList.remove('d-none');
+                document.getElementById('editInviteSentDate').innerText = `Sent: ${data.invitation_sent_at || 'Recently'}`;
+            } else {
+                inviteSec.classList.add('d-none');
+            }
+
+            // Section 4: Security
+            document.getElementById('secEmailVerified').innerText = data.is_email_verified ? 'Verified' : 'Pending';
+            document.getElementById('secLastPwdChange').innerText = data.last_password_change || 'Sep 06, 2026';
+
+            // Section 5: Activity
+            document.getElementById('actLastLogin').innerText = data.last_login;
+            document.getElementById('actLastActive').innerText = data.last_active;
+            document.getElementById('actLoginCount').innerText = data.login_count || 0;
+            document.getElementById('actLastDevice').innerText = data.last_login_device || 'Chrome on Windows';
+
+            // Section 6: Status dropdown
+            document.getElementById('editStatusSelect').value = data.status || 'ACTIVE';
+
+            // Section 7: Event checkboxes
+            const assignedIds = (data.assigned_events || []).map(e => e.id);
+            document.querySelectorAll('.edit-event-checkbox').forEach(cb => {
+                cb.checked = assignedIds.includes(parseInt(cb.value));
+            });
+            updateAssignedBadge();
+
+            // Danger zone button text
+            const suspBtn = document.getElementById('modalSuspendBtn');
+            if (data.status === 'ACTIVE') {
+                suspBtn.innerText = 'Suspend Account';
+                suspBtn.className = 'btn btn-outline-warning btn-sm';
+            } else {
+                suspBtn.innerText = 'Reactivate Account';
+                suspBtn.className = 'btn btn-outline-success btn-sm';
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('editMemberModal'));
+            modal.show();
+        })
+        .catch(err => {
+            console.error('Error opening edit modal:', err);
+        });
+}
+
+function updateAssignedBadge() {
+    const count = document.querySelectorAll('.edit-event-checkbox:checked').length;
+    document.getElementById('editAssignedBadge').innerText = `${count} events assigned`;
+}
+
+// Modal Event Filters
+let modalEventFilterState = 'ALL';
+
+function filterModalEvents() {
+    const query = (document.getElementById('modalEventSearch').value || '').toLowerCase().trim();
+    document.querySelectorAll('.modal-event-item').forEach(item => {
+        const name = item.getAttribute('data-event-name') || '';
+        const cb = item.querySelector('.edit-event-checkbox');
+        const isChecked = cb ? cb.checked : false;
+
+        const matchesQuery = !query || name.includes(query);
+        let matchesFilter = true;
+        if (modalEventFilterState === 'ASSIGNED') matchesFilter = isChecked;
+        if (modalEventFilterState === 'UNASSIGNED') matchesFilter = !isChecked;
+
+        if (matchesQuery && matchesFilter) {
+            item.classList.remove('d-none');
+        } else {
+            item.classList.add('d-none');
+        }
+    });
+}
+
+function setModalEventFilter(state) {
+    modalEventFilterState = state;
+    document.getElementById('filterAllEventsBtn').classList.toggle('active', state === 'ALL');
+    document.getElementById('filterAssignedEventsBtn').classList.toggle('active', state === 'ASSIGNED');
+    document.getElementById('filterUnassignedEventsBtn').classList.toggle('active', state === 'UNASSIGNED');
+    filterModalEvents();
+}
+
+function selectAllModalEvents() {
+    document.querySelectorAll('.edit-event-checkbox').forEach(cb => cb.checked = true);
+    updateAssignedBadge();
+    filterModalEvents();
+}
+
+function clearAllModalEvents() {
+    document.querySelectorAll('.edit-event-checkbox').forEach(cb => cb.checked = false);
+    updateAssignedBadge();
+    filterModalEvents();
+}
+
+// Confirmation Modals triggers
+function openResetPasswordModal(userId, fullName, email) {
+    document.getElementById('resetUserId').value = userId;
+    document.getElementById('confirmPasswordResetText').innerHTML = `A secure password reset link will be sent to <strong>${email || fullName}</strong>.`;
+    const m = new bootstrap.Modal(document.getElementById('confirmPasswordResetModal'));
+    m.show();
+}
+
+function triggerPasswordResetFromModal() {
+    if (!currentMemberData) return;
+    bootstrap.Modal.getInstance(document.getElementById('editMemberModal')).hide();
+    setTimeout(() => {
+        openResetPasswordModal(currentMemberData.id, currentMemberData.full_name, currentMemberData.email);
+    }, 350);
+}
+
+function triggerSignOutSessionsFromModal() {
+    if (!currentMemberData) return;
+    bootstrap.Modal.getInstance(document.getElementById('editMemberModal')).hide();
+    setTimeout(() => {
+        document.getElementById('signOutUserId').value = currentMemberData.id;
+        const m = new bootstrap.Modal(document.getElementById('confirmSignOutModal'));
+        m.show();
+    }, 350);
+}
+
+function openSuspendModal(userId, fullName) {
+    document.getElementById('suspendUserId').value = userId;
+    document.getElementById('suspendModalTitle').innerText = `Suspend ${fullName}?`;
+    const m = new bootstrap.Modal(document.getElementById('confirmSuspendModal'));
+    m.show();
+}
+
+function triggerSuspendFromModal() {
+    if (!currentMemberData) return;
+    bootstrap.Modal.getInstance(document.getElementById('editMemberModal')).hide();
+    setTimeout(() => {
+        if (currentMemberData.status === 'ACTIVE') {
+            openSuspendModal(currentMemberData.id, currentMemberData.full_name);
+        } else {
+            openReactivateModal(currentMemberData.id, currentMemberData.full_name);
+        }
+    }, 350);
+}
+
+function openReactivateModal(userId, fullName) {
+    document.getElementById('reactivateUserId').value = userId;
+    document.getElementById('reactivateModalTitle').innerText = `Restore access for ${fullName}?`;
+    const m = new bootstrap.Modal(document.getElementById('confirmReactivateModal'));
+    m.show();
+}
+
+function openRemoveModal(userId, fullName) {
+    document.getElementById('removeUserId').value = userId;
+    document.getElementById('removeModalTitle').innerText = `Remove ${fullName} from Studio Alpha?`;
+    const m = new bootstrap.Modal(document.getElementById('confirmRemoveModal'));
+    m.show();
+}
+
+function triggerRemoveFromModal() {
+    if (!currentMemberData) return;
+    bootstrap.Modal.getInstance(document.getElementById('editMemberModal')).hide();
+    setTimeout(() => {
+        openRemoveModal(currentMemberData.id, currentMemberData.full_name);
+    }, 350);
+}
+
+function triggerResendFromModal() {
+    if (!currentMemberData) return;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = "{% url 'accounts:team_management' %}";
+    form.innerHTML = `
+        {% csrf_token %}
+        <input type="hidden" name="action" value="resend_invitation">
+        <input type="hidden" name="user_id" value="${currentMemberData.id}">
+    `;
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function triggerCancelInviteFromModal() {
+    if (!currentMemberData) return;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = "{% url 'accounts:team_management' %}";
+    form.innerHTML = `
+        {% csrf_token %}
+        <input type="hidden" name="action" value="cancel_invitation">
+        <input type="hidden" name="user_id" value="${currentMemberData.id}">
+    `;
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Copy Direct Invitation Link (Screen 5)
+function copyInviteLink() {
+    const input = document.getElementById('inviteLinkInput');
+    input.select();
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value);
+
+    const icon = document.getElementById('copyBtnIcon');
+    const text = document.getElementById('copyBtnText');
+    icon.className = 'bi bi-check2';
+    text.innerText = 'Copied!';
+    setTimeout(() => {
+        icon.className = 'bi bi-clipboard';
+        text.innerText = 'Copy Invitation Link';
+    }, 2500);
+}
+
+// Open details drawer
+function openMemberDrawer(userId) {
+    window.location.href = `/accounts/team/member/${userId}/`;
+}
+
+// Auto-trigger invitation success modal if just invited
+document.addEventListener('DOMContentLoaded', function() {
+    {% if just_invited %}
+        const inviteModal = new bootstrap.Modal(document.getElementById('invitationSuccessModal'));
+        inviteModal.show();
+    {% endif %}
+});
+</script>
+{% endblock %}

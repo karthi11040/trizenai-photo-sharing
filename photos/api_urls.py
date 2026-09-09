@@ -1,5 +1,6 @@
 from django.urls import path
+from photos import api_views
 
 urlpatterns = [
-    # Placeholder API routes for Phase 1 scaffolding - to be expanded in Phase 4
+    path('<int:id>/', api_views.PhotoDetailAPIView.as_view(), name='api_photo_detail'),
 ]

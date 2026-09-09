@@ -48,6 +48,10 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
+# Node / JS
+node_modules/
+package-lock.json
+
 # IDEs & OS files
 .vscode/
 .idea/
@@ -56,3 +60,4 @@ coverage.xml
 *~
 .DS_Store
 Thumbs.db
+

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Access Denied &mdash; TrizenAI Studio{% endblock %}
+
+{% block guest_header %}{% endblock %}
+{% block guest_footer %}{% endblock %}
+{% block public_main_class %}p-0 m-0 w-100{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex flex-column align-items-center justify-content-center p-4 bg-slate-50" style="background: radial-gradient(circle at 50% 10%, #ffffff 0%, #f1f5f9 100%);">
+    
+    <a href="{% url 'home' %}" class="d-flex align-items-center gap-2.5 text-decoration-none mb-4">
+        <div class="d-flex align-items-center justify-content-center bg-white rounded-3 p-1 shadow-sm border" style="width: 40px; height: 40px; border-color: #e2e8f0;">
+            <img src="{% static 'img/logo-icon.png' %}" alt="TrizenAI" width="28" height="28">
+        </div>
+        <span class="fw-bold text-dark tracking-tight" style="font-size: 1.35rem; font-family: var(--font-family-display);">Trizen<span style="color: #2563eb;">AI</span></span>
+    </a>
+
+    <div class="card border rounded-4 p-4 p-sm-5 bg-white text-center w-100 shadow-sm" style="max-width: 480px; border-color: #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
+        
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 mx-auto" style="width: 56px; height: 56px; background-color: #fef2f2; color: #dc2626;">
+            <i class="bi bi-slash-circle-fill" style="font-size: 1.85rem;"></i>
+        </div>
+
+        <h2 class="fw-bold text-dark mb-2" style="font-size: 1.65rem; letter-spacing: -0.02em; font-family: var(--font-family-display);">
+            Access Denied
+        </h2>
+        
+        <p class="text-secondary small mb-4" style="font-size: 0.925rem; color: #64748b; line-height: 1.6;">
+            You don't have permission to perform this action.
+        </p>
+
+        <a href="{% url 'accounts:dashboard_router' %}" class="btn btn-primary w-100 fw-semibold d-flex align-items-center justify-content-center gap-2 shadow-sm" style="background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%); border: none; border-radius: 10px; min-height: 48px; font-size: 0.95rem;">
+            <i class="bi bi-grid-fill me-1.5"></i>
+            <span>Return to Dashboard</span>
+        </a>
+
+    </div>
+
+    <div class="mt-4 text-center text-muted small" style="font-size: 0.78rem; color: #64748b;">
+        Protected by TrizenAI Encrypted Authentication &bull; &copy; 2026
+    </div>
+
+</div>
+{% endblock %}

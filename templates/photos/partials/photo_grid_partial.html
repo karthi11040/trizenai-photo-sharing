@@ -1,0 +1,35 @@
+{% if grouped_photos %}
+    {% for group in grouped_photos %}
+        <div class="col-12 date-group-header my-2" data-date="{{ group.date_iso }}">
+            <div class="d-flex align-items-center justify-content-between bg-light border border-secondary-subtle rounded-3 px-3 py-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary text-white rounded-pill px-2.5 py-1">
+                        <i class="bi bi-calendar-event me-1"></i>Upload Day
+                    </span>
+                    <h5 class="fw-bold text-dark mb-0" style="font-size: 1rem;">
+                        {{ group.date_str }}
+                    </h5>
+                </div>
+                <span class="badge bg-secondary-subtle text-secondary border rounded-pill px-2.5 py-1 extra-small fw-semibold">
+                    {{ group.items|length }} photo{% if group.items|length > 1 %}s{% endif %}
+                </span>
+            </div>
+        </div>
+        {% for item in group.items %}
+            {% include 'photos/partials/photo_card.html' with item=item event=event %}
+        {% endfor %}
+    {% endfor %}
+{% elif photos %}
+    {% for item in photos %}
+        {% include 'photos/partials/photo_card.html' with item=item event=event %}
+    {% endfor %}
+{% else %}
+    <div class="col-12 text-center py-5 bg-white rounded-4 border shadow-sm my-4" id="empty-photos-notice">
+        <i class="bi bi-images text-muted fs-1 mb-2"></i>
+        <h4 class="fw-bold">No Photos In This Event</h4>
+        <p class="text-muted small mb-3">Upload photography batches to curate and generate customer galleries.</p>
+        <a href="{% url 'photos:upload_photos' event_id=event.id %}" class="btn btn-primary btn-sm px-4">
+            <i class="bi bi-cloud-arrow-up me-1"></i> Upload Photos
+        </a>
+    </div>
+{% endif %}

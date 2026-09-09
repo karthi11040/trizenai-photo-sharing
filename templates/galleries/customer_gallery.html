@@ -1,0 +1,899 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ display_title|default:gallery.event.name }} &mdash; Studio Gallery</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans, Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5.3 & Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+
+    <style>
+        :root {
+            --bg-canvas: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-surface-secondary: #f1f5f9;
+            --border-subtle: #e2e8f0;
+            --border-strong: #cbd5e1;
+            --accent-primary: #2563eb;
+            --accent-primary-hover: #1d4ed8;
+            --accent-glow: rgba(37, 99, 235, 0.15);
+            --text-heading: #0f172a;
+            --text-body: #334155;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-canvas);
+            color: var(--text-body);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Subtle Ambient Glow */
+        .ambient-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 450px;
+            background: radial-gradient(circle at 50% -10%, rgba(37, 99, 235, 0.08), rgba(99, 102, 241, 0.04), transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Top Sticky Glass Navbar (White Theme) */
+        .client-navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0.85rem 2rem;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .brand-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-heading);
+        }
+
+        .brand-logo-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+
+        /* Buttons (Light Mode) */
+        .btn-theme-light {
+            background: #ffffff;
+            border: 1px solid var(--border-strong);
+            color: var(--text-heading);
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 0.45rem 1rem;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-theme-light:hover {
+            background: var(--bg-surface-secondary);
+            border-color: #94a3b8;
+            color: var(--text-heading);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary-theme {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: 1px solid #3b82f6;
+            color: #ffffff;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 0.45rem 1rem;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-primary-theme:hover {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #ffffff;
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+            transform: translateY(-1px);
+        }
+
+        /* Hero Banner */
+        .gallery-hero {
+            position: relative;
+            padding: 3.5rem 1.5rem 2.5rem 1.5rem;
+            text-align: center;
+            z-index: 1;
+        }
+
+        .gallery-hero-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.75rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--text-heading);
+            margin-bottom: 0.75rem;
+        }
+
+        .gallery-hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .gallery-hero-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* Control Toolbar */
+        .gallery-control-bar {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+        }
+
+        .grid-toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.35rem 0.5rem;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+
+        .grid-toggle-btn.active, .grid-toggle-btn:hover {
+            color: var(--accent-primary);
+            background: var(--bg-surface-secondary);
+        }
+
+        /* Photo Grid & Cards (White Theme) */
+        .photo-grid-container {
+            transition: all 0.3s ease;
+        }
+
+        .photo-card {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            background: var(--bg-surface);
+            border: 1.5px solid var(--border-subtle);
+            cursor: pointer;
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s, border-color 0.35s;
+            aspect-ratio: 4/3;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        }
+
+        .photo-card:hover {
+            transform: translateY(-5px) scale(1.012);
+            box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.12), 0 0 20px var(--accent-glow);
+            border-color: var(--accent-primary);
+            z-index: 2;
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .photo-card:hover img {
+            transform: scale(1.06);
+        }
+
+        /* Hover Vignette Overlay */
+        .photo-card-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.35) 45%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.25rem;
+            z-index: 2;
+        }
+
+        .photo-card:hover .photo-card-overlay {
+            opacity: 1;
+        }
+
+        .btn-icon-glass {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-icon-glass:hover {
+            background: rgba(255, 255, 255, 0.4);
+            color: #ffffff;
+            transform: scale(1.1);
+        }
+
+        .btn-icon-glass.favorited {
+            background: rgba(239, 68, 68, 0.4);
+            border-color: #ef4444;
+            color: #ffffff;
+        }
+
+        /* Lightbox Modal (Dark Cinema Focus) */
+        .cinema-lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: rgba(9, 13, 22, 0.96);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            display: none;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .cinema-lightbox.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .lightbox-topbar {
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .lightbox-stage {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        .lightbox-stage img {
+            max-width: 90vw;
+            max-height: 75vh;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .lightbox-nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .lightbox-nav-arrow:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.1);
+            color: #ffffff;
+        }
+
+        .lightbox-nav-prev { left: 1.5rem; }
+        .lightbox-nav-next { right: 1.5rem; }
+
+        /* Filmstrip Scrubber */
+        .lightbox-filmstrip {
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            gap: 0.65rem;
+            justify-content: center;
+            overflow-x: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(15, 23, 42, 0.85);
+        }
+
+        .filmstrip-thumb {
+            width: 56px;
+            height: 42px;
+            border-radius: 6px;
+            object-fit: cover;
+            opacity: 0.45;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filmstrip-thumb.active, .filmstrip-thumb:hover {
+            opacity: 1;
+            border-color: #3b82f6;
+            transform: scale(1.05);
+        }
+
+        /* Floating Proofing Dock */
+        .proofing-floating-dock {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 990;
+            background: #0f172a;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 9999px;
+            padding: 0.55rem 1.35rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.3);
+        }
+
+        /* Footer */
+        .gallery-footer {
+            border-top: 1px solid var(--border-subtle);
+            background: var(--bg-surface);
+            padding: 3rem 1.5rem;
+            margin-top: 5rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="ambient-mesh"></div>
+
+<!-- 1. Top Client Floating Glass Navbar -->
+<nav class="client-navbar">
+    <div class="container-fluid px-lg-4 d-flex justify-content-between align-items-center">
+        <!-- Brand & Title (Clean display, studio branding) -->
+        <div class="d-flex align-items-center gap-3">
+            <a href="{% url 'home' %}" class="brand-pill">
+                <img src="{% if studio_logo_url %}{{ studio_logo_url }}{% else %}{% static 'img/logo-icon.png' %}{% endif %}" alt="{{ studio_name }}" class="brand-logo-img">
+                <span class="fw-bold tracking-tight d-none d-sm-inline" style="font-size: 1.05rem;">{{ studio_name }}</span>
+            </a>
+            <span class="text-muted d-none d-md-inline">&bull;</span>
+            <span class="small fw-semibold text-dark d-none d-md-inline truncate-1" style="max-width: 260px;">{{ display_title|default:gallery.event.name }}</span>
+            <div class="d-none d-lg-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded-pill bg-light border text-secondary small fw-medium">
+                <i class="bi bi-camera-fill text-primary" style="font-size: 0.75rem;"></i>
+                <span> Uploaded by <strong>{{ studio_name }}</strong></span>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex align-items-center gap-2.5">
+            <button type="button" class="btn btn-theme-light d-none d-sm-inline-flex" onclick="window.print();" title="Print proof sheet">
+                <i class="bi bi-printer"></i>
+                <span>Print</span>
+            </button>
+
+            <button type="button" class="btn btn-primary-theme btn-sm" onclick="startSlideshow();">
+                <i class="bi bi-play-fill fs-6"></i>
+                <span>Slideshow</span>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- 2. Hero Editorial Banner -->
+<header class="gallery-hero">
+    <div class="container">
+        {% if cover_thumbnail_url %}
+        <div class="mb-4 d-flex justify-content-center">
+            <div class="position-relative overflow-hidden rounded-4 shadow-sm border" style="max-width: 680px; width: 100%; height: 260px; border-color: var(--border-subtle) !important;">
+                <img src="{{ cover_thumbnail_url }}" alt="{{ display_title }}" class="w-100 h-100 object-fit-cover">
+                <div class="position-absolute inset-0" style="background: linear-gradient(to top, rgba(15, 23, 42, 0.6) 0%, transparent 60%);"></div>
+                <div class="position-absolute bottom-0 start-0 p-3 text-white">
+                    <span class="badge bg-primary rounded-pill px-3 py-1 font-monospace small shadow-sm">
+                        <i class="bi bi-patch-check-fill me-1"></i>Cover Photo &bull; {{ studio_name }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="d-inline-flex align-items-center gap-2 badge px-3 py-1.5 rounded-pill mb-3" style="background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.2); color: #2563eb; font-size: 0.78rem;">
+            <i class="bi bi-patch-check-fill"></i>
+            <span>Verified Delivery by <strong>{{ studio_name }}</strong></span>
+        </div>
+
+        <h1 class="gallery-hero-title">
+            {{ display_title|default:gallery.event.name }}
+        </h1>
+
+        <div class="gallery-hero-meta">
+            <span><i class="bi bi-person-badge-fill text-primary"></i>Studio Lead: <strong>{{ uploader_name }}</strong></span>
+            <span><i class="bi bi-geo-alt-fill text-primary"></i>{{ gallery.event.location|default:"Studio Production" }}</span>
+            <span><i class="bi bi-calendar3 text-primary"></i>{{ gallery.event.event_date|date:"F d, Y" }}</span>
+            <span><i class="bi bi-camera-fill text-success"></i><strong>{{ photos_count }}</strong> Delivered Photographs</span>
+            <span class="badge rounded-pill bg-light text-dark border px-2.5 py-1 font-monospace" style="font-size: 0.72rem;">PIN Protected</span>
+        </div>
+    </div>
+</header>
+
+<!-- 3. Main Gallery Showcase Container -->
+<main class="container-fluid px-lg-5 pb-5">
+    <!-- Gallery Control Toolbar -->
+    <div class="gallery-control-bar">
+        <div class="d-flex align-items-center gap-2">
+            <span class="small fw-semibold text-dark"><i class="bi bi-images me-1.5 text-primary"></i>Delivered Collection</span>
+            <span class="badge bg-light text-dark border rounded-pill px-2.5 py-0.5" style="font-size: 0.75rem;">{{ photos_count }} Assets</span>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <!-- Grid Density Toggles -->
+            <div class="d-none d-md-flex align-items-center bg-light p-1 rounded-3 border">
+                <button type="button" class="grid-toggle-btn" onclick="setGridColumns(2);" title="2-Column Large View">
+                    <i class="bi bi-grid-fill"></i>
+                </button>
+                <button type="button" class="grid-toggle-btn active" id="btnGrid3" onclick="setGridColumns(3);" title="3-Column Balanced View">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                </button>
+                <button type="button" class="grid-toggle-btn" onclick="setGridColumns(4);" title="4-Column Compact View">
+                    <i class="bi bi-grid-3x2-gap-fill"></i>
+                </button>
+            </div>
+
+            <!-- Download All Action -->
+            {% if photos %}
+                <button type="button" class="btn btn-theme-light" onclick="downloadAllPhotos();">
+                    <i class="bi bi-cloud-arrow-down-fill text-primary"></i>
+                    <span>Download All ({{ photos_count }})</span>
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Photo Grid -->
+    <div class="row g-4 photo-grid-container" id="galleryPhotoGrid">
+        {% for p in photos %}
+            <div class="col-12 col-sm-6 col-md-4 col-lg-4 gallery-col-item" data-photo-id="{{ p.id }}">
+                <div class="photo-card" onclick="openLightbox({{ forloop.counter0 }});">
+                    <img src="{{ p.signed_url|default:'/static/img/logo.png' }}" alt="{{ p.filename }}" loading="lazy">
+                    
+                    <div class="photo-card-overlay">
+                        <!-- Top Tag Bar -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-dark bg-opacity-75 text-white border border-white-25 rounded-pill px-2.5 py-1 font-monospace" style="font-size: 0.7rem;">
+                                Ultra-HD Original
+                            </span>
+                            <div class="d-flex gap-1.5" onclick="event.stopPropagation();">
+                                <button type="button" class="btn-icon-glass favorite-btn" onclick="toggleFavorite(this, {{ p.id }});" title="Favorite Photo">
+                                    <i class="bi bi-heart"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Information & Action Bar -->
+                        <div class="d-flex justify-content-between align-items-end">
+                            <div>
+                                <div class="text-white fw-bold small text-truncate" style="max-width: 220px;">{{ p.filename }}</div>
+                                <div class="text-white-50" style="font-size: 0.72rem;">Studio Delivered Master</div>
+                            </div>
+                            {% if p.signed_url %}
+                                <a href="{{ p.signed_url }}" download="{{ p.filename }}" class="btn-icon-glass" title="Download High-Res Original" onclick="event.stopPropagation();">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="p-5 text-center rounded-4 bg-white border">
+                    <i class="bi bi-images fs-1 text-muted mb-3 d-block"></i>
+                    <h4 class="fw-bold text-dark mb-1">Photographs Processing</h4>
+                    <p class="text-muted small mb-0">Your photography studio is currently preparing and delivering your high-resolution selections.</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</main>
+
+<!-- 4. Floating Client Proofing Dock -->
+<div class="proofing-floating-dock" id="proofingDock" style="display: none;">
+    <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-heart-fill text-danger"></i>
+        <span class="small fw-semibold text-white"><span id="favCount">0</span> Photos Favorited</span>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-primary-theme btn-sm px-3 rounded-pill" onclick="downloadFavorites();">
+            <i class="bi bi-download me-1"></i> Download Selected
+        </button>
+    </div>
+</div>
+
+<!-- 5. Fullscreen Cinema Lightbox & Slideshow Modal -->
+<div id="cinemaLightbox" class="cinema-lightbox">
+    <!-- Topbar -->
+    <div class="lightbox-topbar">
+        <div class="d-flex align-items-center gap-2.5">
+            <span class="badge bg-dark text-white border border-white-25 rounded-pill px-3 py-1 font-monospace" id="lbCounter">
+                1 / {{ photos_count }}
+            </span>
+            <span class="text-white small fw-medium truncate-1 d-none d-md-inline" id="lbTitle" style="max-width: 180px;">Photo.png</span>
+            <span class="badge bg-primary bg-opacity-75 text-white border border-primary-subtle rounded-pill px-3 py-1 small d-inline-flex align-items-center gap-1.5 shadow-sm" style="font-size: 0.78rem;">
+                <i class="bi bi-camera-fill"></i>
+                <span>{{ studio_name }}</span>
+            </span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn-icon-glass me-1" id="lbFavoriteBtn" onclick="toggleCurrentLightboxFavorite(event);" title="Like / Favorite Photo (Key: L)">
+                <i class="bi bi-heart" id="lbFavIcon"></i>
+            </button>
+            <button type="button" class="btn btn-theme-light btn-sm" id="btnSlideshowToggle" onclick="toggleSlideshowPlayback();">
+                <i class="bi bi-play-fill" id="slideshowIcon"></i>
+                <span id="slideshowLabel">Play Slideshow</span>
+            </button>
+            <a href="#" id="lbDownloadBtn" download class="btn btn-primary-theme btn-sm rounded-pill px-3">
+                <i class="bi bi-download me-1"></i> Download HD
+            </a>
+            <button type="button" class="btn-icon-glass ms-2" onclick="closeLightbox();" title="Close (Esc)">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Lightbox Stage -->
+    <div class="lightbox-stage" onclick="closeLightbox();">
+        <button type="button" class="lightbox-nav-arrow lightbox-nav-prev" onclick="event.stopPropagation(); prevPhoto();" title="Previous (Left Arrow)">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+
+        <img id="lbMainImage" src="" alt="Full Resolution Photograph" onclick="event.stopPropagation();">
+
+        <button type="button" class="lightbox-nav-arrow lightbox-nav-next" onclick="event.stopPropagation(); nextPhoto();" title="Next (Right Arrow)">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+
+    <!-- Bottom Filmstrip -->
+    <div class="lightbox-filmstrip" id="lbFilmstrip">
+        {% for p in photos %}
+            <img src="{{ p.signed_url|default:'/static/img/logo.png' }}" 
+                 class="filmstrip-thumb {% if forloop.first %}active{% endif %}" 
+                 onclick="openLightbox({{ forloop.counter0 }});" 
+                 id="thumb_{{ forloop.counter0 }}" 
+                 alt="{{ p.filename }}">
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 6. Footer -->
+<footer class="gallery-footer">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <img src="{% static 'img/logo-icon.png' %}" alt="{{ studio_name }}" width="24" height="24" style="border-radius: 6px;">
+                <span class="text-dark fw-semibold">{{ studio_name }}</span>
+                <span class="text-muted small">&bull; Uploaded & Curated by <strong>{{ uploader_name }}</strong></span>
+            </div>
+            <div class="text-muted">
+                &copy; 2026 {{ studio_name }} &bull; Protected by 6-Digit PIN &bull; Delivered via Trizen Cloud Storage
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- JavaScript Logic -->
+<script>
+const galleryPhotos = [
+    {% for p in photos %}
+    {
+        id: {{ p.id }},
+        filename: "{{ p.filename|escapejs }}",
+        url: "{{ p.signed_url|escapejs }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+let activeIndex = 0;
+let isLightboxOpen = false;
+let slideshowInterval = null;
+const favoritedIds = new Set();
+
+// 1. Grid Density Switcher
+function setGridColumns(cols) {
+    const items = document.querySelectorAll('.gallery-col-item');
+    document.querySelectorAll('.grid-toggle-btn').forEach(btn => btn.classList.remove('active'));
+    
+    items.forEach(item => {
+        item.className = 'gallery-col-item';
+        if (cols === 2) {
+            item.classList.add('col-12', 'col-md-6');
+        } else if (cols === 4) {
+            item.classList.add('col-12', 'col-sm-6', 'col-md-4', 'col-lg-3');
+        } else {
+            item.classList.add('col-12', 'col-sm-6', 'col-md-4', 'col-lg-4');
+        }
+    });
+}
+
+// 2. Lightbox Engine & Favorite Sync
+function updateLightboxFavoriteUI(photoId) {
+    const isFav = favoritedIds.has(photoId);
+    const btn = document.getElementById('lbFavoriteBtn');
+    const icon = document.getElementById('lbFavIcon');
+    if (btn && icon) {
+        if (isFav) {
+            btn.classList.add('favorited');
+            icon.className = 'bi bi-heart-fill text-danger';
+            btn.title = "Unfavorite Photo (Key: L)";
+        } else {
+            btn.classList.remove('favorited');
+            icon.className = 'bi bi-heart text-white';
+            btn.title = "Like / Favorite Photo (Key: L)";
+        }
+    }
+}
+
+function openLightbox(idx) {
+    if (!galleryPhotos.length) return;
+    activeIndex = (idx + galleryPhotos.length) % galleryPhotos.length;
+    const photo = galleryPhotos[activeIndex];
+
+    document.getElementById('lbMainImage').src = photo.url;
+    document.getElementById('lbTitle').textContent = photo.filename;
+    document.getElementById('lbCounter').textContent = `${activeIndex + 1} / ${galleryPhotos.length}`;
+    
+    const dlBtn = document.getElementById('lbDownloadBtn');
+    dlBtn.href = photo.url;
+    dlBtn.setAttribute('download', photo.filename);
+
+    document.querySelectorAll('.filmstrip-thumb').forEach((t, i) => {
+        t.classList.toggle('active', i === activeIndex);
+    });
+
+    updateLightboxFavoriteUI(photo.id);
+
+    const modal = document.getElementById('cinemaLightbox');
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    isLightboxOpen = true;
+}
+
+function toggleCurrentLightboxFavorite(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (!galleryPhotos.length) return;
+    const photo = galleryPhotos[activeIndex];
+    if (!photo) return;
+
+    const item = document.querySelector(`.gallery-col-item[data-photo-id="${photo.id}"]`);
+    const cardBtn = item ? item.querySelector('.favorite-btn') : null;
+    if (cardBtn) {
+        toggleFavorite(cardBtn, photo.id);
+    } else {
+        if (favoritedIds.has(photo.id)) {
+            favoritedIds.delete(photo.id);
+        } else {
+            favoritedIds.add(photo.id);
+        }
+        const dock = document.getElementById('proofingDock');
+        const countEl = document.getElementById('favCount');
+        if (countEl) countEl.textContent = favoritedIds.size;
+        if (dock) dock.style.display = favoritedIds.size > 0 ? 'flex' : 'none';
+    }
+
+    updateLightboxFavoriteUI(photo.id);
+}
+
+function closeLightbox() {
+    stopSlideshow();
+    const modal = document.getElementById('cinemaLightbox');
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+    isLightboxOpen = false;
+}
+
+function nextPhoto() {
+    openLightbox(activeIndex + 1);
+}
+
+function prevPhoto() {
+    openLightbox(activeIndex - 1);
+}
+
+// 3. Slideshow Functionality
+function startSlideshow() {
+    openLightbox(0);
+    toggleSlideshowPlayback(true);
+}
+
+function toggleSlideshowPlayback(forceStart = false) {
+    if (slideshowInterval && !forceStart) {
+        stopSlideshow();
+    } else {
+        clearInterval(slideshowInterval);
+        slideshowInterval = setInterval(nextPhoto, 3500);
+        document.getElementById('slideshowIcon').className = 'bi bi-pause-fill';
+        document.getElementById('slideshowLabel').textContent = 'Pause';
+    }
+}
+
+function stopSlideshow() {
+    if (slideshowInterval) {
+        clearInterval(slideshowInterval);
+        slideshowInterval = null;
+        const icon = document.getElementById('slideshowIcon');
+        const lbl = document.getElementById('slideshowLabel');
+        if (icon) icon.className = 'bi bi-play-fill';
+        if (lbl) lbl.textContent = 'Play Slideshow';
+    }
+}
+
+// Keyboard controls
+document.addEventListener('keydown', function(e) {
+    if (!isLightboxOpen) return;
+    if (e.key === 'ArrowRight') nextPhoto();
+    if (e.key === 'ArrowLeft') prevPhoto();
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'l' || e.key === 'L') {
+        toggleCurrentLightboxFavorite();
+    }
+    if (e.key === ' ') {
+        e.preventDefault();
+        toggleSlideshowPlayback();
+    }
+});
+
+// 4. Client Favorites / Proofing System
+function toggleFavorite(btn, photoId) {
+    const isFav = favoritedIds.has(photoId);
+    if (isFav) {
+        favoritedIds.delete(photoId);
+        btn.classList.remove('favorited');
+        btn.innerHTML = '<i class="bi bi-heart"></i>';
+    } else {
+        favoritedIds.add(photoId);
+        btn.classList.add('favorited');
+        btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
+    }
+
+    const dock = document.getElementById('proofingDock');
+    const countEl = document.getElementById('favCount');
+    countEl.textContent = favoritedIds.size;
+    dock.style.display = favoritedIds.size > 0 ? 'flex' : 'none';
+
+    if (isLightboxOpen && galleryPhotos[activeIndex] && galleryPhotos[activeIndex].id === photoId) {
+        updateLightboxFavoriteUI(photoId);
+    }
+}
+
+function downloadFavorites() {
+    galleryPhotos.forEach(p => {
+        if (favoritedIds.has(p.id) && p.url) {
+            const a = document.createElement('a');
+            a.href = p.url;
+            a.download = p.filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    });
+}
+
+function downloadAllPhotos() {
+    galleryPhotos.forEach((p, index) => {
+        if (p.url) {
+            setTimeout(() => {
+                const a = document.createElement('a');
+                a.href = p.url;
+                a.download = p.filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }, index * 250);
+        }
+    });
+}
+
+// 5. Client 20-Minute Inactivity Auto-Lock & Tab Inactivity Session Closer
+(function init20MinInactivityGuard() {
+    const MAX_IDLE_MS = 20 * 60 * 1000; // 20 minutes = 1200 seconds
+    let lastActivity = Date.now();
+
+    function updateActivity() {
+        lastActivity = Date.now();
+    }
+
+    // Capture user interaction
+    ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => {
+        window.addEventListener(evt, updateActivity, { passive: true });
+    });
+
+    const redirectUrl = "{% url 'galleries:customer_gallery_router' slug=gallery.slug %}";
+
+    function checkInactivity() {
+        const elapsed = Date.now() - lastActivity;
+        if (elapsed >= MAX_IDLE_MS) {
+            window.location.href = redirectUrl;
+        }
+    }
+
+    // Check every second while viewing
+    setInterval(checkInactivity, 1000);
+
+    // Tab visibility change / focus: close session immediately if idle > 20 min when user switches back
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            checkInactivity();
+        }
+    });
+    window.addEventListener('focus', checkInactivity);
+})();
+</script>
+</body>
+</html>

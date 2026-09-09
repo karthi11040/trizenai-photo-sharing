@@ -56,7 +56,8 @@ class EventService:
         event_date,
         created_by: User,
         description: str = '',
-        location: str = ''
+        location: str = '',
+        cover_image = None
     ) -> Event:
         """
         Creates an event. Only Admins can invoke this service.
@@ -69,7 +70,8 @@ class EventService:
             event_date=event_date,
             created_by=created_by,
             description=description.strip(),
-            location=location.strip()
+            location=location.strip(),
+            cover_image=cover_image
         )
         logger.info("Event created: '%s' (ID: %d) by %s", event.name, event.id, created_by.username)
         return event

@@ -1,71 +1,131 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}My Assigned Events &mdash; TrizenAI Photos{% endblock %}
+{% block title %}My Assigned Events &mdash; TrizenAI Studio{% endblock %}
+
+{% block breadcrumbs %}
+    <a href="{% url 'accounts:dashboard_router' %}" class="text-decoration-none text-secondary">Studio Alpha</a>
+    <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+    <span class="fw-semibold text-dark">My Assigned Events</span>
+{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <!-- Header -->
-    <div class="mb-4">
-        <h2 class="fw-bold text-dark mb-1">My Assigned Events</h2>
-        <p class="text-muted small mb-0">Events where you are designated as a team photographer. You can view event logistics and upload photographs.</p>
+<div class="assigned-events-view pb-5">
+    
+    <!-- Top Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h2 class="fw-bold text-dark mb-0">My Assigned Events</h2>
+                <span class="badge rounded-pill px-3 py-1" style="background: #eff6ff; color: #1d4ed8; font-size: 0.75rem; font-weight: 600; border: 1px solid #bfdbfe;">
+                    {{ total_events }} Event{{ total_events|pluralize }}
+                </span>
+            </div>
+            <p class="text-muted small mb-0">Events where you are designated as a team photographer. Upload photos and manage assigned shoots.</p>
+        </div>
     </div>
 
-    {% if events %}
+    {% if events_data %}
         <div class="row g-4">
-            {% for event in events %}
-                <div class="col-md-6 col-lg-4">
-                    <div class="card h-100 neutral-card card-hover d-flex flex-column">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <span class="badge-status badge-team">
-                                <i class="bi bi-calendar3 me-1"></i>{{ event.event_date|date:"M d, Y" }}
-                            </span>
-                            <span class="badge-status" style="background: #F1F5F9; color: var(--color-text-secondary);">
-                                Assigned Member
-                            </span>
+            {% for item in events_data %}
+                {% with ev=item.event thumb=item.thumbnail_url photos_count=item.photos_count my_photos_count=item.my_photos_count members_count=item.members_count %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm bg-white overflow-hidden d-flex flex-column" style="border-radius: 16px; transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                        
+                        <!-- Event Cover Thumbnail Banner -->
+                        <div class="position-relative w-100 bg-light overflow-hidden" style="height: 180px;">
+                            {% if thumb %}
+                                <img src="{{ thumb }}" alt="{{ ev.name }}" class="w-100 h-100 object-fit-cover">
+                            {% else %}
+                                <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-muted" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+                                    <div class="d-flex align-items-center justify-content-center rounded-circle bg-white shadow-xs p-3 mb-1" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-camera-fill text-secondary opacity-75 fs-4"></i>
+                                    </div>
+                                    <span class="small text-muted" style="font-size: 0.75rem;">No Cover Photo</span>
+                                </div>
+                            {% endif %}
+
+                            <!-- Badge Floating Overlay -->
+                            <div class="position-absolute top-0 start-0 m-3">
+                                <span class="badge rounded-pill bg-primary text-white px-2.5 py-1 shadow-sm" style="font-size: 0.72rem; font-weight: 600;">
+                                    <i class="bi bi-person-check-fill me-1"></i>Assigned Shooter
+                                </span>
+                            </div>
+
+                            <!-- Date Badge Floating Overlay -->
+                            <div class="position-absolute bottom-0 end-0 m-3">
+                                <span class="badge bg-white text-dark shadow-xs border px-2.5 py-1" style="font-size: 0.75rem; border-radius: 8px;">
+                                    <i class="bi bi-calendar3 me-1 text-primary"></i>{{ ev.event_date|date:"M d, Y" }}
+                                </span>
+                            </div>
                         </div>
 
-                        <h5 class="fw-bold text-dark mb-2">
-                            <a href="{% url 'events:event_detail' event_id=event.id %}" class="text-decoration-none text-dark">
-                                {{ event.name }}
-                            </a>
-                        </h5>
+                        <!-- Card Body -->
+                        <div class="p-3.5 p-md-4 d-flex flex-column flex-grow-1">
+                            <h5 class="fw-bold text-dark mb-1.5 text-truncate" style="font-size: 1.15rem;">
+                                <a href="{% url 'events:event_detail' event_id=ev.id %}" class="text-decoration-none text-dark hover-primary">
+                                    {{ ev.name }}
+                                </a>
+                            </h5>
 
-                        {% if event.location %}
-                            <p class="small text-muted mb-2">
-                                <i class="bi bi-geo-alt text-secondary me-1"></i>{{ event.location }}
+                            <!-- Location -->
+                            <p class="small text-muted mb-2 d-flex align-items-center gap-1.5" style="font-size: 0.825rem;">
+                                <i class="bi bi-geo-alt-fill text-danger opacity-75"></i>
+                                <span class="text-truncate">{{ ev.location|default:"Studio / Location not specified" }}</span>
                             </p>
-                        {% endif %}
 
-                        {% if event.description %}
-                            <p class="small text-secondary mb-3 flex-grow-1">
-                                {{ event.description|truncatewords:16 }}
+                            <!-- Description -->
+                            <p class="small text-secondary mb-3 flex-grow-1" style="font-size: 0.825rem; line-height: 1.5;">
+                                {% if ev.description %}
+                                    {{ ev.description|truncatewords:14 }}
+                                {% else %}
+                                    <span class="text-muted fst-italic">No additional notes provided.</span>
+                                {% endif %}
                             </p>
-                        {% else %}
-                            <p class="small text-muted fst-italic mb-3 flex-grow-1">No additional notes provided.</p>
-                        {% endif %}
 
-                        <div class="pt-3 border-top d-flex justify-content-between align-items-center mt-auto">
-                            <a href="{% url 'events:event_detail' event_id=event.id %}" class="btn btn-secondary btn-sm">
-                                View Details &rarr;
-                            </a>
-                            <a href="{% url 'events:event_detail' event_id=event.id %}" class="btn btn-primary btn-sm">
-                                <i class="bi bi-cloud-arrow-up me-1"></i> Open Event
-                            </a>
+                            <!-- Shooters & Uploads Strip -->
+                            <div class="d-flex align-items-center justify-content-between py-2 px-2.5 mb-3 rounded-3 bg-light border" style="font-size: 0.78rem; border-color: #f1f5f9 !important;">
+                                <div class="d-flex align-items-center gap-1.5 text-muted">
+                                    <i class="bi bi-cloud-arrow-up-fill text-primary"></i>
+                                    <span>My Uploads: <strong>{{ my_photos_count }}</strong></span>
+                                </div>
+                                <div class="d-flex align-items-center gap-1.5 text-muted">
+                                    <i class="bi bi-images text-secondary"></i>
+                                    <span>Total: <strong>{{ photos_count }}</strong></span>
+                                </div>
+                            </div>
+
+                            <!-- Card Footer Actions -->
+                            <div class="pt-3 border-top d-flex justify-content-between align-items-center mt-auto">
+                                <a href="{% url 'events:event_detail' event_id=ev.id %}" class="btn btn-outline-secondary btn-sm px-3" style="border-radius: 8px;">
+                                    View Details &rarr;
+                                </a>
+                                <a href="{% url 'photos:upload_photos' event_id=ev.id %}" class="btn btn-primary btn-sm px-3 fw-semibold d-flex align-items-center gap-1.5 shadow-sm" style="border-radius: 8px;">
+                                    <i class="bi bi-cloud-arrow-up"></i>
+                                    <span>+ Upload Photos</span>
+                                </a>
+                            </div>
+
                         </div>
                     </div>
                 </div>
+                {% endwith %}
             {% endfor %}
         </div>
     {% else %}
-        <div class="empty-state">
-            <i class="bi bi-calendar-check empty-state-icon d-block"></i>
-            <h4 class="fw-bold text-dark">No Events Assigned Yet</h4>
-            <p class="text-muted small mx-auto mb-3" style="max-width: 440px;">
+        <div class="card border-0 shadow-sm p-5 text-center bg-white" style="border-radius: 16px;">
+            <div class="d-inline-flex p-3 rounded-circle bg-primary-subtle text-primary mb-3 mx-auto" style="width: 64px; height: 64px; align-items: center; justify-content: center;">
+                <i class="bi bi-calendar-check fs-2"></i>
+            </div>
+            <h4 class="fw-bold text-dark mb-1">No Events Assigned Yet</h4>
+            <p class="text-muted small mx-auto mb-4" style="max-width: 440px;">
                 Your team administrator has not assigned you to any photography events yet. Once assigned, they will appear here.
             </p>
-            <a href="{% url 'accounts:dashboard_router' %}" class="btn btn-secondary">
-                <i class="bi bi-speedometer2 me-1"></i> Back to Dashboard
-            </a>
+            <div>
+                <a href="{% url 'accounts:dashboard_router' %}" class="btn btn-light px-4 border" style="border-radius: 10px; min-height: 42px;">
+                    <i class="bi bi-speedometer2 me-1"></i> Back to Dashboard
+                </a>
+            </div>
         </div>
     {% endif %}
 </div>

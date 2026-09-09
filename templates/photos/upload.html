@@ -1,0 +1,451 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Batch Upload Photographs &mdash; {{ event.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-hero-card {
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 20px;
+        background: #ffffff;
+        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0,0,0,0.02);
+        overflow: hidden;
+    }
+    .upload-spec-banner {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: #ffffff;
+        border-radius: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+    .upload-spec-banner::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(0,0,0,0) 70%);
+        pointer-events: none;
+    }
+    .dropzone-box {
+        border: 2.5px dashed #cbd5e1;
+        border-radius: 20px;
+        background: #f8fafc;
+        padding: 3.5rem 2rem;
+        text-align: center;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+    }
+    .dropzone-box:hover, .dropzone-box.dragover {
+        border-color: #4f46e5;
+        background: #f0f3ff;
+        transform: scale(1.005);
+        box-shadow: 0 12px 30px rgba(79, 70, 229, 0.12);
+    }
+    .dropzone-icon-wrapper {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+        color: #4f46e5;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.2);
+        transition: transform 0.3s ease;
+    }
+    .dropzone-box:hover .dropzone-icon-wrapper {
+        transform: translateY(-4px) scale(1.08);
+    }
+    .preview-card {
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        overflow: hidden;
+        position: relative;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .preview-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+        border-color: #cbd5e1;
+    }
+    .preview-thumb-box {
+        position: relative;
+        width: 100%;
+        padding-top: 75%;
+        background: #0f172a;
+        overflow: hidden;
+    }
+    .preview-thumb-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .remove-file-btn {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: rgba(15, 23, 42, 0.8);
+        color: #ffffff;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+        transition: background 0.2s ease;
+        z-index: 10;
+    }
+    .remove-file-btn:hover {
+        background: #ef4444;
+        color: #ffffff;
+    }
+    .format-pill {
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 99px;
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+    <a href="{% url 'events:event_list' %}" class="text-decoration-none text-secondary">Events</a>
+    <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+    <a href="{% url 'events:event_detail' event_id=event.id %}" class="text-decoration-none text-secondary">{{ event.name }}</a>
+    <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+    <span class="fw-semibold text-dark">Batch Photo Upload</span>
+{% endblock %}
+
+{% block content %}
+<div class="upload-workspace-view pb-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-9 col-lg-10">
+            <div class="upload-hero-card p-4 p-md-5">
+                <!-- Title Header -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3 border-bottom pb-4">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <h2 class="fw-bold text-dark mb-0" style="letter-spacing: -0.02em;">Upload Event Photographs</h2>
+                            <span class="badge bg-primary-subtle text-primary fw-semibold px-3 py-1 rounded-pill" style="font-size: 0.8rem;">
+                                <i class="bi bi-camera me-1"></i>{{ event.name }}
+                            </span>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            Select or drag multiple high-resolution photographs to upload directly to Supabase private storage.
+                        </p>
+                    </div>
+                    <a href="{% url 'photos:event_photos' event_id=event.id %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Curation
+                    </a>
+                </div>
+
+                <!-- Studio Specification Dark Banner -->
+                <div class="upload-spec-banner p-4 mb-4 shadow-sm">
+                    <div class="row align-items-center g-3">
+                        <div class="col-md-7">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="bi bi-shield-check text-indigo-400 fs-4 text-warning"></i>
+                                <h6 class="fw-bold mb-0 text-white">Upload Specifications &amp; Compatibility</h6>
+                            </div>
+                            <p class="text-white-50 extra-small mb-2" style="font-size: 0.8rem;">
+                                Supporting full studio formats with high-throughput streaming directly into secure private buckets.
+                            </p>
+                            <div class="d-flex flex-wrap gap-1">
+                                <span class="format-pill">JPEG</span>
+                                <span class="format-pill">PNG</span>
+                                <span class="format-pill">WEBP</span>
+                                <span class="format-pill">TIFF</span>
+                                <span class="format-pill">HEIC</span>
+                                <span class="format-pill">RAW</span>
+                                <span class="format-pill">CR2 / CR3</span>
+                                <span class="format-pill">NEF</span>
+                                <span class="format-pill">ARW</span>
+                                <span class="format-pill">DNG</span>
+                            </div>
+                        </div>
+                        <div class="col-md-5 text-md-end border-start-md border-white-10 ps-md-4">
+                            <div class="small text-white-50 mb-1"><i class="bi bi-hdd-network me-1"></i>File Size Limit</div>
+                            <div class="fw-bold text-white fs-6">Unrestricted Mass Upload</div>
+                            <div class="extra-small text-success mt-1"><i class="bi bi-check-circle-fill me-1"></i>Live Metadata Verification</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form & Dropzone -->
+                <form method="post" enctype="multipart/form-data" id="photoUploadForm">
+                    {% csrf_token %}
+
+                    <div class="dropzone-box mb-4" id="dropzone">
+                        <div class="dropzone-icon-wrapper">
+                            <i class="bi bi-cloud-arrow-up-fill fs-2"></i>
+                        </div>
+                        <h4 class="fw-bold text-dark mb-1">Drag &amp; drop your event photos here</h4>
+                        <p class="text-secondary small mb-3">or click anywhere inside to browse files from your computer</p>
+                        
+                        <input type="file" name="photos" id="fileInput" multiple accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.tiff,.tif,.raw,.cr2,.cr3,.nef,.arw,.dng,.bmp,.gif" class="d-none">
+                        
+                        <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold shadow-sm" onclick="document.getElementById('fileInput').click();">
+                            <i class="bi bi-folder2-open me-2"></i>Browse Computer Files
+                        </button>
+                    </div>
+
+                    <!-- Interactive Photo Queue Preview Grid -->
+                    <div id="fileQueueContainer" class="d-none mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                            <div>
+                                <h6 class="fw-bold text-dark mb-0">Selected Upload Queue</h6>
+                                <span class="text-muted extra-small" id="fileCountBadge">0 photo(s) selected</span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" id="clearQueueBtn">
+                                <i class="bi bi-trash me-1"></i>Clear Queue
+                            </button>
+                        </div>
+
+                        <!-- Grid container for photo thumbnail cards -->
+                        <div class="row g-3" id="photoPreviewGrid" style="max-height: 380px; overflow-y: auto;">
+                        </div>
+                    </div>
+
+                    <!-- Sleek Upload Progress Container -->
+                    <div id="uploadProgressContainer" class="d-none mb-4 p-4 border rounded-4 bg-light shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span id="uploadProgressStatus" class="fw-bold text-dark">Uploading event photos...</span>
+                                <div class="text-muted extra-small mt-0.5" id="uploadDetailStatus">Streaming to Supabase Storage</div>
+                            </div>
+                            <span id="uploadProgressPercent" class="fw-bold text-primary fs-5">0%</span>
+                        </div>
+                        <div class="progress" style="height: 12px; border-radius: 99px; background: #e2e8f0;">
+                            <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Action Controls -->
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top gap-3">
+                        <a href="{% url 'photos:event_photos' event_id=event.id %}" class="btn btn-light rounded-pill px-4 fw-semibold text-secondary">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 py-2.5 fw-bold shadow-sm" id="uploadSubmitBtn" disabled>
+                            <i class="bi bi-cloud-upload me-2"></i>Start Batch Upload
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('photoUploadForm');
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const queueContainer = document.getElementById('fileQueueContainer');
+    const previewGrid = document.getElementById('photoPreviewGrid');
+    const fileCountBadge = document.getElementById('fileCountBadge');
+    const submitBtn = document.getElementById('uploadSubmitBtn');
+    const clearBtn = document.getElementById('clearQueueBtn');
+
+    const progressContainer = document.getElementById('uploadProgressContainer');
+    const progressStatus = document.getElementById('uploadProgressStatus');
+    const detailStatus = document.getElementById('uploadDetailStatus');
+    const progressPercent = document.getElementById('uploadProgressPercent');
+    const progressBar = document.getElementById('uploadProgressBar');
+
+    let queuedFiles = [];
+
+    dropzone.addEventListener('click', (e) => {
+        if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+            fileInput.click();
+        }
+    });
+
+    ['dragenter', 'dragover'].forEach(name => {
+        dropzone.addEventListener(name, (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(name => {
+        dropzone.addEventListener(name, (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+        });
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            addFilesToQueue(Array.from(e.dataTransfer.files));
+        }
+    });
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            addFilesToQueue(Array.from(fileInput.files));
+        }
+    });
+
+    function addFilesToQueue(newFiles) {
+        // Append unique new files
+        newFiles.forEach(f => {
+            if (!queuedFiles.some(existing => existing.name === f.name && existing.size === f.size)) {
+                queuedFiles.push(f);
+            }
+        });
+        syncFileInput();
+        renderQueue();
+    }
+
+    function removeFileFromQueue(index) {
+        queuedFiles.splice(index, 1);
+        syncFileInput();
+        renderQueue();
+    }
+
+    function syncFileInput() {
+        const dt = new DataTransfer();
+        queuedFiles.forEach(file => dt.items.add(file));
+        fileInput.files = dt.files;
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function renderQueue() {
+        previewGrid.innerHTML = '';
+        if (queuedFiles.length > 0) {
+            queueContainer.classList.remove('d-none');
+            submitBtn.disabled = false;
+
+            let totalBytes = 0;
+            queuedFiles.forEach((file, index) => {
+                totalBytes += file.size;
+
+                const col = document.createElement('div');
+                col.className = 'col-6 col-sm-4 col-md-3 col-lg-2.4';
+                
+                const isImage = file.type.startsWith('image/');
+                const objectUrl = isImage ? URL.createObjectURL(file) : null;
+
+                col.innerHTML = `
+                    <div class="preview-card">
+                        <button type="button" class="remove-file-btn" onclick="removeQueuedFile(${index})" title="Remove photo">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        <div class="preview-thumb-box">
+                            ${isImage 
+                                ? `<img src="${objectUrl}" alt="${file.name}" class="preview-thumb-img">`
+                                : `<div class="d-flex align-items-center justify-content-center h-100 text-white-50"><i class="bi bi-file-earmark-image fs-1"></i></div>`
+                            }
+                        </div>
+                        <div class="p-2">
+                            <div class="fw-bold text-dark text-truncate extra-small" title="${file.name}">${file.name}</div>
+                            <div class="text-muted" style="font-size: 0.65rem;">${formatBytes(file.size)}</div>
+                        </div>
+                    </div>
+                `;
+                previewGrid.appendChild(col);
+            });
+
+            fileCountBadge.innerText = `${queuedFiles.length} photo(s) queued (${formatBytes(totalBytes)} total)`;
+        } else {
+            queueContainer.classList.add('d-none');
+            submitBtn.disabled = true;
+        }
+    }
+
+    window.removeQueuedFile = function(index) {
+        removeFileFromQueue(index);
+    };
+
+    clearBtn.addEventListener('click', () => {
+        queuedFiles = [];
+        syncFileInput();
+        renderQueue();
+    });
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (queuedFiles.length === 0) return;
+
+        const formData = new FormData(form);
+        const xhr = new XMLHttpRequest();
+
+        progressContainer.classList.remove('d-none');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Uploading Photographs...';
+
+        xhr.upload.addEventListener('progress', (evt) => {
+            if (evt.lengthComputable) {
+                const percent = Math.round((evt.loaded / evt.total) * 100);
+                progressBar.style.width = percent + '%';
+                progressPercent.textContent = percent + '%';
+                progressStatus.textContent = `Uploading ${queuedFiles.length} photograph(s)...`;
+                detailStatus.textContent = `${formatBytes(evt.loaded)} of ${formatBytes(evt.total)} transferred`;
+            }
+        });
+
+        xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                progressStatus.textContent = 'Upload complete!';
+                detailStatus.textContent = 'Photos successfully saved and metadata verified.';
+                progressBar.className = 'progress-bar bg-success';
+                if (window.showToast) {
+                    window.showToast(`Successfully uploaded ${queuedFiles.length} photo(s).`, 'success');
+                }
+                setTimeout(() => {
+                    window.location.href = "{% url 'photos:event_photos' event_id=event.id %}";
+                }, 800);
+            } else {
+                progressStatus.textContent = 'Upload encountered an error.';
+                progressBar.className = 'progress-bar bg-danger';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-arrow-counterclockwise me-2"></i>Retry Upload';
+                if (window.showToast) {
+                    window.showToast('Upload failed. Please try again.', 'danger');
+                }
+            }
+        });
+
+        xhr.addEventListener('error', () => {
+            progressStatus.textContent = 'Network error during upload.';
+            progressBar.className = 'progress-bar bg-danger';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-arrow-counterclockwise me-2"></i>Retry Upload';
+            if (window.showToast) {
+                window.showToast('Network error occurred.', 'danger');
+            }
+        });
+
+        xhr.open('POST', window.location.href, true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.send(formData);
+    });
+});
+</script>
+{% endblock %}

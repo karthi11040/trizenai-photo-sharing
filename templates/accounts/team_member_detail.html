@@ -1,0 +1,606 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ member.get_full_name|default:member.username }} &mdash; Team Member &mdash; TrizenAI Studio{% endblock %}
+
+{% block breadcrumbs %}
+    <a href="{% url 'accounts:dashboard_router' %}" class="text-decoration-none text-secondary">Studio Alpha</a>
+    <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+    <a href="{% url 'accounts:team_management' %}" class="text-decoration-none text-secondary">Team</a>
+    <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+    <span class="fw-semibold text-dark">{{ member.get_full_name|default:member.username }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="team-detail-view pb-5">
+
+    <!-- Top Member Header Banner -->
+    <div class="card border-0 shadow-sm p-4 mb-4 bg-white" style="border-radius: 16px;">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle text-white fw-bold d-flex align-items-center justify-content-center shadow-sm flex-shrink-0" 
+                     style="width: 58px; height: 58px; font-size: 1.35rem; background: {% if status_code == 'PENDING' %}#d97706{% elif status_code == 'SUSPENDED' %}#dc2626{% else %}#3b82f6{% endif %};">
+                    {{ member.first_name|default:member.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                        <h3 class="fw-bold text-dark mb-0">{{ member.get_full_name|default:member.username }}</h3>
+                        <span class="badge rounded-pill px-2.5 py-1 small fw-semibold" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
+                            Team Member
+                        </span>
+                        {% if status_code == 'ACTIVE' %}
+                            <span class="badge rounded-pill px-2.5 py-1 small bg-success-subtle text-success border border-success-subtle">
+                                <span class="d-inline-block rounded-circle me-1" style="width: 6px; height: 6px; background-color: currentColor;"></span>
+                                Active
+                            </span>
+                        {% elif status_code == 'PENDING' %}
+                            <span class="badge rounded-pill px-2.5 py-1 small bg-warning-subtle text-warning border border-warning-subtle">
+                                <span class="d-inline-block rounded-circle me-1" style="width: 6px; height: 6px; background-color: currentColor;"></span>
+                                Pending
+                            </span>
+                        {% else %}
+                            <span class="badge rounded-pill px-2.5 py-1 small bg-danger-subtle text-danger border border-danger-subtle">
+                                <span class="d-inline-block rounded-circle me-1" style="width: 6px; height: 6px; background-color: currentColor;"></span>
+                                Suspended
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="text-muted small d-flex flex-wrap align-items-center gap-2">
+                        <span><i class="bi bi-envelope me-1"></i>{{ member.email|default:"No email configured" }}</span>
+                        <span>&bull;</span>
+                        <span><i class="bi bi-telephone me-1"></i>{{ phone_number|default:"No phone" }}</span>
+                        <span>&bull;</span>
+                        <span><i class="bi bi-building me-1"></i>{{ workspace_name }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Primary Header Action Buttons -->
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'accounts:team_management' %}" class="btn btn-light btn-sm px-3" style="border-radius: 10px; min-height: 38px;">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Team
+                </a>
+                <button type="button" class="btn btn-outline-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#resetPasswordModal" style="border-radius: 10px; min-height: 38px;">
+                    <i class="bi bi-key me-1"></i> Send Password Reset
+                </button>
+                {% if status_code == 'ACTIVE' %}
+                    <button type="button" class="btn btn-outline-warning btn-sm px-3" data-bs-toggle="modal" data-bs-target="#suspendModal" style="border-radius: 10px; min-height: 38px;">
+                        <i class="bi bi-pause-circle me-1"></i> Suspend
+                    </button>
+                {% else %}
+                    <button type="button" class="btn btn-outline-success btn-sm px-3" data-bs-toggle="modal" data-bs-target="#reactivateModal" style="border-radius: 10px; min-height: 38px;">
+                        <i class="bi bi-play-circle me-1"></i> Reactivate
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Metric Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card h-100 p-3 border-0 shadow-sm bg-white" style="border-radius: 16px;">
+                <div class="text-muted small mb-1" style="font-size: 0.75rem;">Account Status</div>
+                <div class="fs-5 fw-bold text-dark">{{ status_code|title }}</div>
+                <div class="text-muted small pt-1" style="font-size: 0.72rem;">
+                    {% if status_code == 'ACTIVE' %}Can sign in and upload photos{% elif status_code == 'PENDING' %}Invitation sent, pending activation{% else %}Access temporarily revoked{% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 p-3 border-0 shadow-sm bg-white" style="border-radius: 16px;">
+                <div class="text-muted small mb-1" style="font-size: 0.75rem;">Assigned Events</div>
+                <div class="fs-5 fw-bold text-dark">{{ assigned_events_count }}</div>
+                <div class="text-muted small pt-1" style="font-size: 0.72rem;">Active shooting assignments</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 p-3 border-0 shadow-sm bg-white" style="border-radius: 16px;">
+                <div class="text-muted small mb-1" style="font-size: 0.75rem;">Photos Uploaded</div>
+                <div class="fs-5 fw-bold text-dark">{{ photos_uploaded_count }}</div>
+                <div class="text-muted small pt-1" style="font-size: 0.72rem;">RAW and JPG files ingested</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 p-3 border-0 shadow-sm bg-white" style="border-radius: 16px;">
+                <div class="text-muted small mb-1" style="font-size: 0.75rem;">Last Active</div>
+                <div class="fs-6 fw-bold text-dark text-truncate">{{ member.last_login|date:"M d, Y"|default:"Never logged in" }}</div>
+                <div class="text-muted small pt-1" style="font-size: 0.72rem;">{{ last_login_device }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5 Dedicated Tabs Navigation -->
+    <div class="card border-0 shadow-sm bg-white overflow-hidden mb-4" style="border-radius: 16px;">
+        <div class="border-bottom px-3 pt-2 bg-light">
+            <ul class="nav nav-tabs border-0" id="teamMemberTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-semibold text-dark border-0 px-3 py-2.5" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                        <i class="bi bi-info-circle me-1"></i> Overview
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold text-dark border-0 px-3 py-2.5" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab">
+                        <i class="bi bi-calendar-check me-1"></i> Assigned Events ({{ assigned_events_count }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold text-dark border-0 px-3 py-2.5" id="photos-tab" data-bs-toggle="tab" data-bs-target="#photos" type="button" role="tab">
+                        <i class="bi bi-images me-1"></i> Photos ({{ photos_uploaded_count }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold text-dark border-0 px-3 py-2.5" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab">
+                        <i class="bi bi-clock-history me-1"></i> Activity
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold text-dark border-0 px-3 py-2.5" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab">
+                        <i class="bi bi-shield-check me-1"></i> Security
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="tab-content p-4" id="teamMemberTabContent">
+            
+            <!-- TAB 1: OVERVIEW -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-12 col-lg-6">
+                        <div class="card border p-3 h-100 bg-light" style="border-radius: 12px;">
+                            <h6 class="fw-bold text-dark mb-3">Profile Information</h6>
+                            <div class="row g-2 small">
+                                <div class="col-5 text-muted">First Name:</div>
+                                <div class="col-7 fw-semibold text-dark">{{ member.first_name|default:"Not specified" }}</div>
+                                
+                                <div class="col-5 text-muted">Last Name:</div>
+                                <div class="col-7 fw-semibold text-dark">{{ member.last_name|default:"Not specified" }}</div>
+
+                                <div class="col-5 text-muted">Email Address:</div>
+                                <div class="col-7 fw-semibold text-dark d-flex align-items-center gap-1">
+                                    <span>{{ member.email }}</span>
+                                    {% if is_email_verified %}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.65rem;">
+                                            <i class="bi bi-check-circle-fill me-0.5"></i> Verified
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size: 0.65rem;">
+                                            Verification Pending
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-5 text-muted">Phone Number:</div>
+                                <div class="col-7 fw-semibold text-dark">{{ phone_number|default:"Not specified" }}</div>
+
+                                <div class="col-5 text-muted">Username:</div>
+                                <div class="col-7 fw-semibold text-dark">@{{ member.username }}</div>
+
+                                <div class="col-5 text-muted">Joined Workspace:</div>
+                                <div class="col-7 fw-semibold text-dark">{{ member.date_joined|date:"M d, Y"|default:"Sep 06, 2026" }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-6">
+                        <div class="card border p-3 h-100 bg-light" style="border-radius: 12px;">
+                            <h6 class="fw-bold text-dark mb-3">Workspace Membership & Access</h6>
+                            <div class="row g-2 small mb-3">
+                                <div class="col-5 text-muted">Workspace:</div>
+                                <div class="col-7 fw-semibold text-dark">{{ workspace_name }}</div>
+
+                                <div class="col-5 text-muted">Member Type:</div>
+                                <div class="col-7 fw-semibold text-dark">Team Member</div>
+
+                                <div class="col-5 text-muted">Membership State:</div>
+                                <div class="col-7 fw-semibold text-dark">Active Workspace Member</div>
+
+                                <div class="col-5 text-muted">Login Status:</div>
+                                <div class="col-7 fw-semibold text-dark">
+                                    {% if member.last_login %}
+                                        Last login {{ member.last_login|date:"M d, Y at I:i A" }}
+                                    {% else %}
+                                        Never logged in
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Authorization Model Note -->
+                            <div class="p-2.5 rounded-3 bg-white border small text-muted">
+                                <div class="fw-semibold text-dark mb-1" style="font-size: 0.78rem;">Event Access Authorization</div>
+                                <div class="d-flex align-items-center gap-1 text-primary fw-bold mb-1" style="font-size: 0.75rem;">
+                                    <span>Workspace Membership</span>
+                                    <span>+</span>
+                                    <span>Event Assignment</span>
+                                    <span>=</span>
+                                    <span>Event Access</span>
+                                </div>
+                                <div style="font-size: 0.72rem;">Team members can only access and upload photographs to events specifically assigned to them.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="card border p-3 bg-white" style="border-radius: 12px;">
+                            <h6 class="fw-bold text-dark mb-2">Permissions Matrix</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0 small">
+                                    <thead>
+                                        <tr class="text-muted">
+                                            <th class="border-0">Allowed Capabilities</th>
+                                            <th class="border-0 text-muted">Restricted / Prohibited Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-success py-1.5"><i class="bi bi-check-lg me-1.5"></i> Sign in with email and password</td>
+                                            <td class="text-danger py-1.5"><i class="bi bi-x-lg me-1.5"></i> Create new events</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-success py-1.5"><i class="bi bi-check-lg me-1.5"></i> Access assigned photography events</td>
+                                            <td class="text-danger py-1.5"><i class="bi bi-x-lg me-1.5"></i> Manage team members or invite photographers</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-success py-1.5"><i class="bi bi-check-lg me-1.5"></i> Upload RAW and JPEG photos to assigned events</td>
+                                            <td class="text-danger py-1.5"><i class="bi bi-x-lg me-1.5"></i> Create or promote workspace administrators</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-success py-1.5"><i class="bi bi-check-lg me-1.5"></i> View own uploaded photos</td>
+                                            <td class="text-danger py-1.5"><i class="bi bi-x-lg me-1.5"></i> Publish client galleries or configure PINs</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-success py-1.5"><i class="bi bi-check-lg me-1.5"></i> Update own personal profile</td>
+                                            <td class="text-danger py-1.5"><i class="bi bi-x-lg me-1.5"></i> Manage or delete other photographers' photos</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: ASSIGNED EVENTS -->
+            <div class="tab-pane fade" id="events" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-dark mb-0">Assigned Photography Events</h6>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">{{ assigned_events_count }} Events Assigned</span>
+                </div>
+
+                {% if assigned_events %}
+                    <div class="row g-3">
+                        {% for item in assigned_events %}
+                            <div class="col-12 col-md-6">
+                                <div class="card border p-3 h-100 bg-light" style="border-radius: 12px;">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="fw-bold text-dark mb-0">{{ item.event.name }}</h6>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle small" style="font-size: 0.7rem;">
+                                            {{ item.assignment_status }}
+                                        </span>
+                                    </div>
+                                    <div class="text-muted small mb-2">
+                                        <div><i class="bi bi-calendar-event me-1"></i>{{ item.event.event_date|date:"M d, Y"|default:"Date not set" }}</div>
+                                        <div><i class="bi bi-geo-alt me-1"></i>{{ item.event.location|default:"Studio / Location" }}</div>
+                                    </div>
+                                    <div class="pt-2 border-top d-flex justify-content-between align-items-center mt-auto">
+                                        <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small" style="font-size: 0.72rem;">
+                                            {{ item.photos_count }} photos uploaded by member
+                                        </span>
+                                        <a href="{% url 'events:event_detail' event_id=item.event.id %}" class="btn btn-outline-primary btn-sm px-2.5" style="border-radius: 8px;">
+                                            View Event <i class="bi bi-arrow-right"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5 text-muted small">
+                        <i class="bi bi-calendar-x fs-1 d-block mb-2 text-muted"></i>
+                        <h6 class="fw-bold text-dark mb-1">No Events Assigned Yet</h6>
+                        <p class="text-muted small mb-3">Assign this member to photography events from the team management modal or the event details page.</p>
+                        <a href="{% url 'accounts:team_management' %}" class="btn btn-primary btn-sm px-3" style="border-radius: 10px;">
+                            Go to Team Management
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- TAB 3: PHOTOS -->
+            <div class="tab-pane fade" id="photos" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0">Photos Uploaded by {{ member.first_name|default:member.username }}</h6>
+                        <div class="text-muted small" style="font-size: 0.75rem;">Showing photos exclusively ingested by this shooter.</div>
+                    </div>
+                    <span class="badge bg-secondary text-white rounded-pill px-3 py-1 small">{{ photos_uploaded_count }} Total</span>
+                </div>
+
+                {% if uploaded_photos %}
+                    <div class="row g-3">
+                        {% for item in uploaded_photos %}
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="card border rounded-3 overflow-hidden h-100 shadow-xs bg-white">
+                                    <div style="height: 140px; background: #e2e8f0; overflow: hidden;" class="position-relative">
+                                        {% if item.thumbnail_url %}
+                                            <img src="{{ item.thumbnail_url }}" alt="{{ item.photo.filename }}" class="w-100 h-100 object-fit-cover">
+                                        {% else %}
+                                            <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-light text-muted small">
+                                                <i class="bi bi-image fs-3"></i>
+                                            </div>
+                                        {% endif %}
+                                        <span class="position-absolute bottom-0 end-0 bg-dark text-white px-1.5 py-0.5 small" style="font-size: 0.65rem; border-top-left-radius: 6px;">
+                                            {{ item.file_size_str }}
+                                        </span>
+                                    </div>
+                                    <div class="p-2.5">
+                                        <div class="fw-semibold text-dark text-truncate small" title="{{ item.photo.filename }}">{{ item.photo.filename }}</div>
+                                        <div class="text-muted" style="font-size: 0.7rem;">{{ item.photo.event.name }} &bull; {{ item.photo.created_at|date:"M d, Y" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5 text-muted small">
+                        <i class="bi bi-camera fs-1 d-block mb-2 text-muted"></i>
+                        <h6 class="fw-bold text-dark mb-1">No Photos Uploaded Yet</h6>
+                        <p class="text-muted small mb-0">Photos uploaded by this photographer to their assigned events will appear here.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- TAB 4: ACTIVITY -->
+            <div class="tab-pane fade" id="activity" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-12 col-lg-6">
+                        <h6 class="fw-bold text-dark mb-3">Application Activity Log</h6>
+                        <div class="timeline ps-3 border-start">
+                            {% for item in uploaded_photos|slice:":4" %}
+                                <div class="position-relative mb-3 ps-3">
+                                    <span class="position-absolute top-0 start-0 translate-middle p-1.5 bg-primary rounded-circle border border-white"></span>
+                                    <div class="small fw-semibold text-dark">Uploaded photo {{ item.photo.filename }}</div>
+                                    <div class="text-muted" style="font-size: 0.72rem;">Added to {{ item.photo.event.name }} &bull; {{ item.photo.created_at|date:"M d, Y" }}</div>
+                                </div>
+                            {% endfor %}
+                            <div class="position-relative mb-3 ps-3">
+                                <span class="position-absolute top-0 start-0 translate-middle p-1.5 bg-success rounded-circle border border-white"></span>
+                                <div class="small fw-semibold text-dark">Signed in to workspace</div>
+                                <div class="text-muted" style="font-size: 0.72rem;">Authenticated via {{ last_login_device }} &bull; {{ member.last_login|date:"M d, Y"|default:"Recently" }}</div>
+                            </div>
+                            <div class="position-relative ps-3">
+                                <span class="position-absolute top-0 start-0 translate-middle p-1.5 bg-secondary rounded-circle border border-white"></span>
+                                <div class="small fw-semibold text-dark">Team Member account created</div>
+                                <div class="text-muted" style="font-size: 0.72rem;">Invited to Studio Alpha workspace &bull; {{ member.date_joined|date:"M d, Y"|default:"Sep 06, 2026" }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-6">
+                        <h6 class="fw-bold text-dark mb-3">Security Timeline</h6>
+                        <div class="timeline ps-3 border-start">
+                            <div class="position-relative mb-3 ps-3">
+                                <span class="position-absolute top-0 start-0 translate-middle p-1.5 bg-success rounded-circle border border-white"></span>
+                                <div class="small fw-semibold text-dark">Account Created</div>
+                                <div class="text-muted" style="font-size: 0.72rem;">Initiated by Administrator &bull; {{ member.date_joined|date:"M d, Y"|default:"Sep 06, 2026" }}</div>
+                            </div>
+                            <div class="position-relative mb-3 ps-3">
+                                <span class="position-absolute top-0 start-0 translate-middle p-1.5 bg-success rounded-circle border border-white"></span>
+                                <div class="small fw-semibold text-dark">Invitation Dispatched</div>
+                                <div class="text-muted" style="font-size: 0.72rem;">One-time activation link delivered to {{ member.email }}</div>
+                            </div>
+                            <div class="position-relative mb-3 ps-3">
+                                <span class="position-absolute top-0 start-0 translate-middle p-1.5 bg-success rounded-circle border border-white"></span>
+                                <div class="small fw-semibold text-dark">Email Verification</div>
+                                <div class="text-muted" style="font-size: 0.72rem;">Verified via Supabase verification flow &bull; Status: Active</div>
+                            </div>
+                            <div class="position-relative ps-3">
+                                <span class="position-absolute top-0 start-0 translate-middle p-1.5 bg-success rounded-circle border border-white"></span>
+                                <div class="small fw-semibold text-dark">Password Configured</div>
+                                <div class="text-muted" style="font-size: 0.72rem;">PBKDF2 SHA-256 encrypted password active &bull; Last updated {{ last_password_change }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: SECURITY -->
+            <div class="tab-pane fade" id="security" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-12 col-lg-6">
+                        <div class="card border p-3 bg-light h-100" style="border-radius: 12px;">
+                            <h6 class="fw-bold text-dark mb-3">Account Security Status</h6>
+                            <div class="row g-2 small mb-3">
+                                <div class="col-5 text-muted">Email Verification:</div>
+                                <div class="col-7 fw-semibold text-dark">
+                                    {% if is_email_verified %}
+                                        <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Verified</span>
+                                    {% else %}
+                                        <span class="text-warning"><i class="bi bi-clock-history me-1"></i> Verification Pending</span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-5 text-muted">Password Status:</div>
+                                <div class="col-7 fw-semibold text-success"><i class="bi bi-shield-lock-fill me-1"></i> Configured</div>
+
+                                <div class="col-5 text-muted">Last Password Change:</div>
+                                <div class="col-7 fw-semibold text-dark">{{ last_password_change }}</div>
+
+                                <div class="col-5 text-muted">Total Logins:</div>
+                                <div class="col-7 fw-semibold text-dark">{{ login_count }} successful logins</div>
+
+                                <div class="col-5 text-muted">Last Known Device:</div>
+                                <div class="col-7 fw-semibold text-dark">{{ last_login_device }}</div>
+                            </div>
+
+                            <div class="d-flex flex-column gap-2 mt-auto">
+                                <button type="button" class="btn btn-outline-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#resetPasswordModal" style="border-radius: 8px;">
+                                    <i class="bi bi-key me-1"></i> Send Password Reset Link
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#signOutSessionsModal" style="border-radius: 8px;">
+                                    <i class="bi bi-shield-x me-1"></i> Sign Out All Active Sessions
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-6">
+                        <div class="card border p-3 border-danger-subtle bg-white h-100" style="border-radius: 12px;">
+                            <h6 class="fw-bold text-danger mb-2"><i class="bi bi-exclamation-triangle me-1"></i> Danger Zone</h6>
+                            <p class="text-muted small mb-3">
+                                Destructive actions for this member. Existing uploaded photos will remain preserved and associated with their account in the database.
+                            </p>
+
+                            <div class="d-flex flex-column gap-2 mt-auto">
+                                {% if status_code == 'ACTIVE' %}
+                                    <button type="button" class="btn btn-outline-warning btn-sm w-100 text-start d-flex justify-content-between align-items-center" data-bs-toggle="modal" data-bs-target="#suspendModal" style="border-radius: 8px;">
+                                        <span><i class="bi bi-pause-circle me-1"></i> Suspend Account</span>
+                                        <i class="bi bi-chevron-right small"></i>
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-outline-success btn-sm w-100 text-start d-flex justify-content-between align-items-center" data-bs-toggle="modal" data-bs-target="#reactivateModal" style="border-radius: 8px;">
+                                        <span><i class="bi bi-play-circle me-1"></i> Reactivate Account</span>
+                                        <i class="bi bi-chevron-right small"></i>
+                                    </button>
+                                {% endif %}
+
+                                <button type="button" class="btn btn-outline-danger btn-sm w-100 text-start d-flex justify-content-between align-items-center" data-bs-toggle="modal" data-bs-target="#removeModal" style="border-radius: 8px;">
+                                    <span><i class="bi bi-person-x me-1"></i> Remove from Workspace</span>
+                                    <i class="bi bi-chevron-right small"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal 1: Send Password Reset Confirmation -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 rounded-circle bg-primary-subtle text-primary mb-3">
+                    <i class="bi bi-key-fill" style="font-size: 2.2rem;"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">Send password reset email?</h5>
+                <p class="text-secondary small mb-4">
+                    A secure password reset link will be sent to <strong>{{ member.email }}</strong>.
+                </p>
+                <form method="post" action="{% url 'accounts:team_member_send_password_reset' member_id=member.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-light px-4 flex-fill" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 44px;">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4 flex-fill fw-semibold" style="border-radius: 10px; min-height: 44px;">Send Reset Link</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 2: Suspend Account Confirmation -->
+<div class="modal fade" id="suspendModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 rounded-circle bg-warning-subtle text-warning mb-3">
+                    <i class="bi bi-pause-circle-fill" style="font-size: 2.2rem;"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">Suspend {{ member.get_full_name|default:member.username }}?</h5>
+                <p class="text-secondary small mb-4">
+                    This will prevent the Team Member from signing in and accessing assigned workspace resources.
+                </p>
+                <form method="post" action="{% url 'accounts:team_member_suspend' member_id=member.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-light px-4 flex-fill" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 44px;">Cancel</button>
+                        <button type="submit" class="btn btn-danger px-4 flex-fill fw-semibold" style="border-radius: 10px; min-height: 44px;">Suspend Account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 3: Reactivate Account Confirmation -->
+<div class="modal fade" id="reactivateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 rounded-circle bg-success-subtle text-success mb-3">
+                    <i class="bi bi-play-circle-fill" style="font-size: 2.2rem;"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">Restore access for {{ member.get_full_name|default:member.username }}?</h5>
+                <p class="text-secondary small mb-4">
+                    The Team Member will be able to sign in again and access their assigned events.
+                </p>
+                <form method="post" action="{% url 'accounts:team_member_reactivate' member_id=member.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-light px-4 flex-fill" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 44px;">Cancel</button>
+                        <button type="submit" class="btn btn-success px-4 flex-fill fw-semibold text-white" style="border-radius: 10px; min-height: 44px;">Reactivate</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 4: Remove Member Confirmation -->
+<div class="modal fade" id="removeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 rounded-circle bg-danger-subtle text-danger mb-3">
+                    <i class="bi bi-exclamation-triangle-fill" style="font-size: 2.2rem;"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-1">Remove {{ member.get_full_name|default:member.username }} from {{ workspace_name }}?</h4>
+                <p class="text-secondary small mb-4 px-2">
+                    This will revoke workspace access. Existing uploaded photos will remain associated with the account unless explicitly deleted by an authorized administrator.
+                </p>
+                <form method="post" action="{% url 'accounts:team_member_remove' member_id=member.id %}">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-light px-4 flex-fill" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 44px;">Cancel</button>
+                        <button type="submit" class="btn btn-danger px-4 flex-fill fw-semibold" style="border-radius: 10px; min-height: 44px;">Remove Member</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 5: Sign Out All Sessions Confirmation -->
+<div class="modal fade" id="signOutSessionsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 rounded-circle bg-secondary-subtle text-secondary mb-3">
+                    <i class="bi bi-shield-x" style="font-size: 2.2rem;"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">Sign out all active sessions?</h5>
+                <p class="text-secondary small mb-4">
+                    This will sign the Team Member out of all currently active devices. They will need to sign in again.
+                </p>
+                <form method="post" action="{% url 'accounts:team_member_sign_out_sessions' member_id=member.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-light px-4 flex-fill" data-bs-dismiss="modal" style="border-radius: 10px; min-height: 44px;">Cancel</button>
+                        <button type="submit" class="btn btn-secondary px-4 flex-fill fw-semibold" style="border-radius: 10px; min-height: 44px;">Sign Out All Sessions</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,542 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Review Photos &mdash; {{ event.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .curation-card {
+        border-radius: var(--radius-lg, 16px);
+        overflow: hidden;
+        border: 2px solid rgba(226, 232, 240, 0.9);
+        background: #ffffff;
+        transition: all var(--transition-normal, 0.2s cubic-bezier(0.4, 0, 0.2, 1));
+        position: relative;
+        cursor: pointer;
+        box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.05));
+    }
+    .curation-card:hover {
+        border-color: #cbd5e1;
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md, 0 10px 25px -5px rgba(0, 0, 0, 0.08));
+    }
+    .curation-card.is-selected {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25), var(--shadow-md);
+    }
+    .curation-card.is-live {
+        border-color: #10b981;
+        cursor: default;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+    .curation-card.is-live:hover {
+        transform: none;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+    .curation-card.is-live .curation-thumb {
+        transform: none !important;
+    }
+    .curation-card.is-live .selection-check-badge {
+        background: #10b981;
+        color: #ffffff;
+        border-color: #10b981;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+    }
+    .curation-thumb-container {
+        position: relative;
+        width: 100%;
+        padding-top: 100%; /* 1:1 Aspect ratio */
+        background: #0f172a;
+        overflow: hidden;
+    }
+    .curation-thumb {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.25s ease;
+    }
+    .curation-card:hover .curation-thumb {
+        transform: scale(1.04);
+    }
+    .selection-check-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        width: 30px;
+        height: 30px;
+        border-radius: 99px;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: transparent;
+        border: 1.5px solid rgba(255, 255, 255, 0.9);
+        transition: all 0.2s ease;
+        z-index: 10;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .curation-card.is-selected .selection-check-badge {
+        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        color: #ffffff;
+        border-color: #4f46e5;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.45);
+    }
+    .photo-tag-overlay {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: #ffffff;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 3px 9px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .floating-bottom-bar {
+        position: fixed;
+        bottom: 28px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(15, 23, 42, 0.96);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        color: #ffffff;
+        padding: 0.65rem 1.35rem 0.65rem 0.85rem;
+        border-radius: 9999px;
+        box-shadow: 0 24px 50px -10px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15);
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2.25rem;
+        z-index: 1060;
+        width: max-content;
+        max-width: calc(100vw - 32px);
+        box-sizing: border-box;
+    }
+    .dock-action-btn {
+        height: 40px;
+        padding: 0 1.2rem;
+        border-radius: 9999px;
+        font-size: 0.84rem;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        text-decoration: none;
+        flex-shrink: 0;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        cursor: pointer;
+    }
+    .dock-btn-outline {
+        background: rgba(255, 255, 255, 0.06);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+    }
+    .dock-btn-outline:hover {
+        background: rgba(255, 255, 255, 0.16);
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.6);
+        transform: translateY(-1px);
+    }
+    .dock-btn-light {
+        background: #ffffff;
+        color: #0f172a;
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+    .dock-btn-light:hover {
+        background: #f8fafc;
+        color: #0f172a;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .dock-btn-primary {
+        background: #2563eb;
+        color: #ffffff;
+        border: 1px solid #3b82f6;
+        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.5);
+    }
+    .dock-btn-primary:hover:not(:disabled) {
+        background: #1d4ed8;
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.65);
+    }
+    .dock-btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+    @media (max-width: 860px) {
+        .floating-bottom-bar {
+            width: calc(100vw - 24px);
+            max-width: calc(100vw - 24px);
+            flex-direction: column;
+            gap: 0.85rem;
+            bottom: 12px;
+            padding: 1rem;
+            border-radius: 20px;
+        }
+        .dock-actions-group {
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+    <a href="{% url 'events:event_list' %}" class="text-decoration-none text-secondary">Events</a>
+    <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+    <a href="{% url 'events:event_detail' event_id=event.id %}" class="text-decoration-none text-secondary">{{ event.name }}</a>
+    <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+    <span class="fw-semibold text-dark">Photo Review &amp; Curation</span>
+    <span class="badge rounded-pill px-2 py-0.5 ms-1" style="background: #f3e8ff; color: #9333ea; font-size: 0.68rem;">Phase II: Lead Curation</span>
+{% endblock %}
+
+{% block content %}
+<div class="photo-curation-view pb-5" id="curation-view-wrapper">
+    <!-- Header & Proofing Progress Banner -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 p-4 rounded-4 bg-white border shadow-sm gap-3">
+        <div>
+            <h1 class="fw-bold tracking-tight text-dark mb-1" style="font-size: 1.85rem;">
+                Review Photos &mdash; {{ event.name }}
+            </h1>
+            <div class="d-flex flex-wrap align-items-center gap-3 text-secondary small">
+                <span><strong id="total-uploaded-count">{{ photos|length }}</strong> Total Uploaded</span>
+                <span>&bull;</span>
+                <span><strong>{{ event.memberships.count|default:1 }}</strong> Team Shooters</span>
+                <span>&bull;</span>
+                <span><i class="bi bi-calendar-event me-1 text-primary"></i>Event Date: <strong>{{ event.event_date|date:"M d, Y" }}</strong></span>
+                <span>&bull;</span>
+                <span class="text-primary fw-medium">Curation Quota: Recommended for Client</span>
+            </div>
+        </div>
+
+        <!-- Proofing Progress Card -->
+        <div class="bg-light p-3 rounded-3 border" style="min-width: 260px;">
+            <div class="d-flex justify-content-between align-items-center small mb-1">
+                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.7rem;">Proofing Progress</span>
+                <span class="fw-bold text-dark"><span id="reviewed-count">{{ photos|length }}</span> / <span id="total-progress-count">{{ photos|length }}</span></span>
+            </div>
+            <div class="progress" style="height: 6px; border-radius: 99px; background: #cbd5e1;">
+                <div class="progress-bar bg-primary" id="proofing-progress-bar" style="width: 100%;"></div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-1" style="font-size: 0.75rem;">
+                <span class="text-muted" id="proofing-pct-label">100% reviewed</span>
+                <span class="text-success fw-semibold"><i class="bi bi-shield-check me-1"></i>Verified</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Toolbar Bar -->
+    <div class="card border-0 bg-white shadow-sm rounded-4 p-3 mb-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <!-- Shooters Filter -->
+                <select id="shooter-filter-select" class="form-select form-select-sm rounded-pill border-secondary-subtle px-3" style="width: auto; background-color: #fff;">
+                    <option value="all">All Shooters</option>
+                    {% for m in event.memberships.all %}
+                        <option value="{{ m.user.id }}">{{ m.user.username }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- Upload Date Filter -->
+                <div class="input-group input-group-sm" style="width: auto;">
+                    <span class="input-group-text bg-light border-end-0" title="Filter by Photo Upload Date"><i class="bi bi-calendar-event text-muted"></i></span>
+                    <input type="date" id="date-filter-input" class="form-control form-control-sm rounded-end border-secondary-subtle px-2" placeholder="Upload Date">
+                </div>
+
+                <!-- Rating Filter -->
+                <select id="rating-filter-select" class="form-select form-select-sm rounded-pill border-secondary-subtle px-3" style="width: auto; background-color: #fff;">
+                    <option value="all">All Ratings</option>
+                    <option value="5">5 Stars Only</option>
+                    <option value="3">3+ Stars Only</option>
+                </select>
+
+                <!-- Capture Order Sort -->
+                <select id="sort-order-select" class="form-select form-select-sm rounded-pill border-secondary-subtle px-3" style="width: auto; background-color: #fff;">
+                    <option value="desc">Newest First</option>
+                    <option value="asc">Oldest First</option>
+                </select>
+
+                <!-- Filename Search -->
+                <div class="input-group input-group-sm" style="width: 220px;">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="photo-search-input" class="form-control bg-light border-start-0 ps-0" placeholder="Search filename...">
+                </div>
+            </div>
+
+            <!-- Batch Operations -->
+            <div class="d-flex align-items-center gap-2">
+                <button id="select-all-btn" class="btn btn-sm btn-outline-primary fw-semibold px-3 rounded-pill"
+                        hx-post="{% url 'photos:select_all_photos' event_id=event.id %}"
+                        hx-target="#photo-grid-container"
+                        hx-swap="innerHTML">
+                    Select All Batch
+                </button>
+                <button id="clear-selection-btn" class="btn btn-sm btn-outline-secondary fw-semibold px-3 rounded-pill"
+                        hx-post="{% url 'photos:clear_photo_selection' event_id=event.id %}"
+                        hx-target="#photo-grid-container"
+                        hx-swap="innerHTML">
+                    Clear Selection
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden input tracking total count for live polling -->
+    <form id="live-polling-form">
+        <input type="hidden" id="known-count-input" name="known_count" value="{{ photos|length }}">
+    </form>
+
+    <!-- Curation Photo Grid Container with Live Polling -->
+    <div class="row g-3 g-md-4 mb-5 pb-5" 
+         id="photo-grid-container"
+         hx-get="{% url 'photos:live_photos' event_id=event.id %}"
+         hx-trigger="every 10s"
+         hx-include="#known-count-input"
+         hx-swap="beforeend">
+        {% include 'photos/partials/photo_grid_partial.html' with photos=photos event=event %}
+    </div>
+</div>
+
+<!-- Floating Bottom Curation Dock -->
+<div class="floating-bottom-bar shadow-lg">
+    <div class="d-flex align-items-center gap-3 flex-shrink-0">
+        <div class="rounded-3 bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);">
+            <i class="bi bi-collection-fill fs-5"></i>
+        </div>
+        <div class="flex-shrink-0 text-start">
+            <div class="fw-bold text-white lh-1 mb-1" style="font-size: 0.95rem; white-space: nowrap;">
+                <span id="selected-counter">{{ selected_count }}</span> Photos Selected
+            </div>
+            <div class="text-white-50 small" style="font-size: 0.75rem; white-space: nowrap; line-height: 1;">Ready for client proofing export &amp; gallery generation</div>
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-2.5 ms-auto flex-shrink-0 dock-actions-group">
+        <button id="dock-deselect-btn" class="dock-action-btn dock-btn-outline"
+                hx-post="{% url 'photos:clear_photo_selection' event_id=event.id %}"
+                hx-target="#photo-grid-container"
+                hx-swap="innerHTML">
+            <span>Deselect All</span>
+        </button>
+
+        <button id="view-only-selected-btn" class="dock-action-btn dock-btn-light" type="button" onclick="toggleViewOnlySelected()">
+            <i class="bi bi-eye"></i>
+            <span><span id="view-toggle-text">View Only Selected</span> (<span id="view-selected-count">{{ selected_count }}</span>)</span>
+        </button>
+
+        <form id="create-gallery-dock-form" 
+              hx-post="{% url 'galleries:gallery_create' event_id=event.id %}" 
+              hx-swap="none"
+              onsubmit="handleGalleryCreationSubmit(event)">
+            {% csrf_token %}
+            <button id="create-gallery-btn" type="submit" class="dock-action-btn dock-btn-primary" {% if selected_count == 0 %}disabled{% endif %}>
+                <span id="create-gallery-btn-text">
+                    {% if event.gallery and event.gallery.is_published %}
+                        Sync {{ selected_count }} Selected to Live Gallery
+                    {% else %}
+                        + Create Customer Gallery {% if selected_count > 0 %}({{ selected_count }} selected){% endif %}
+                    {% endif %}
+                </span>
+                <i class="bi bi-arrow-right"></i>
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let isViewOnlySelected = false;
+    const hasLiveGallery = {% if event.gallery and event.gallery.is_published %}true{% else %}false{% endif %};
+
+    function updateSelectedCounters(newCount) {
+        const count = typeof newCount === 'number' ? newCount : document.querySelectorAll('.curation-card.is-selected').length;
+        const counterEl = document.getElementById('selected-counter');
+        const viewCounterEl = document.getElementById('view-selected-count');
+        const createBtn = document.getElementById('create-gallery-btn');
+        const createBtnText = document.getElementById('create-gallery-btn-text');
+
+        if (counterEl) counterEl.textContent = count;
+        if (viewCounterEl) viewCounterEl.textContent = count;
+
+        if (createBtn) {
+            createBtn.disabled = (count === 0);
+            if (count > 0 && !createBtn.classList.contains('is-submitting')) {
+                createBtnText.textContent = hasLiveGallery 
+                    ? `Sync ${count} Selected to Live Gallery` 
+                    : `+ Create Customer Gallery (${count} selected)`;
+            } else if (count === 0) {
+                createBtnText.textContent = hasLiveGallery 
+                    ? 'Sync Selected to Live Gallery' 
+                    : '+ Create Customer Gallery';
+            }
+        }
+
+        // Update proofing progress
+        const totalCards = document.querySelectorAll('.photo-card-wrapper').length;
+        const totalUploadedEl = document.getElementById('total-uploaded-count');
+        const totalProgressEl = document.getElementById('total-progress-count');
+        const reviewedEl = document.getElementById('reviewed-count');
+        const knownInput = document.getElementById('known-count-input');
+
+        if (totalUploadedEl) totalUploadedEl.textContent = totalCards;
+        if (totalProgressEl) totalProgressEl.textContent = totalCards;
+        if (reviewedEl) reviewedEl.textContent = totalCards;
+        if (knownInput) knownInput.value = totalCards;
+
+        if (isViewOnlySelected) {
+            applyViewOnlySelectedFilter();
+        }
+    }
+
+    function toggleViewOnlySelected() {
+        isViewOnlySelected = !isViewOnlySelected;
+        const toggleText = document.getElementById('view-toggle-text');
+        const btn = document.getElementById('view-only-selected-btn');
+
+        if (isViewOnlySelected) {
+            toggleText.textContent = 'View All Photos';
+            btn.classList.add('bg-primary-subtle', 'text-primary');
+        } else {
+            toggleText.textContent = 'View Only Selected';
+            btn.classList.remove('bg-primary-subtle', 'text-primary');
+        }
+        applyViewOnlySelectedFilter();
+    }
+
+    function applyViewOnlySelectedFilter() {
+        document.querySelectorAll('.photo-card-wrapper').forEach(wrapper => {
+            const isSel = wrapper.getAttribute('data-is-selected') === 'true' || wrapper.querySelector('.curation-card.is-selected') !== null;
+            if (isViewOnlySelected) {
+                wrapper.style.display = isSel ? '' : 'none';
+            } else {
+                applyToolbarFilters(wrapper);
+            }
+        });
+    }
+
+    function applyToolbarFilters(wrapper) {
+        const query = document.getElementById('photo-search-input')?.value.toLowerCase().trim() || '';
+        const shooter = document.getElementById('shooter-filter-select')?.value || 'all';
+        const rating = document.getElementById('rating-filter-select')?.value || 'all';
+        const dateVal = document.getElementById('date-filter-input')?.value || '';
+
+        const filename = wrapper.getAttribute('data-filename') || '';
+        const shooterId = wrapper.getAttribute('data-shooter-id') || '';
+        const uploadDate = wrapper.getAttribute('data-upload-date') || '';
+
+        let matches = true;
+        if (query && !filename.includes(query)) matches = false;
+        if (shooter !== 'all' && shooterId !== shooter) matches = false;
+        if (dateVal && uploadDate !== dateVal) matches = false;
+
+        wrapper.style.display = matches ? '' : 'none';
+        updateDateGroupHeaderVisibility();
+    }
+
+    function updateDateGroupHeaderVisibility() {
+        document.querySelectorAll('.date-group-header').forEach(header => {
+            const dateIso = header.getAttribute('data-date');
+            const cardsForDate = Array.from(document.querySelectorAll(`.photo-card-wrapper[data-upload-date="${dateIso}"]`));
+            const hasVisibleCard = cardsForDate.some(c => c.style.display !== 'none');
+            header.style.display = hasVisibleCard ? '' : 'none';
+        });
+    }
+
+    function handleGalleryCreationSubmit(e) {
+        const createBtn = document.getElementById('create-gallery-btn');
+        const createBtnText = document.getElementById('create-gallery-btn-text');
+        if (createBtn) {
+            createBtn.disabled = true;
+            createBtn.classList.add('is-submitting');
+            createBtnText.textContent = hasLiveGallery ? 'Updating Gallery...' : 'Preparing Gallery...';
+        }
+    }
+
+    // HTMX custom event handlers for server triggers
+    document.body.addEventListener('updateSelectedCount', function(evt) {
+        updateSelectedCounters(evt.detail.value);
+    });
+
+    document.body.addEventListener('newPhotosUploaded', function(evt) {
+        if (evt.detail && evt.detail.total_count) {
+            updateSelectedCounters();
+            if (window.showToast) {
+                window.showToast(`${evt.detail.added_count} new photo(s) uploaded by team members!`, 'info');
+            }
+        }
+    });
+
+    document.body.addEventListener('galleryCreated', function(evt) {
+        window.location.href = "{% url 'galleries:gallery_list' %}";
+    });
+
+    document.body.addEventListener('htmx:responseError', function(evt) {
+        const createBtn = document.getElementById('create-gallery-btn');
+        const createBtnText = document.getElementById('create-gallery-btn-text');
+        if (createBtn) {
+            createBtn.disabled = false;
+            createBtn.classList.remove('is-submitting');
+            updateSelectedCounters();
+        }
+    });
+
+    // Client-side filter listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        updateSelectedCounters();
+
+        document.getElementById('photo-search-input')?.addEventListener('input', () => {
+            document.querySelectorAll('.photo-card-wrapper').forEach(applyToolbarFilters);
+        });
+
+        document.getElementById('shooter-filter-select')?.addEventListener('change', () => {
+            document.querySelectorAll('.photo-card-wrapper').forEach(applyToolbarFilters);
+        });
+
+        document.getElementById('date-filter-input')?.addEventListener('change', () => {
+            document.querySelectorAll('.photo-card-wrapper').forEach(applyToolbarFilters);
+        });
+
+        document.getElementById('rating-filter-select')?.addEventListener('change', () => {
+            document.querySelectorAll('.photo-card-wrapper').forEach(applyToolbarFilters);
+        });
+
+        document.getElementById('sort-order-select')?.addEventListener('change', (e) => {
+            const order = e.target.value;
+            const container = document.getElementById('photo-grid-container');
+            if (!container) return;
+            const headers = Array.from(container.querySelectorAll('.date-group-header'));
+            headers.sort((a, b) => {
+                const dateA = a.getAttribute('data-date') || '';
+                const dateB = b.getAttribute('data-date') || '';
+                return order === 'asc' ? dateA.localeCompare(dateB) : dateB.localeCompare(dateA);
+            });
+            headers.forEach(h => {
+                container.appendChild(h);
+                const dateIso = h.getAttribute('data-date');
+                const cards = Array.from(container.querySelectorAll(`.photo-card-wrapper[data-upload-date="${dateIso}"]`));
+                cards.forEach(c => container.appendChild(c));
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,113 +1,531 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Lead Dashboard &mdash; TrizenAI Photos{% endblock %}
+{% block title %}Studio Dashboard — {{ studio_brand }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.dash-hero{background:linear-gradient(135deg,#0f172a 0%,#1e293b 60%,#1a2744 100%);border-radius:20px;padding:2rem 2.25rem;color:#fff;position:relative;overflow:hidden;margin-bottom:1.75rem}
+.dash-hero::before{content:'';position:absolute;top:-60px;right:-80px;width:300px;height:300px;background:radial-gradient(circle,rgba(99,102,241,.22) 0%,transparent 70%);pointer-events:none}
+.dash-hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.35);color:#a5b4fc;padding:4px 14px;border-radius:99px;font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.75rem}
+.dash-hero h1{font-size:2rem;font-weight:800;color:#fff;letter-spacing:-.03em;margin-bottom:.3rem}
+.dash-hero p{color:#94a3b8;font-size:.9rem;margin-bottom:0}
+.hero-stat-pill{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.65rem 1.1rem;text-align:center;min-width:90px}
+.hero-stat-pill .val{font-size:1.55rem;font-weight:800;color:#fff;line-height:1}
+.hero-stat-pill .lbl{font-size:.68rem;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.gm-card{border-radius:18px;padding:1.4rem 1.5rem;color:#fff;position:relative;overflow:hidden;transition:transform .22s ease,box-shadow .22s ease;border:none}
+.gm-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px -8px rgba(0,0,0,.22)}
+.gm-card::after{content:'';position:absolute;top:-30px;right:-30px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.07);pointer-events:none}
+.gm-card-indigo{background:linear-gradient(135deg,#4f46e5,#6366f1);box-shadow:0 8px 24px -6px rgba(79,70,229,.4)}
+.gm-card-amber{background:linear-gradient(135deg,#d97706,#f59e0b);box-shadow:0 8px 24px -6px rgba(217,119,6,.4)}
+.gm-card-emerald{background:linear-gradient(135deg,#059669,#10b981);box-shadow:0 8px 24px -6px rgba(5,150,105,.4)}
+.gm-card-violet{background:linear-gradient(135deg,#7c3aed,#a855f7);box-shadow:0 8px 24px -6px rgba(124,58,237,.4)}
+.gm-card .gm-icon{width:48px;height:48px;background:rgba(255,255,255,.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.35rem;margin-bottom:.85rem;backdrop-filter:blur(4px)}
+.gm-card .gm-val{font-size:2.2rem;font-weight:800;letter-spacing:-.03em;line-height:1;margin-bottom:4px}
+.gm-card .gm-label{font-size:.78rem;font-weight:600;opacity:.82;text-transform:uppercase;letter-spacing:.06em}
+.gm-card .gm-footer{margin-top:.85rem;padding-top:.75rem;border-top:1px solid rgba(255,255,255,.15);font-size:.74rem;opacity:.85;display:flex;justify-content:space-between;align-items:center}
+.dash-panel{background:#fff;border:1px solid #e2e8f0;border-radius:18px;box-shadow:0 2px 12px rgba(15,23,42,.04)}
+.dash-panel-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;gap:.5rem}
+.dash-panel-header h6{font-size:.9rem;font-weight:700;color:#0f172a;margin:0}
+.dash-panel-body{padding:1.25rem 1.5rem}
+.studio-calendar{user-select:none}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.cal-nav-btn{width:30px;height:30px;border:1px solid #e2e8f0;background:#f8fafc;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#475569;transition:all .15s}
+.cal-nav-btn:hover{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.cal-month-label{font-size:.9rem;font-weight:700;color:#0f172a}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-day-name{font-size:.65rem;font-weight:700;color:#94a3b8;text-align:center;padding-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.cal-day{width:100%;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-size:.78rem;font-weight:500;color:#475569;cursor:default;position:relative;transition:all .15s;padding-bottom:14px}
+.cal-day.other-month{color:#cbd5e1}
+.cal-day.today{background:#4f46e5;color:#fff!important;font-weight:700;box-shadow:0 2px 8px rgba(79,70,229,.35)}
+.cal-day.has-event{cursor:pointer;background:#eff6ff;color:#1d4ed8;font-weight:700}
+.cal-day.has-event:hover{background:#dbeafe;transform:scale(1.1);z-index:2}
+.cal-day.has-event::after{display:none}
+.cal-day.today.has-event::after{display:none}
+.cal-day-count{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);background:#4f46e5;color:#fff;font-size:.5rem;font-weight:800;min-width:13px;height:13px;border-radius:99px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1}
+.cal-day.today .cal-day-count{background:rgba(255,255,255,0.3)}
+.cal-event-popup{position:fixed;background:#0f172a;color:#fff;border-radius:12px;padding:10px 14px;font-size:.78rem;z-index:9999;max-width:220px;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1);display:none}
+.event-row{display:flex;align-items:center;gap:1rem;padding:.85rem 0;border-bottom:1px solid #f1f5f9;transition:all .15s;border-radius:10px}
+.event-row:last-child{border-bottom:none}
+.event-row:hover{background:#f8fafc;padding-left:.5rem}
+.event-thumb-sm{width:56px;height:46px;border-radius:10px;background:linear-gradient(135deg,#1e293b,#334155);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.event-thumb-sm img{width:100%;height:100%;object-fit:cover}
+.event-thumb-sm i{color:rgba(255,255,255,.3);font-size:1.1rem}
+.event-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-published{background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.15)}
+.dot-review{background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.15)}
+.dot-new{background:#94a3b8}
+.activity-timeline-item{display:flex;gap:.9rem;align-items:flex-start;padding:.65rem 0;border-bottom:1px solid #f8fafc}
+.activity-timeline-item:last-child{border-bottom:none}
+.activity-icon-circle{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+.ip-row{display:flex;align-items:center;gap:.75rem;padding:.55rem 0;border-bottom:1px solid #f8fafc;font-size:.8rem}
+.ip-row:last-child{border-bottom:none}
+.velocity-chart{display:flex;align-items:flex-end;gap:6px;height:64px}
+.vel-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.vel-bar{width:100%;background:#e2e8f0;border-radius:4px 4px 0 0;min-height:4px;transition:all .3s ease}
+.vel-bar.today-bar{background:linear-gradient(180deg,#6366f1,#4f46e5)}
+.vel-day-name{font-size:.62rem;color:#94a3b8;font-weight:600;text-transform:uppercase}
+.vel-day-name.today{color:#4f46e5;font-weight:700}
+.qa-btn{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border:1px solid #e2e8f0;border-radius:12px;background:#fff;color:#0f172a;font-size:.85rem;font-weight:600;text-decoration:none;transition:all .15s;margin-bottom:.5rem}
+.qa-btn:hover{border-color:#4f46e5;background:#f5f3ff;color:#4f46e5;transform:translateX(3px)}
+.qa-btn:last-child{margin-bottom:0}
+.qa-btn-primary{background:linear-gradient(135deg,#4f46e5,#6366f1);border:none;color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.3)}
+.qa-btn-primary:hover{background:linear-gradient(135deg,#4338ca,#4f46e5);color:#fff;border:none;box-shadow:0 6px 18px rgba(79,70,229,.4)}
+@keyframes pulseRing{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.8);opacity:0}}
+.live-dot{position:relative;width:9px;height:9px;border-radius:50%;background:#10b981;flex-shrink:0;display:inline-block}
+.live-dot::before{content:'';position:absolute;inset:0;border-radius:50%;background:#10b981;animation:pulseRing 1.6s ease-out infinite}
+@media(max-width:767px){.dash-hero h1{font-size:1.5rem}.gm-card .gm-val{font-size:1.8rem}}
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<span>{{ studio_brand|default:"Studio" }}</span>
+<i class="bi bi-chevron-right mx-1 text-muted" style="font-size:.7rem;"></i>
+<span class="fw-semibold text-dark">Dashboard</span>
+<span class="badge bg-dark text-white rounded-pill px-2 ms-1" style="font-size:.65rem;">Lead</span>
+{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <!-- Header -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-        <div>
-            <div class="d-flex align-items-center gap-2">
-                <h2 class="fw-bold text-dark mb-0">Lead Dashboard</h2>
-                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1">Admin</span>
-            </div>
-            <p class="text-muted small mb-0 mt-1">Manage events, assign team photographers, review uploads, and publish PIN-protected customer galleries.</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{% url 'events:event_list' %}" class="btn btn-outline-primary btn-sm px-3 shadow-sm">
-                <i class="bi bi-calendar-event me-1"></i> View All Events
-            </a>
-            <a href="{% url 'events:event_list' %}" class="btn btn-primary btn-sm px-3 shadow-sm">
-                <i class="bi bi-plus-lg me-1"></i> Create New Event
-            </a>
-        </div>
+<div id="calEventPopup" class="cal-event-popup"></div>
+
+<!-- HERO -->
+<div class="dash-hero mb-4">
+  <div class="row align-items-center g-3">
+    <div class="col-12 col-md-7">
+      <div class="dash-hero-badge"><span class="live-dot me-1"></span>Workstation Active &bull; Cloud Sync Connected</div>
+      <h1 id="dashGreeting">Good morning, {{ user.first_name|default:user.username }}</h1>
+      <p>Manage events, team shooters, curation pipelines &amp; client galleries.</p>
+      <div class="d-flex gap-2 mt-3 flex-wrap">
+        {% if primary_event %}
+        <a href="{% url 'photos:upload_photos' primary_event.id %}" class="btn btn-sm btn-light fw-semibold d-flex align-items-center gap-2" style="border-radius:10px;color:#0f172a;">
+          <i class="bi bi-cloud-arrow-up"></i>Batch Upload
+        </a>
+        {% endif %}
+        <a href="{% url 'events:event_create' %}" class="btn btn-sm fw-semibold d-flex align-items-center gap-2" style="background:rgba(99,102,241,.22);border:1px solid rgba(99,102,241,.4);color:#a5b4fc;border-radius:10px;">
+          <i class="bi bi-plus-lg"></i>Create Event
+        </a>
+      </div>
     </div>
-
-    <!-- Overview Metrics -->
-    <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="text-muted small fw-semibold text-uppercase">Events</div>
-                        <h3 class="fw-bold text-dark mb-0 mt-1">Active</h3>
-                    </div>
-                    <div class="bg-primary-subtle text-primary p-3 rounded-3 fs-4">
-                        <i class="bi bi-calendar3"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="text-muted small fw-semibold text-uppercase">Object Storage</div>
-                        <h3 class="fw-bold text-dark mb-0 mt-1">Supabase</h3>
-                    </div>
-                    <div class="bg-success-subtle text-success p-3 rounded-3 fs-4">
-                        <i class="bi bi-images"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="text-muted small fw-semibold text-uppercase">Galleries</div>
-                        <h3 class="fw-bold text-dark mb-0 mt-1">PIN Protected</h3>
-                    </div>
-                    <div class="bg-warning-subtle text-warning p-3 rounded-3 fs-4">
-                        <i class="bi bi-shield-lock"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="text-muted small fw-semibold text-uppercase">Role Level</div>
-                        <h3 class="fw-bold text-dark mb-0 mt-1">Lead Admin</h3>
-                    </div>
-                    <div class="bg-danger-subtle text-danger p-3 rounded-3 fs-4">
-                        <i class="bi bi-person-badge"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="col-12 col-md-5">
+      <div class="d-flex gap-2 flex-wrap justify-content-md-end">
+        <div class="hero-stat-pill"><div class="val">{{ total_events }}</div><div class="lbl">Events</div></div>
+        <div class="hero-stat-pill"><div class="val">{{ total_photos_display }}</div><div class="lbl">Photos</div></div>
+        <div class="hero-stat-pill"><div class="val">{{ published_galleries_count }}</div><div class="lbl">Galleries</div></div>
+        <div class="hero-stat-pill"><div class="val">{{ total_gallery_views }}</div><div class="lbl">Views</div></div>
+      </div>
     </div>
-
-    <!-- Quick Actions Card -->
-    <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
-        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-gear-wide-connected me-2 text-primary"></i>Photography Operations</h5>
-        <div class="row g-3">
-            <div class="col-md-4">
-                <div class="p-3 border rounded-3 bg-light">
-                    <h6 class="fw-bold"><i class="bi bi-calendar-plus text-primary me-2"></i>Event Coordination</h6>
-                    <p class="small text-muted mb-2">Create upcoming wedding or corporate events, define locations, and assign photographers.</p>
-                    <a href="{% url 'events:event_list' %}" class="btn btn-sm btn-outline-primary">Manage Events &rarr;</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="p-3 border rounded-3 bg-light">
-                    <h6 class="fw-bold"><i class="bi bi-check2-square text-success me-2"></i>Photo Selection</h6>
-                    <p class="small text-muted mb-2">Review team uploads across events, toggle photo selection checkboxes, and assemble customer collections.</p>
-                    <a href="{% url 'events:event_list' %}" class="btn btn-sm btn-outline-success">Review Photos &rarr;</a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="p-3 border rounded-3 bg-light">
-                    <h6 class="fw-bold"><i class="bi bi-key text-warning me-2"></i>PIN Gallery Delivery</h6>
-                    <p class="small text-muted mb-2">Configure 6-digit access PINs, publish curated galleries, and share public links with clients.</p>
-                    <a href="{% url 'events:event_list' %}" class="btn btn-sm btn-outline-warning">Galleries &rarr;</a>
-                </div>
-            </div>
-        </div>
-    </div>
+  </div>
 </div>
+
+<!-- METRIC CARDS -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="gm-card gm-card-indigo h-100">
+      <div class="gm-icon"><i class="bi bi-calendar3"></i></div>
+      <div class="gm-val">{{ total_events }}</div>
+      <div class="gm-label">Total Events</div>
+      <div class="gm-footer"><span>This month</span><strong>+{{ events_this_month }}</strong></div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="gm-card gm-card-amber h-100">
+      <div class="gm-icon"><i class="bi bi-camera-reels"></i></div>
+      <div class="gm-val">{{ active_shoots }}</div>
+      <div class="gm-label">Active Shoots</div>
+      <div class="gm-footer"><span>Photographers</span><strong>{{ total_shooters }}</strong></div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="gm-card gm-card-emerald h-100">
+      <div class="gm-icon"><i class="bi bi-camera"></i></div>
+      <div class="gm-val">{{ total_photos_display }}</div>
+      <div class="gm-label">Total Photos</div>
+      <div class="gm-footer"><span>Storage used</span><strong>{{ total_storage_str }}</strong></div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="gm-card gm-card-violet h-100">
+      <div class="gm-icon"><i class="bi bi-images"></i></div>
+      <div class="gm-val">{{ published_galleries_count }}</div>
+      <div class="gm-label">Client Galleries</div>
+      <div class="gm-footer"><span>Unique visitors</span><strong>{{ total_unique_ips }} IPs</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="row g-4">
+  <!-- LEFT COL -->
+  <div class="col-12 col-xl-8">
+
+    <!-- CALENDAR -->
+    <div class="dash-panel mb-4">
+      <div class="dash-panel-header">
+        <div class="d-flex align-items-center gap-2">
+          <div style="width:32px;height:32px;background:#eff6ff;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-calendar-event text-primary" style="font-size:1rem;"></i>
+          </div>
+          <div>
+            <h6 style="margin:0;">Event Calendar</h6>
+            <div class="text-muted" style="font-size:.72rem;">{{ current_month_name }}</div>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          {% if next_event %}
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1" style="font-size:.7rem;">
+            <i class="bi bi-clock me-1"></i>Next: {{ next_event.name }} &bull; {{ next_event.event_date|date:"M d" }}
+          </span>
+          {% endif %}
+          <a href="{% url 'events:event_create' %}" class="btn btn-sm btn-primary fw-semibold" style="border-radius:10px;font-size:.78rem;">
+            <i class="bi bi-plus-lg me-1"></i>Add Event
+          </a>
+        </div>
+      </div>
+      <div class="dash-panel-body">
+        <div class="studio-calendar">
+          <div class="cal-header">
+            <button class="cal-nav-btn" id="calPrev"><i class="bi bi-chevron-left"></i></button>
+            <span class="cal-month-label" id="calMonthLabel"></span>
+            <button class="cal-nav-btn" id="calNext"><i class="bi bi-chevron-right"></i></button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+        <div class="d-flex align-items-center gap-4 mt-3 pt-2 border-top" style="font-size:.73rem;color:#64748b;">
+          <span class="d-flex align-items-center gap-1"><span style="width:12px;height:12px;border-radius:3px;background:#4f46e5;display:inline-block;"></span>Today</span>
+          <span class="d-flex align-items-center gap-1"><span style="width:12px;height:12px;border-radius:3px;background:#eff6ff;border:1px solid #dbeafe;display:inline-block;"></span>Event Day</span>
+          <span class="d-flex align-items-center gap-1"><span style="width:6px;height:6px;border-radius:50%;background:#4f46e5;display:inline-block;"></span>Hover for details</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- EVENTS LIST -->
+    <div class="dash-panel mb-4">
+      <div class="dash-panel-header">
+        <div class="d-flex align-items-center gap-2">
+          <div style="width:32px;height:32px;background:#fef9c3;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-camera-reels" style="font-size:1rem;color:#d97706;"></i>
+          </div>
+          <h6 style="margin:0;">All Events</h6>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+          <div class="d-flex gap-1" id="eventFilterTabs">
+            <button class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold filter-tab-btn active" data-filter="all" style="font-size:.75rem;">All</button>
+            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 filter-tab-btn bg-white" data-filter="active" style="font-size:.75rem;">In Review</button>
+            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 filter-tab-btn bg-white" data-filter="published" style="font-size:.75rem;">Published</button>
+          </div>
+          <div class="input-group input-group-sm" style="width:180px;">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted" style="font-size:.8rem;"></i></span>
+            <input type="text" id="eventSearchInput" class="form-control border-start-0 ps-0 bg-white" placeholder="Search..." style="font-size:.82rem;">
+          </div>
+        </div>
+      </div>
+      <div class="dash-panel-body" id="eventCardsList" style="padding-top:.5rem;padding-bottom:.5rem;">
+        {% for ev in events_data %}
+        <div class="event-row event-item-card"
+             data-event-name="{{ ev.name|lower }}"
+             data-event-location="{{ ev.location|lower }}"
+             data-is-published="{{ ev.is_published|yesno:'true,false' }}">
+          <div class="event-thumb-sm">
+            {% if ev.thumbnail_url %}<img src="{{ ev.thumbnail_url }}" alt="{{ ev.name }}">{% else %}<i class="bi bi-camera"></i>{% endif %}
+          </div>
+          <span class="event-status-dot {% if ev.is_published %}dot-published{% elif ev.status_class == 'warning' %}dot-review{% else %}dot-new{% endif %}"></span>
+          <div class="flex-grow-1" style="min-width:0;">
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+              <span class="fw-bold text-dark" style="font-size:.9rem;">{{ ev.name }}</span>
+              {% if ev.is_published %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill" style="font-size:.65rem;"><i class="bi bi-check-circle me-1"></i>Published</span>
+              {% elif ev.status_class == 'warning' %}
+              <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill" style="font-size:.65rem;"><i class="bi bi-hourglass-split me-1"></i>In Review</span>
+              {% else %}
+              <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill" style="font-size:.65rem;">New</span>
+              {% endif %}
+            </div>
+            <div class="d-flex flex-wrap gap-3 text-muted" style="font-size:.76rem;">
+              <span><i class="bi bi-geo-alt me-1"></i>{{ ev.location }}</span>
+              <span><i class="bi bi-calendar3 me-1"></i>{{ ev.date_str }}</span>
+              <span><i class="bi bi-camera me-1"></i>{{ ev.photos_count }}</span>
+              <span><i class="bi bi-people me-1"></i>{{ ev.photographers_count }}</span>
+              {% if ev.is_published %}
+              <span class="text-primary"><i class="bi bi-eye me-1"></i>{{ ev.client_views }}</span>
+              <span class="text-info"><i class="bi bi-globe2 me-1"></i>{{ ev.unique_ips }} IPs</span>
+              {% endif %}
+            </div>
+            {% if not ev.is_published %}
+            <div class="d-flex align-items-center gap-2 mt-1" style="max-width:200px;">
+              <div class="progress flex-grow-1" style="height:4px;background:#e2e8f0;border-radius:99px;">
+                <div class="progress-bar bg-primary" style="width:{{ ev.curated_pct }}%;"></div>
+              </div>
+              <span class="text-muted fw-semibold" style="font-size:.68rem;white-space:nowrap;">{{ ev.curated_pct }}%</span>
+            </div>
+            {% endif %}
+          </div>
+          <div class="d-flex flex-column gap-1 flex-shrink-0">
+            {% if ev.is_published %}
+            <a href="{{ ev.public_url|default:'/galleries/' }}" target="_blank" class="btn btn-primary btn-sm fw-semibold px-3" style="border-radius:9px;font-size:.75rem;"><i class="bi bi-box-arrow-up-right me-1"></i>View</a>
+            <a href="{% url 'galleries:gallery_list' %}" class="btn btn-outline-secondary btn-sm px-3 bg-white fw-semibold" style="border-radius:9px;font-size:.75rem;">Manage</a>
+            {% else %}
+            <a href="{{ ev.review_url }}" class="btn btn-primary btn-sm fw-semibold px-3" style="border-radius:9px;font-size:.75rem;"><i class="bi bi-images me-1"></i>Review</a>
+            <a href="{{ ev.manage_url }}" class="btn btn-outline-secondary btn-sm px-3 bg-white fw-semibold" style="border-radius:9px;font-size:.75rem;">Event</a>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5">
+          <i class="bi bi-calendar-x text-muted fs-1 d-block mb-2"></i>
+          <h6 class="fw-bold">No Events Yet</h6>
+          <p class="text-muted small mb-3">Create your first photography event to get started.</p>
+          <a href="{% url 'events:event_create' %}" class="btn btn-primary btn-sm px-4">Create Event</a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- UPLOAD VELOCITY -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <div class="d-flex align-items-center gap-2">
+          <div style="width:32px;height:32px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-bar-chart-fill" style="font-size:1rem;color:#059669;"></i>
+          </div>
+          <div>
+            <h6 style="margin:0;">Weekly Upload Velocity</h6>
+            <div class="text-muted" style="font-size:.72rem;">Daily photo intake over last 7 days</div>
+          </div>
+        </div>
+        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1" style="font-size:.7rem;">
+          <i class="bi bi-shield-check me-1"></i>Supabase Sync Active
+        </span>
+      </div>
+      <div class="dash-panel-body">
+        <div class="velocity-chart" id="velocityChart">
+          {% for dv in daily_velocity %}
+          <div class="vel-bar-wrap" title="{{ dv.day_name }}: {{ dv.count }} photos">
+            <div class="vel-bar {% if dv.is_today %}today-bar{% endif %}" data-count="{{ dv.count }}" style="height:8px;"></div>
+            <span class="vel-day-name {% if dv.is_today %}today{% endif %}">{{ dv.day_name|slice:":3" }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top text-muted" style="font-size:.76rem;">
+          <span><i class="bi bi-camera me-1"></i>Total pipeline: <strong class="text-dark">{{ total_photos_display }} photos</strong></span>
+          <span>+{{ photos_today_count }} today</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COL -->
+  <div class="col-12 col-xl-4">
+
+    <!-- QUICK ACTIONS -->
+    <div class="dash-panel mb-4">
+      <div class="dash-panel-header">
+        <h6><i class="bi bi-lightning-charge text-warning me-2"></i>Quick Actions</h6>
+      </div>
+      <div class="dash-panel-body">
+        <a href="{% url 'events:event_create' %}" class="qa-btn qa-btn-primary">
+          <span class="d-flex align-items-center gap-2"><i class="bi bi-plus-circle-fill"></i>Create New Event</span>
+          <i class="bi bi-chevron-right small"></i>
+        </a>
+        <a href="{% url 'photos:review_hub' %}" class="qa-btn">
+          <span class="d-flex align-items-center gap-2"><i class="bi bi-grid text-warning"></i>Review Photo Batches</span>
+          <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+        <a href="{% url 'galleries:gallery_list' %}" class="qa-btn">
+          <span class="d-flex align-items-center gap-2"><i class="bi bi-send text-primary"></i>Manage Client Galleries</span>
+          <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+        <a href="{% url 'accounts:team_management' %}" class="qa-btn">
+          <span class="d-flex align-items-center gap-2"><i class="bi bi-person-plus text-info"></i>Team Roster</span>
+          <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+        <a href="{% url 'accounts:studio_settings' %}" class="qa-btn">
+          <span class="d-flex align-items-center gap-2"><i class="bi bi-gear text-secondary"></i>Studio Settings</span>
+          <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- LIVE IP MONITOR -->
+    <div class="dash-panel mb-4">
+      <div class="dash-panel-header">
+        <div class="d-flex align-items-center gap-2">
+          <span class="live-dot"></span>
+          <h6 style="margin:0;">Client View Monitor</h6>
+        </div>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1 font-monospace" style="font-size:.7rem;">{{ total_gallery_views }} hits &bull; {{ total_unique_ips }} IPs</span>
+      </div>
+      <div class="dash-panel-body">
+        {% for v in recent_gallery_visits %}
+        <div class="ip-row">
+          <div style="width:32px;height:32px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-globe2 text-info" style="font-size:.85rem;"></i>
+          </div>
+          <div class="flex-grow-1" style="min-width:0;">
+            <div class="d-flex justify-content-between mb-1">
+              <code class="text-dark" style="font-size:.76rem;">{{ v.ip_address }}</code>
+              <span class="text-muted" style="font-size:.68rem;">{{ v.viewed_at|timesince }} ago</span>
+            </div>
+            <div class="text-secondary" style="font-size:.75rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">{{ v.gallery.title|default:v.gallery.event.name }}</div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-broadcast fs-3 d-block mb-1 opacity-40"></i>
+          <span class="small">No client visits logged yet.</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- RECENT ACTIVITY -->
+    <div class="dash-panel mb-4">
+      <div class="dash-panel-header">
+        <h6><i class="bi bi-activity text-success me-2"></i>Recent Activity</h6>
+        <a href="{% url 'events:event_list' %}" class="small text-decoration-none fw-semibold text-primary" style="font-size:.78rem;">View all</a>
+      </div>
+      <div class="dash-panel-body">
+        {% for item in recent_activities %}
+        <div class="activity-timeline-item">
+          <div class="activity-icon-circle {{ item.icon_bg }}">
+            <i class="bi {{ item.icon }}"></i>
+          </div>
+          <div>
+            <div class="small text-dark lh-sm"><strong>{{ item.user }}</strong> {{ item.action }} <em>{{ item.target }}</em></div>
+            <div class="text-muted" style="font-size:.7rem;">{{ item.meta }}</div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-activity fs-3 d-block mb-1 opacity-40"></i>
+          <span class="small">No recent activity yet.</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- STORAGE STATUS -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-hdd-network text-primary"></i>
+          <h6 style="margin:0;">Storage &amp; Integration</h6>
+        </div>
+        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 fw-semibold" style="font-size:.7rem;">Connected</span>
+      </div>
+      <div class="dash-panel-body">
+        {% for device in tether_devices %}
+        <div class="d-flex align-items-center justify-content-between py-2 {% if not forloop.last %}border-bottom{% endif %}">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge rounded-circle p-1 bg-success" style="width:10px;height:10px;"></span>
+            <span class="small fw-semibold text-dark">{{ device.name }}</span>
+          </div>
+          <span class="badge bg-light text-secondary border small">{{ device.status }}</span>
+        </div>
+        {% endfor %}
+        <div class="mt-3 p-3 rounded-3" style="background:#f8fafc;font-size:.76rem;color:#475569;">
+          <div class="d-flex justify-content-between mb-1"><span>Total photos</span><strong class="text-dark">{{ total_photos_display }}</strong></div>
+          <div class="d-flex justify-content-between mb-1"><span>Storage used</span><strong class="text-dark">{{ total_storage_str }}</strong></div>
+          <div class="d-flex justify-content-between"><span>Published galleries</span><strong class="text-dark">{{ published_galleries_count }}</strong></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var greetEl = document.getElementById('dashGreeting');
+  if (greetEl) {
+    var hr = new Date().getHours();
+    var name = '{{ user.first_name|default:user.username|escapejs }}';
+    var g = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+    greetEl.textContent = g + ', ' + name;
+  }
+  var bars = document.querySelectorAll('.vel-bar');
+  if (bars.length) {
+    var counts = Array.from(bars).map(function(b){ return parseInt(b.dataset.count,10)||0; });
+    var mx = Math.max.apply(null, counts.concat([1]));
+    bars.forEach(function(b){ b.style.height = Math.max((parseInt(b.dataset.count,10)/mx)*100, 6)+'%'; });
+  }
+  var searchInput = document.getElementById('eventSearchInput');
+  var cards = document.querySelectorAll('.event-item-card');
+  function applyFilter() {
+    var q = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    var activeBtn = document.querySelector('.filter-tab-btn.active');
+    var filter = activeBtn ? activeBtn.dataset.filter : 'all';
+    cards.forEach(function(card){
+      var isPub = card.dataset.isPublished === 'true';
+      var matchQ = !q || (card.dataset.eventName||'').includes(q) || (card.dataset.eventLocation||'').includes(q);
+      var matchF = filter==='all' ? true : filter==='active' ? !isPub : isPub;
+      card.style.display = (matchQ && matchF) ? 'flex' : 'none';
+    });
+  }
+  if (searchInput) searchInput.addEventListener('input', applyFilter);
+  document.querySelectorAll('.filter-tab-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.filter-tab-btn').forEach(function(b){
+        b.classList.remove('btn-primary','active'); b.classList.add('btn-outline-secondary','bg-white');
+      });
+      this.classList.remove('btn-outline-secondary','bg-white'); this.classList.add('btn-primary','active');
+      applyFilter();
+    });
+  });
+  var calEvents = {{ calendar_events_json|safe }};
+  var todayISO = '{{ today_date }}';
+  var evMap = {};
+  calEvents.forEach(function(e){ if(!evMap[e.date]) evMap[e.date]=[]; evMap[e.date].push(e); });
+  var todayParts = todayISO.split('-');
+  var calYear=parseInt(todayParts[0],10), calMonth=parseInt(todayParts[1],10)-1;
+  var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var popup=document.getElementById('calEventPopup');
+  function renderCal() {
+    document.getElementById('calMonthLabel').textContent = MONTHS[calMonth]+' '+calYear;
+    var grid=document.getElementById('calGrid'); grid.innerHTML='';
+    DAYS.forEach(function(d){ var el=document.createElement('div'); el.className='cal-day-name'; el.textContent=d; grid.appendChild(el); });
+    var firstDay=new Date(calYear,calMonth,1).getDay();
+    var daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+    var daysInPrev=new Date(calYear,calMonth,0).getDate();
+    for(var i=firstDay-1;i>=0;i--){ var el=document.createElement('div'); el.className='cal-day other-month'; el.textContent=daysInPrev-i; grid.appendChild(el); }
+    for(var d=1;d<=daysInMonth;d++){
+      var mm=String(calMonth+1).padStart(2,'0'), dd=String(d).padStart(2,'0');
+      var key=calYear+'-'+mm+'-'+dd;
+      var el=document.createElement('div'); el.className='cal-day';
+      if(key===todayISO) el.classList.add('today');
+      if(evMap[key]) el.classList.add('has-event');
+      el.textContent=d;
+      if(evMap[key]){
+        var cnt = evMap[key].length;
+        var badge = document.createElement('span');
+        badge.className = 'cal-day-count';
+        badge.textContent = cnt;
+        el.appendChild(badge);
+        (function(k){
+          el.addEventListener('mouseenter',function(e){
+            popup.innerHTML=evMap[k].map(function(ev){ return '<div class="mb-1"><strong style="font-size:.8rem;">'+ev.name+'</strong>'+(ev.location?'<div style="font-size:.7rem;opacity:.75;">&#128205; '+ev.location+'</div>':'')+'</div>'; }).join('<hr style="border-color:rgba(255,255,255,.15);margin:6px 0;">');
+            popup.style.display='block'; posPopup(e);
+          });
+          el.addEventListener('mousemove',posPopup);
+          el.addEventListener('mouseleave',function(){ popup.style.display='none'; });
+        })(key);
+      }
+      grid.appendChild(el);
+    }
+    var total=firstDay+daysInMonth, rem=total%7===0?0:7-(total%7);
+    for(var d=1;d<=rem;d++){ var el=document.createElement('div'); el.className='cal-day other-month'; el.textContent=d; grid.appendChild(el); }
+  }
+  function posPopup(e){
+    var x=e.clientX+12,y=e.clientY-10,pw=popup.offsetWidth||200,ph=popup.offsetHeight||60;
+    popup.style.left=(x+pw>window.innerWidth?x-pw-24:x)+'px';
+    popup.style.top=(y+ph>window.innerHeight?y-ph:y)+'px';
+  }
+  document.getElementById('calPrev').addEventListener('click',function(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCal(); });
+  document.getElementById('calNext').addEventListener('click',function(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCal(); });
+  renderCal();
+});
+</script>
 {% endblock %}

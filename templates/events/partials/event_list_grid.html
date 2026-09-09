@@ -1,0 +1,14 @@
+{% load static %}
+<div class="row g-4" id="events-grid-container">
+    {% for item in events_data %}
+        {% include 'events/partials/event_card.html' with event=item.event thumbnail_url=item.thumbnail_url photos_count=item.photos_count members_count=item.members_count is_published=item.is_published is_admin=is_admin %}
+    {% empty %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white">
+                <i class="bi bi-calendar-x text-muted fs-1 mb-2"></i>
+                <h5 class="fw-bold">No Events Found</h5>
+                <p class="text-muted small mb-3">Create your first photography event or try a different search filter.</p>
+            </div>
+        </div>
+    {% endfor %}
+</div>

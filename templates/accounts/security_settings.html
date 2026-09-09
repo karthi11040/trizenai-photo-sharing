@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Security &amp; Password &mdash; TrizenAI Studio{% endblock %}
+
+{% block breadcrumbs %}
+    <a href="{% url 'accounts:dashboard_router' %}" class="text-decoration-none text-secondary">Studio Alpha</a>
+    <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+    <span class="fw-semibold text-dark">Security Settings</span>
+{% endblock %}
+
+{% block content %}
+<div class="security-view pb-5" style="max-width: 800px;">
+    
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark mb-1">Security &amp; Password</h2>
+        <p class="text-secondary small mb-0">Manage your credentials, active session status, and workspace security.</p>
+    </div>
+
+    <!-- Password Change Card -->
+    <div class="card border-0 shadow-sm p-4 bg-white mb-4" style="border-radius: 16px;">
+        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+            <i class="bi bi-key-fill text-primary"></i>
+            <h5 class="fw-bold text-dark mb-0" style="font-size: 1.05rem;">Change Password</h5>
+        </div>
+
+        <form method="post" action="{% url 'accounts:security_settings' %}" novalidate>
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold small text-dark mb-1">Current Password *</label>
+                <div class="input-group">
+                    {{ form.current_password }}
+                    <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center px-3 border-start-0" type="button" data-password-toggle="{{ form.current_password.id_for_label }}" aria-label="Show password" style="border-top-right-radius: 10px; border-bottom-right-radius: 10px;">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+                {% if form.current_password.errors %}
+                    <div class="text-danger small mt-1" style="font-size: 0.75rem;">{{ form.current_password.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold small text-dark mb-1">New Password *</label>
+                <div class="input-group">
+                    {{ form.new_password }}
+                    <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center px-3 border-start-0" type="button" data-password-toggle="{{ form.new_password.id_for_label }}" aria-label="Show password" style="border-top-right-radius: 10px; border-bottom-right-radius: 10px;">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+                {% if form.new_password.errors %}
+                    <div class="text-danger small mt-1" style="font-size: 0.75rem;">{{ form.new_password.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold small text-dark mb-1">Confirm New Password *</label>
+                {{ form.confirm_new_password }}
+                {% if form.confirm_new_password.errors %}
+                    <div class="text-danger small mt-1" style="font-size: 0.75rem;">{{ form.confirm_new_password.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary px-4 fw-semibold" style="border-radius: 10px; min-height: 44px;">
+                    Update Password
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Active Session Information Card -->
+    <div class="card border-0 shadow-sm p-4 bg-white mb-4" style="border-radius: 16px;">
+        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+            <i class="bi bi-shield-check text-success"></i>
+            <h5 class="fw-bold text-dark mb-0" style="font-size: 1.05rem;">Active Workspace Session</h5>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 bg-light border mb-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-success-subtle text-success" style="width: 40px; height: 40px;">
+                    <i class="bi bi-laptop"></i>
+                </div>
+                <div>
+                    <div class="fw-bold text-dark small">Current Browser Session</div>
+                    <div class="text-muted" style="font-size: 0.72rem;">Secured with HttpOnly &amp; SameSite cookies</div>
+                </div>
+            </div>
+            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                Active
+            </span>
+        </div>
+
+        <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm px-3" style="border-radius: 8px;">
+                <i class="bi bi-box-arrow-left me-1"></i>Sign Out of Session
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

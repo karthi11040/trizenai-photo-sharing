@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Photo Review Hub &mdash; TrizenAI Studio{% endblock %}
+
+{% block breadcrumbs %}
+    <a href="{% url 'accounts:dashboard_router' %}" class="text-decoration-none text-secondary">Studio Alpha</a>
+    <i class="bi bi-chevron-right mx-1 text-muted" style="font-size: 0.7rem;"></i>
+    <span class="fw-semibold text-dark">Photo Review &amp; Curation Hub</span>
+{% endblock %}
+
+{% block content %}
+<div class="photo-review-hub-view pb-5">
+    <!-- Header Banner -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h2 class="fw-bold text-dark mb-0">Photo Review &amp; Curation Hub</h2>
+                <span class="badge rounded-pill px-3 py-1" style="background: #f3e8ff; color: #9333ea; font-size: 0.75rem;">Phase II: Lead Curation</span>
+            </div>
+            <p class="text-secondary small mb-0">Select an event shoot to curate photos, verify sharpness, and export client proofing selections.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'events:event_list' %}" class="btn btn-outline-secondary btn-sm px-3 shadow-sm bg-white" style="border-radius: 10px;">
+                <i class="bi bi-calendar3 me-1"></i> All Events
+            </a>
+        </div>
+    </div>
+
+    <!-- 3 Summary Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+            <div class="metric-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-medium">Total RAW Photos</span>
+                    <div class="metric-icon-sq bg-primary-subtle text-primary">
+                        <i class="bi bi-camera"></i>
+                    </div>
+                </div>
+                <div class="fs-2 fw-bold text-dark">{{ total_photos_count }}</div>
+                <div class="text-muted small pt-2 border-top" style="font-size: 0.75rem;">Across all studio production events</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="metric-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-medium">In Active Review</span>
+                    <div class="metric-icon-sq bg-warning-subtle text-warning">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                </div>
+                <div class="fs-2 fw-bold text-dark">{{ total_in_review }}</div>
+                <div class="text-muted small pt-2 border-top" style="font-size: 0.75rem;">Pending lead curation &amp; client export</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="metric-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-secondary small fw-medium">Curated &amp; Ready</span>
+                    <div class="metric-icon-sq" style="background: #f3e8ff; color: #9333ea;">
+                        <i class="bi bi-check2-all"></i>
+                    </div>
+                </div>
+                <div class="fs-2 fw-bold text-dark">{{ curated_ready_count }}</div>
+                <div class="text-muted small pt-2 border-top" style="font-size: 0.75rem;">Selects prepared for client proofing</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Search Bar -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary btn-sm rounded-pill px-3 py-1 fw-semibold filter-tab-btn active" data-filter="all">All Shoots ({{ events|length }})</button>
+            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1 filter-tab-btn bg-white" data-filter="in_progress">In Review</button>
+            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1 filter-tab-btn bg-white" data-filter="completed">Delivered</button>
+        </div>
+        <div class="input-group input-group-sm" style="width: 260px;">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" id="reviewSearchInput" class="form-control border-start-0 ps-0 bg-white" placeholder="Filter by event name...">
+        </div>
+    </div>
+
+    <!-- Event Curation Grid -->
+    <div class="row g-4" id="reviewEventsGrid">
+        {% for ev in events %}
+            <div class="col-12 col-md-6 col-lg-4 review-card-col" data-event-name="{{ ev.name|lower }}" data-is-published="{{ ev.is_published|yesno:'true,false' }}">
+                <div class="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column overflow-hidden bg-white">
+                    <!-- Thumbnail Header -->
+                    <div class="position-relative" style="height: 180px; {% if ev.thumbnail_url %}background-image: url('{{ ev.thumbnail_url }}'); background-size: cover; background-position: center;{% else %}background: linear-gradient(135deg, #1e293b, #334155);{% endif %}">
+                        <span class="event-tag-badge">{{ ev.badge_tag }}</span>
+                        <div class="position-absolute top-0 end-0 m-3">
+                            <span class="badge bg-dark bg-opacity-75 text-white rounded-pill px-2.5 py-1 small">
+                                <i class="bi bi-camera me-1"></i>{{ ev.photos_count }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-4 d-flex flex-column flex-grow-1">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="badge bg-{{ ev.status_class }}-subtle text-{{ ev.status_class }} rounded-pill px-2.5 py-1 small fw-semibold">
+                                {{ ev.status_label }}
+                            </span>
+                            <span class="text-muted small">{{ ev.date_str }}</span>
+                        </div>
+
+                        <h5 class="fw-bold text-dark mb-1">{{ ev.name }}</h5>
+                        <p class="text-muted small mb-3"><i class="bi bi-geo-alt me-1 text-secondary"></i>{{ ev.location }} &bull; {{ ev.shooters_count }} Shooters</p>
+
+                        <!-- Progress Bar -->
+                        <div class="mb-4 mt-auto">
+                            <div class="d-flex justify-content-between small text-muted mb-1 fw-semibold" style="font-size: 0.72rem;">
+                                <span>Curation Progress</span>
+                                <span>{{ ev.curated_pct }}%</span>
+                            </div>
+                            <div class="progress" style="height: 6px; border-radius: 99px; background: #e2e8f0;">
+                                <div class="progress-bar bg-primary" style="width: {{ ev.curated_pct }}%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex gap-2">
+                            <a href="{{ ev.review_url }}" class="btn btn-primary btn-sm flex-grow-1 py-2 fw-semibold d-flex align-items-center justify-content-center gap-1.5 shadow-sm" style="border-radius: 10px;">
+                                <i class="bi bi-grid-fill"></i>
+                                <span>Open Curation Grid</span>
+                            </a>
+                            <a href="{{ ev.upload_url }}" class="btn btn-outline-secondary btn-sm px-3 bg-white" style="border-radius: 10px;" title="Upload more photos">
+                                <i class="bi bi-cloud-arrow-up"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white">
+                    <i class="bi bi-images text-muted fs-1 mb-2"></i>
+                    <h5 class="fw-bold">No Events to Review</h5>
+                    <p class="text-muted small mb-3">Create an event and upload RAW photos to begin curation.</p>
+                    <a href="{% url 'events:event_create' %}" class="btn btn-primary btn-sm px-4">Create Event</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('reviewSearchInput');
+    const cardCols = document.querySelectorAll('.review-card-col');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase();
+            cardCols.forEach(col => {
+                const name = col.getAttribute('data-event-name') || '';
+                col.style.display = name.includes(query) ? 'block' : 'none';
+            });
+        });
+    }
+
+    const filterBtns = document.querySelectorAll('.filter-tab-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            filterBtns.forEach(b => {
+                b.classList.remove('btn-primary', 'active');
+                b.classList.add('btn-outline-secondary', 'bg-white');
+            });
+            this.classList.remove('btn-outline-secondary', 'bg-white');
+            this.classList.add('btn-primary', 'active');
+
+            const f = this.getAttribute('data-filter');
+            cardCols.forEach(col => {
+                const isPub = col.getAttribute('data-is-published') === 'true';
+                if (f === 'all') col.style.display = 'block';
+                else if (f === 'in_progress') col.style.display = !isPub ? 'block' : 'none';
+                else if (f === 'completed') col.style.display = isPub ? 'block' : 'none';
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

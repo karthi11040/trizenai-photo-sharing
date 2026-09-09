@@ -1,0 +1,63 @@
+{% load static %}
+<div id="event-team-list" class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold text-dark mb-0">
+            <i class="bi bi-people me-2 text-primary"></i>Team Members
+        </h5>
+        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-0.5 small">{{ memberships.count }}</span>
+    </div>
+
+    <!-- Add Member Form (Admin Only) -->
+    {% if is_admin and add_member_form %}
+        <div class="p-3 bg-light rounded-3 border mb-3">
+            <label class="form-label small fw-semibold text-dark mb-2">Assign Team Member</label>
+            <form hx-post="{% url 'events:add_member' event_id=event.id %}"
+                  hx-target="#event-team-list"
+                  hx-swap="outerHTML"
+                  hx-indicator="#add-member-spinner">
+                {% csrf_token %}
+                <div class="d-flex gap-2">
+                    {{ add_member_form.user }}
+                    <button type="submit" class="btn btn-primary btn-sm flex-shrink-0 px-3 d-inline-flex align-items-center gap-1" style="border-radius: 8px;">
+                        <span class="spinner-border spinner-border-sm htmx-indicator" id="add-member-spinner" role="status"></span>
+                        <i class="bi bi-plus-lg"></i> Assign
+                    </button>
+                </div>
+            </form>
+        </div>
+    {% endif %}
+
+    <!-- Memberships List -->
+    <div class="d-flex flex-column gap-2">
+        {% for m in memberships %}
+            <div class="d-flex align-items-center justify-content-between p-2.5 rounded-3 bg-light border" id="member-row-{{ m.user.id }}">
+                <div class="d-flex align-items-center gap-2.5">
+                    <div class="avatar-circle bg-primary text-white font-monospace fw-bold" style="width: 32px; height: 32px; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                        {{ m.user.username|slice:":1"|upper }}
+                    </div>
+                    <div>
+                        <div class="fw-semibold text-dark small">{{ m.user.get_full_name|default:m.user.username }}</div>
+                        <div class="text-muted extra-small" style="font-size: 0.72rem;">{{ m.user.email }}</div>
+                    </div>
+                </div>
+
+                {% if is_admin %}
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-danger border-0 rounded-circle p-1" 
+                            hx-post="{% url 'events:remove_member' event_id=event.id user_id=m.user.id %}"
+                            hx-target="#event-team-list"
+                            hx-swap="outerHTML"
+                            hx-confirm="Remove {{ m.user.username }} from {{ event.name }}?"
+                            title="Remove member">
+                        <i class="bi bi-x-circle fs-6"></i>
+                    </button>
+                {% endif %}
+            </div>
+        {% empty %}
+            <div class="text-center py-4 text-muted small">
+                <i class="bi bi-person-x fs-3 d-block mb-1"></i>
+                <span>No team members assigned yet.</span>
+            </div>
+        {% endfor %}
+    </div>
+</div>

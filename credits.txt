@@ -1,0 +1,169 @@
+================================================================================
+                    TRIZENAI PHOTO SHARING PLATFORM
+                    CREDITS & THIRD-PARTY ATTRIBUTIONS
+================================================================================
+
+Project: TrizenAI Photo Sharing Platform
+Challenge: Full-Stack Internship Challenge
+Company: TrizenAI Technologies Private Limited (talent@trizen-ai.com)
+Submission Date: September 2026
+
+--------------------------------------------------------------------------------
+1. BACKEND & WEB FRAMEWORKS
+--------------------------------------------------------------------------------
+- Django (v5.1+)
+  Authors: Django Software Foundation (DSF) and individual contributors
+  Website: https://www.djangoproject.com/
+  License: BSD 3-Clause License
+  Role: Core Web Application, Authentication, ORM, Admin Panel, Session Management
+
+- Django REST Framework (v3.15+)
+  Authors: Encode OSS Ltd / Tom Christie and contributors
+  Website: https://www.django-rest-framework.org/
+  License: Encode BSD License
+  Role: RESTful Web APIs, Serializers, Permissions, Standardized JSON Error Contract
+
+- Gunicorn (Green Unicorn) (v21.2+)
+  Authors: Benoit Chesneau and contributors
+  Website: https://gunicorn.org/
+  License: MIT License
+  Role: Production WSGI HTTP Server for Cloud Web Deployment
+
+- WhiteNoise (v6.6+)
+  Authors: David Evans and contributors
+  Website: https://whitenoise.readthedocs.io/
+  License: MIT License
+  Role: Static file serving and compression for Django applications
+
+--------------------------------------------------------------------------------
+2. DATABASE & CLOUD STORAGE SERVICES
+--------------------------------------------------------------------------------
+- Supabase PostgreSQL
+  Provider: Supabase Inc.
+  Website: https://supabase.com/
+  Role: Managed Cloud Relational Database (Users, Events, Photo Metadata, Galleries)
+
+- Supabase Storage
+  Provider: Supabase Inc.
+  Website: https://supabase.com/storage
+  Role: Private Object Storage with HMAC time-limited Signed URLs for photo assets
+
+- psycopg2-binary (v2.9+)
+  Authors: Federico Di Gregorio, Daniele Varrazzo and contributors
+  Website: https://www.psycopg.org/
+  License: LGPL 3 / BSD with exceptions
+  Role: PostgreSQL database adapter for Python
+
+- dj-database-url (v2.1+)
+  Authors: Kenneth Reitz and contributors
+  Website: https://github.com/jazzband/dj-database-url
+  License: BSD 2-Clause License
+  Role: 12-factor database URL configuration utility
+
+- python-dotenv (v1.0+)
+  Authors: Saurabh Kumar and contributors
+  Website: https://github.com/theskumar/python-dotenv
+  License: BSD 3-Clause License
+  Role: Local environment variable parsing from .env
+
+--------------------------------------------------------------------------------
+3. IMAGE PROCESSING & HTTP UTILITIES
+--------------------------------------------------------------------------------
+- Pillow (PIL Fork) (v10.2+)
+  Authors: Alex Clark and contributors (originally Fredrik Lundh)
+  Website: https://python-pillow.org/
+  License: HPND (Historical Permission Notice and Disclaimer)
+  Role: Deep binary image verification, MIME validation, dimension extraction
+
+- Requests (v2.31+)
+  Authors: Kenneth Reitz and PSF
+  Website: https://requests.readthedocs.io/
+  License: Apache License 2.0
+  Role: HTTP client for Supabase Storage REST API integrations
+
+--------------------------------------------------------------------------------
+4. FRONTEND, STYLING & ASSETS
+--------------------------------------------------------------------------------
+- Bootstrap (v5.3.3)
+  Authors: The Bootstrap Authors & Twitter, Inc.
+  Website: https://getbootstrap.com/
+  License: MIT License
+  Role: Responsive UI framework, utility classes, and layout scaffolding
+
+- Bootstrap Icons (v1.11+)
+  Authors: The Bootstrap Authors
+  Website: https://icons.getbootstrap.com/
+  License: MIT License
+  Role: Clean semantic SVG iconography across dashboards and viewer interfaces
+
+- Design System Tokens
+  Specification: Modern Neutral Design Tokens (Linear/Vercel minimalist aesthetic)
+  Files: design-tokens.json, static/css/tokens.css, static/css/main.css
+  Compliance: WCAG AA color contrast, responsive 44px min tap targets, neutral palettes
+
+- Typography
+  Fonts: Inter, Outfit
+  Foundry: Rasmus Andersson / Google Fonts
+  Website: https://fonts.google.com/
+  License: SIL Open Font License (OFL) 1.1
+
+--------------------------------------------------------------------------------
+5. CLOUD INFRASTRUCTURE & CI/CD PIPELINES
+--------------------------------------------------------------------------------
+- Render
+  Provider: Render Services Inc.
+  Website: https://render.com/
+  Role: Cloud Web Service hosting with automated HTTPS and environment management
+
+- GitHub Actions
+  Provider: GitHub, Inc. / Microsoft Corporation
+  Website: https://github.com/features/actions
+  Role: Continuous Integration (CI) test execution and build verification
+
+--------------------------------------------------------------------------------
+6. DEVELOPMENT, TESTING & AI ASSISTANCE
+--------------------------------------------------------------------------------
+- Testing Frameworks
+  Tools: Django Test Framework, Pytest (v8.0+), Pytest-Django (v4.8+)
+  Licenses: MIT License / BSD License
+  Role: Unit, integration, security, and edge-case test automation
+
+- AI Pair Programming & Implementation Assistant
+  Assistant: Google DeepMind Antigravity AI (Advanced Agentic Coding)
+  Role: Architectural design, test-driven implementation, and code optimization
+
+--------------------------------------------------------------------------------
+7. DEMO LOGIN CREDENTIALS & ACCESS CREDITS
+--------------------------------------------------------------------------------
+
+A. ADMIN / LEAD ACCOUNT (Full Administrative Access)
+   - Portal Login URL:  /login/  or  /admin/
+   - Username:          admin_lead
+   - Password:          AdminPassword2026!
+   - System Role:       ADMIN
+   - Permissions:       Create & manage events, assign team members, view all photos,
+                        select photos for publishing, create & publish PIN-protected galleries.
+
+B. TEAM MEMBER ACCOUNT 1 (Assigned Photographer)
+   - Portal Login URL:  /login/
+   - Username:          photographer_alex
+   - Password:          TeamMember2026!
+   - System Role:       TEAM_MEMBER
+   - Permissions:       View assigned events, upload multi-file event photos,
+                        view own uploads (strictly cannot publish galleries or modify others' photos).
+
+C. TEAM MEMBER ACCOUNT 2 (Assigned Photographer)
+   - Portal Login URL:  /login/
+   - Username:          photographer_priya
+   - Password:          TeamMember2026!
+   - System Role:       TEAM_MEMBER
+   - Permissions:       Collaborative team photographer for cross-member upload testing.
+
+D. CUSTOMER GALLERY ACCESS (No Account Required)
+   - Sample Gallery URL: /gallery/arjun-priya-wedding/
+   - Access PIN:         482917
+   - Customer Access:    Opens link, enters PIN, views published photos without logging in.
+
+* Note: Run 'python manage.py seed_demo_data' anytime to refresh/seed these credentials locally or in production.
+================================================================================
+

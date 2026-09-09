@@ -7,24 +7,34 @@ from accounts.models import Role
 class EventForm(forms.ModelForm):
     class Meta:
         model = Event
-        fields = ['name', 'event_date', 'location', 'description']
+        fields = ['name', 'event_date', 'location', 'description', 'cover_image']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'e.g., Priya & Arjun Wedding'
+                'placeholder': 'e.g., Priya & Arjun Wedding',
+                'style': 'border-radius: 10px; min-height: 44px;'
             }),
             'event_date': forms.DateInput(attrs={
                 'class': 'form-control',
-                'type': 'date'
+                'type': 'date',
+                'style': 'border-radius: 10px; min-height: 44px;'
             }),
             'location': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'e.g., Grand Palace Hotel, Mumbai'
+                'placeholder': 'e.g., Grand Palace Hotel, Mumbai',
+                'style': 'border-radius: 10px; min-height: 44px;'
             }),
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
-                'placeholder': 'Optional details, schedules, notes for photography team...'
+                'placeholder': 'Optional details, schedules, notes for photography team...',
+                'style': 'border-radius: 10px;'
+            }),
+            'cover_image': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*',
+                'id': 'eventCoverInput',
+                'style': 'border-radius: 10px;'
             }),
         }
 
