@@ -88,11 +88,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
-# Database Configuration Strategy (PostgreSQL primary / explicit SQLite local fallback)
-DATABASE_ENGINE = os.getenv('DATABASE_ENGINE', '').lower()
+# Database Configuration Strategy (Supabase PostgreSQL primary / explicit SQLite local fallback)
+DATABASE_ENGINE = os.getenv('DATABASE_ENGINE', '').lower().strip()
 DATABASE_URL = os.getenv('DATABASE_URL', '').strip()
 
-if DATABASE_ENGINE == 'sqlite' or (not DATABASE_URL and DEBUG):
+# Detect automated test runner execution
+IS_TESTING = 'test' in sys.argv or 'pytest' in sys.modules
+
+if DATABASE_ENGINE == 'sqlite' or (IS_TESTING and not DATABASE_URL):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -100,6 +103,10 @@ if DATABASE_ENGINE == 'sqlite' or (not DATABASE_URL and DEBUG):
         }
     }
 elif DATABASE_URL:
+    if not DATABASE_URL.startswith(('postgresql://', 'postgres://')):
+        raise RuntimeError(
+            "Production requires a PostgreSQL connection string starting with postgresql:// or postgres://."
+        )
     DATABASES = {
         'default': dj_database_url.parse(
             DATABASE_URL,
@@ -108,9 +115,10 @@ elif DATABASE_URL:
         )
     }
 else:
-    raise ValueError(
-        "DATABASE_URL must be configured for PostgreSQL database connection in production, "
-        "or explicitly specify DATABASE_ENGINE=sqlite in development."
+    raise RuntimeError(
+        "DATABASE_URL is required in production and must point to your Supabase PostgreSQL database. "
+        "Automatic SQLite fallback in production is disabled. "
+        "For local development, explicitly set DATABASE_ENGINE=sqlite or supply a valid DATABASE_URL."
     )
 
 # Password validation
