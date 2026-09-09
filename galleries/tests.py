@@ -7,7 +7,6 @@ from galleries.models import Gallery
 
 class StudioBrandNameTests(TestCase):
     def setUp(self):
-        self.client = Client()
         self.admin = User.objects.create_user(
             username='admin_studio_lead',
             email='admin@auravision.com',
@@ -19,6 +18,7 @@ class StudioBrandNameTests(TestCase):
         p.status = MemberStatus.ACTIVE
         p.studio_name = 'Aura Vision Studios'
         p.save()
+        self.admin.refresh_from_db()
 
         self.event = Event.objects.create(
             name='Royal Wedding 2026',

@@ -5,230 +5,394 @@
 
 {% block guest_header %}{% endblock %}
 {% block guest_footer %}{% endblock %}
-{% block public_main_class %}p-0 m-0 w-100{% endblock %}
+{% block public_main_class %}p-0 m-0 w-100 container-fluid p-0{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-split-layout {
+        min-height: 100vh;
+        width: 100%;
+        overflow-x: hidden;
+    }
+    .auth-showcase-panel {
+        background: url('{% static "img/auth_showcase.jpg" %}') center/cover no-repeat;
+        position: relative;
+        min-height: 100vh;
+    }
+    .auth-showcase-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.82) 0%, rgba(15, 23, 42, 0.92) 100%);
+        z-index: 1;
+    }
+    .auth-showcase-content {
+        position: relative;
+        z-index: 2;
+        height: 100%;
+    }
+    .auth-glass-card {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+    }
+    .auth-feature-pill {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        font-size: 0.825rem;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: 99px;
+    }
+    .auth-form-panel {
+        min-height: 100vh;
+        background: #ffffff;
+    }
+    .auth-icon-badge {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: #ffffff;
+        border-radius: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        box-shadow: 0 10px 20px -4px rgba(37, 99, 235, 0.35);
+    }
+    .auth-input-group .input-group-text {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+        color: #64748b;
+        transition: all 0.2s ease;
+    }
+    .auth-input-group .form-control {
+        border-color: #e2e8f0;
+        background: #ffffff;
+        min-height: 48px;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+    }
+    .auth-input-group .form-control:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+        background: #ffffff;
+    }
+    .auth-input-group:focus-within .input-group-text {
+        border-color: #2563eb;
+        color: #2563eb;
+        background: #eff6ff;
+    }
+    .btn-auth-primary {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        border: none;
+        border-radius: 12px;
+        min-height: 50px;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #ffffff;
+        box-shadow: 0 10px 24px -4px rgba(37, 99, 235, 0.38);
+        transition: all 0.22s ease;
+    }
+    .btn-auth-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 28px -4px rgba(37, 99, 235, 0.48);
+        color: #ffffff;
+    }
+    .auth-switcher {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 99px;
+        padding: 4px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .auth-switcher-btn {
+        padding: 6px 18px;
+        border-radius: 99px;
+        font-size: 0.825rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .auth-switcher-btn.active {
+        background: #ffffff;
+        color: #0f172a;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+    }
+    .auth-switcher-btn:not(.active) {
+        color: #64748b;
+    }
+    .auth-switcher-btn:not(.active):hover {
+        color: #2563eb;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="min-vh-100 d-flex flex-column align-items-center justify-content-center p-4 bg-white">
+<div class="auth-split-layout container-fluid p-0">
+    <div class="row g-0 min-vh-100">
+        
+        <!-- Left Showcase Panel -->
+        <div class="col-lg-6 col-xl-7 d-none d-lg-flex auth-showcase-panel flex-column justify-content-between p-5">
+            <div class="auth-showcase-overlay"></div>
+            
+            <div class="auth-showcase-content d-flex flex-column justify-content-between h-100">
+                <!-- Top Brand Badge -->
+                <div class="d-flex align-items-center justify-content-between">
+                    <a href="{% url 'home' %}" class="d-flex align-items-center gap-3 text-decoration-none">
+                        <div class="d-flex align-items-center justify-content-center bg-white rounded-3 p-2 shadow-sm">
+                            <img src="{% static 'img/logo-icon.png' %}" alt="TrizenAI" width="32" height="32">
+                        </div>
+                        <div>
+                            <span class="fw-bold text-white fs-4 tracking-tight">Trizen<span style="color: #60a5fa;">AI</span></span>
+                            <span class="badge bg-primary text-white rounded-pill ms-2 px-2.5 py-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">STUDIO</span>
+                        </div>
+                    </a>
+                    <span class="badge bg-white bg-opacity-10 text-white border border-white border-opacity-25 rounded-pill px-3 py-2 small fw-medium">
+                        <i class="bi bi-people-fill text-info me-1.5"></i>Multi-Shooter Workspace
+                    </span>
+                </div>
 
-    <!-- Top Navigation & Brand Header -->
-    <div class="w-100 d-flex justify-content-between align-items-center mb-4" style="max-width: 480px;">
-        <a href="{% url 'home' %}" class="d-flex align-items-center gap-2.5 text-decoration-none">
-            <div class="d-flex align-items-center justify-content-center bg-white rounded-3 p-1 shadow-sm border"
-                style="width: 40px; height: 40px; border-color: #e2e8f0;">
-                <img src="{% static 'img/logo-icon.png' %}" alt="TrizenAI" width="28" height="28">
+                <!-- Hero Copywriting -->
+                <div class="my-auto py-5" style="max-width: 600px;">
+                    <span class="badge bg-primary bg-opacity-25 text-info border border-info border-opacity-25 rounded-pill px-3 py-1.5 mb-3 fw-semibold small">
+                        JOIN TRIZENAI STUDIO NETWORK
+                    </span>
+                    <h1 class="display-5 fw-extrabold text-white mb-3" style="letter-spacing: -0.03em; line-height: 1.15;">
+                        Create Your Photographer Account &amp; Collaborate
+                    </h1>
+                    <p class="text-white-50 fs-5 mb-4" style="line-height: 1.6;">
+                        Join high-performing event photography teams, sync high-res photo uploads, tag guest faces automatically, and share PIN-protected client galleries.
+                    </p>
+
+                    <!-- Feature Badges -->
+                    <div class="d-flex flex-wrap gap-2.5">
+                        <span class="auth-feature-pill"><i class="bi bi-person-badge me-1.5 text-info"></i> Studio Membership</span>
+                        <span class="auth-feature-pill"><i class="bi bi-cloud-arrow-up me-1.5 text-warning"></i> Unlimited Event Uploads</span>
+                        <span class="auth-feature-pill"><i class="bi bi-qr-code-scan me-1.5 text-success"></i> Instant QR/PIN Access</span>
+                    </div>
+                </div>
+
+                <!-- Glass Card Stat -->
+                <div class="auth-glass-card p-4 text-white">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-primary bg-opacity-25 p-2.5 border border-primary border-opacity-25 text-primary">
+                            <i class="bi bi-camera-fill fs-3 text-info"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-white" style="font-size: 1.05rem;">Empowering Modern Photographers</div>
+                            <div class="text-white-50 small">Fast setup in under 60 seconds. Seamless collaboration across all your event jobs.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <span class="fw-bold text-dark tracking-tight"
-                style="font-size: 1.35rem; font-family: var(--font-family-display);">Trizen<span
-                    style="color: #2563eb;">AI</span></span>
-        </a>
-        <a href="{% url 'accounts:login' %}"
-            class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1.5"
-            style="font-size: 0.825rem;">
-            <i class="bi bi-box-arrow-in-right"></i> Sign In
-        </a>
-    </div>
-
-    <!-- Auth Card -->
-    <div class="card border rounded-4 p-4 p-sm-5 bg-white w-100"
-        style="max-width: 480px; border-color: #e2e8f0; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);">
-
-        <div class="text-center mb-4">
-            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 mx-auto"
-                style="width: 56px; height: 56px; background-color: #eff6ff; color: #2563eb;">
-                <i class="bi bi-person-plus-fill" style="font-size: 1.75rem;"></i>
-            </div>
-            <h2 class="fw-bold text-dark mb-1.5"
-                style="font-size: 1.65rem; letter-spacing: -0.02em; font-family: var(--font-family-display);">
-                Create account
-            </h2>
-            <p class="text-secondary small mb-0" style="font-size: 0.9rem; color: #64748b;">
-                Sign up to join your studio team and collaborate on events.
-            </p>
         </div>
 
-        <!-- Messages / Alerts -->
-        {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show p-3 small mb-4 border-0 rounded-3 shadow-xs d-flex align-items-center gap-2"
-            role="alert" style="font-size: 0.85rem;">
-            <i class="bi bi-info-circle-fill fs-6 flex-shrink-0"></i>
-            <div>{{ message }}</div>
-            <button type="button" class="btn-close ms-auto p-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        <!-- Right Interactive Form Panel -->
+        <div class="col-12 col-lg-6 col-xl-5 auth-form-panel d-flex flex-column justify-content-between p-4 p-md-5">
+            
+            <!-- Top Header & Navigation Switcher -->
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <a href="{% url 'home' %}" class="d-flex align-items-center gap-2 text-decoration-none">
+                    <img src="{% static 'img/logo-icon.png' %}" alt="TrizenAI" width="36" height="36" class="d-lg-none">
+                    <span class="fw-bold text-dark fs-5 tracking-tight d-lg-none">Trizen<span style="color: #2563eb;">AI</span></span>
+                </a>
+                <div class="auth-switcher ms-auto">
+                    <a href="{% url 'accounts:login' %}" class="auth-switcher-btn">Sign In</a>
+                    <a href="{% url 'accounts:register' %}" class="auth-switcher-btn active">Register</a>
+                </div>
+            </div>
+
+            <!-- Form Content Box -->
+            <div class="my-auto mx-auto w-100" style="max-width: 440px;">
+                
+                <div class="text-center mb-4">
+                    <div class="auth-icon-badge mb-3 mx-auto">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </div>
+                    <h2 class="fw-bold text-dark mb-1.5" style="font-size: 1.75rem; letter-spacing: -0.03em;">
+                        Create Studio Account
+                    </h2>
+                    <p class="text-secondary small mb-0" style="font-size: 0.925rem;">
+                        Join your photography workspace and collaborate on multi-shooter events.
+                    </p>
+                </div>
+
+                <!-- Messages / Alerts -->
+                {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show p-3 small mb-4 border-0 rounded-3 shadow-xs d-flex align-items-center gap-2" role="alert">
+                    <i class="bi bi-info-circle-fill fs-6 flex-shrink-0"></i>
+                    <div>{{ message }}</div>
+                    <button type="button" class="btn-close ms-auto p-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                <form method="post" action="{% url 'accounts:register' %}" id="registerForm" novalidate>
+                    {% csrf_token %}
+
+                    <!-- First & Last Name Row -->
+                    <div class="row g-2.5 mb-3">
+                        <div class="col-6">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5" style="font-size: 0.85rem;">
+                                First Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}"
+                                value="{{ form.first_name.value|default:'' }}" placeholder="First Name" autocomplete="given-name"
+                                required class="form-control bg-white {% if form.first_name.errors %}is-invalid{% endif %}"
+                                style="border-color: #e2e8f0; border-radius: 12px; min-height: 48px; font-size: 0.9375rem;">
+                            {% if form.first_name.errors %}
+                            <div class="text-danger small mt-1" style="font-size: 0.75rem;">{{ form.first_name.errors|first }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-6">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5" style="font-size: 0.85rem;">
+                                Last Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}"
+                                value="{{ form.last_name.value|default:'' }}" placeholder="Last Name" autocomplete="family-name"
+                                required class="form-control bg-white {% if form.last_name.errors %}is-invalid{% endif %}"
+                                style="border-color: #e2e8f0; border-radius: 12px; min-height: 48px; font-size: 0.9375rem;">
+                            {% if form.last_name.errors %}
+                            <div class="text-danger small mt-1" style="font-size: 0.75rem;">{{ form.last_name.errors|first }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Email Address Input -->
+                    <div class="mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5" style="font-size: 0.85rem;">
+                            Email Address <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group auth-input-group">
+                            <span class="input-group-text px-3">
+                                <i class="bi bi-envelope fs-5"></i>
+                            </span>
+                            <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}"
+                                value="{{ form.email.value|default:'' }}" placeholder="name@trizenai.studio" autocomplete="email"
+                                required class="form-control border-start-0 ps-1 bg-white {% if form.email.errors %}is-invalid{% endif %}"
+                                style="border-top-right-radius: 12px; border-bottom-right-radius: 12px;">
+                        </div>
+                        {% if form.email.errors %}
+                        <div class="text-danger small mt-1.5 d-flex align-items-center gap-1" style="font-size: 0.78rem;">
+                            <i class="bi bi-exclamation-circle-fill"></i> {{ form.email.errors|first }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Username / Studio Account Name -->
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5" style="font-size: 0.85rem;">
+                            Username / Studio ID <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group auth-input-group">
+                            <span class="input-group-text px-3">
+                                <i class="bi bi-at fs-5"></i>
+                            </span>
+                            <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}"
+                                value="{{ form.username.value|default:'' }}" placeholder="Choose username" autocomplete="username"
+                                required class="form-control border-start-0 ps-1 bg-white {% if form.username.errors %}is-invalid{% endif %}"
+                                style="border-top-right-radius: 12px; border-bottom-right-radius: 12px;">
+                        </div>
+                        {% if form.username.errors %}
+                        <div class="text-danger small mt-1.5 d-flex align-items-center gap-1" style="font-size: 0.78rem;">
+                            <i class="bi bi-exclamation-circle-fill"></i> {{ form.username.errors|first }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="mb-3">
+                        <label for="{{ form.password.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5" style="font-size: 0.85rem;">
+                            Password <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group auth-input-group">
+                            <span class="input-group-text px-3">
+                                <i class="bi bi-lock fs-5"></i>
+                            </span>
+                            <input type="password" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}"
+                                placeholder="••••••••••••" autocomplete="new-password" required
+                                class="form-control border-start-0 border-end-0 px-1 bg-white {% if form.password.errors %}is-invalid{% endif %}">
+                            <button class="btn btn-outline-secondary border-start-0 px-3 d-flex align-items-center justify-content-center text-muted bg-white"
+                                type="button" data-password-toggle="{{ form.password.id_for_label }}" aria-label="Show password"
+                                style="border-color: #e2e8f0; border-top-right-radius: 12px; border-bottom-right-radius: 12px;">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        {% if form.password.errors %}
+                        <div class="text-danger small mt-1.5 d-flex align-items-center gap-1" style="font-size: 0.78rem;">
+                            <i class="bi bi-exclamation-circle-fill"></i> {{ form.password.errors|first }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Confirm Password Input -->
+                    <div class="mb-3">
+                        <label for="{{ form.confirm_password.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5" style="font-size: 0.85rem;">
+                            Confirm Password <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group auth-input-group">
+                            <span class="input-group-text px-3">
+                                <i class="bi bi-check2-circle fs-5"></i>
+                            </span>
+                            <input type="password" name="{{ form.confirm_password.name }}"
+                                id="{{ form.confirm_password.id_for_label }}" placeholder="••••••••••••" autocomplete="new-password"
+                                required class="form-control border-start-0 border-end-0 px-1 bg-white {% if form.confirm_password.errors %}is-invalid{% endif %}">
+                            <button class="btn btn-outline-secondary border-start-0 px-3 d-flex align-items-center justify-content-center text-muted bg-white"
+                                type="button" data-password-toggle="{{ form.confirm_password.id_for_label }}"
+                                aria-label="Show password"
+                                style="border-color: #e2e8f0; border-top-right-radius: 12px; border-bottom-right-radius: 12px;">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        {% if form.confirm_password.errors %}
+                        <div class="text-danger small mt-1.5 d-flex align-items-center gap-1" style="font-size: 0.78rem;">
+                            <i class="bi bi-exclamation-circle-fill"></i> {{ form.confirm_password.errors|first }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Requirements Box -->
+                    <div class="p-3 mb-4 rounded-3 bg-light border" style="font-size: 0.78rem; border-color: #f1f5f9 !important;">
+                        <div class="fw-semibold text-secondary mb-1">Password Requirements:</div>
+                        <div class="text-muted d-flex flex-column gap-1">
+                            <div><i class="bi bi-check2 text-primary me-1 fw-bold"></i> At least 8 characters long</div>
+                            <div><i class="bi bi-check2 text-primary me-1 fw-bold"></i> Mix of letters and numbers</div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Action -->
+                    <button type="submit" id="registerSubmitBtn" class="btn btn-auth-primary w-100 d-flex align-items-center justify-content-center gap-2 mb-4">
+                        <span id="registerBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        <span id="registerBtnText"><i class="bi bi-person-check me-1.5"></i>Create Studio Account</span>
+                    </button>
+
+                    <!-- Bottom Link Callout -->
+                    <div class="p-3.5 rounded-3 bg-light border text-center" style="border-color: #f1f5f9 !important;">
+                        <p class="text-secondary small mb-0" style="font-size: 0.875rem;">
+                            Already have a studio account?
+                            <a href="{% url 'accounts:login' %}" class="text-decoration-none fw-bold ms-1" style="color: #2563eb;">Sign In</a>
+                        </p>
+                    </div>
+                </form>
+
+            </div>
+
+            <!-- Footer Microcopy -->
+            <div class="text-center text-muted small mt-4" style="font-size: 0.78rem;">
+                <i class="bi bi-shield-check text-success me-1"></i>Protected by TrizenAI Encrypted Session Authentication &bull; &copy; 2026
+            </div>
+
         </div>
-        {% endfor %}
-        {% endif %}
-
-        <form method="post" action="{% url 'accounts:register' %}" id="registerForm" novalidate>
-            {% csrf_token %}
-
-            <!-- First & Last Name Row -->
-            <div class="row g-2.5 mb-3">
-                <div class="col-6">
-                    <label for="{{ form.first_name.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5"
-                        style="font-size: 0.85rem;">
-                        First Name <span class="text-danger">*</span>
-                    </label>
-                    <input type="text" name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}"
-                        value="{{ form.first_name.value|default:'' }}" placeholder="First Name" autocomplete="given-name"
-                        required class="form-control bg-white {% if form.first_name.errors %}is-invalid{% endif %}"
-                        style="border-color: #e2e8f0; border-radius: 10px; min-height: 46px; font-size: 0.9375rem;">
-                    {% if form.first_name.errors %}
-                    <div class="text-danger small mt-1" style="font-size: 0.75rem;">{{ form.first_name.errors|first }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-6">
-                    <label for="{{ form.last_name.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5"
-                        style="font-size: 0.85rem;">
-                        Last Name <span class="text-danger">*</span>
-                    </label>
-                    <input type="text" name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}"
-                        value="{{ form.last_name.value|default:'' }}" placeholder="Last Name" autocomplete="family-name"
-                        required class="form-control bg-white {% if form.last_name.errors %}is-invalid{% endif %}"
-                        style="border-color: #e2e8f0; border-radius: 10px; min-height: 46px; font-size: 0.9375rem;">
-                    {% if form.last_name.errors %}
-                    <div class="text-danger small mt-1" style="font-size: 0.75rem;">{{ form.last_name.errors|first }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Email Address Input -->
-            <div class="mb-3">
-                <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5"
-                    style="font-size: 0.85rem;">
-                    Email Address <span class="text-danger">*</span>
-                </label>
-                <div class="input-group">
-                    <span class="input-group-text bg-white text-muted border-end-0 px-3"
-                        style="border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
-                        <i class="bi bi-envelope text-secondary" style="font-size: 1.05rem;"></i>
-                    </span>
-                    <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}"
-                        value="{{ form.email.value|default:'' }}" placeholder="name@trizenai.studio" autocomplete="email"
-                        required class="form-control border-start-0 ps-1 bg-white {% if form.email.errors %}is-invalid{% endif %}"
-                        style="border-color: #e2e8f0; border-top-right-radius: 10px; border-bottom-right-radius: 10px; min-height: 46px; font-size: 0.9375rem;">
-                </div>
-                {% if form.email.errors %}
-                <div class="text-danger small mt-1.5 d-flex align-items-center gap-1" style="font-size: 0.78rem;">
-                    <i class="bi bi-exclamation-circle-fill"></i> {{ form.email.errors|first }}
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Username / Studio Account Name -->
-            <div class="mb-3">
-                <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5"
-                    style="font-size: 0.85rem;">
-                    Username / Studio ID <span class="text-danger">*</span>
-                </label>
-                <div class="input-group">
-                    <span class="input-group-text bg-white text-muted border-end-0 px-3"
-                        style="border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
-                        <i class="bi bi-at text-secondary" style="font-size: 1.05rem;"></i>
-                    </span>
-                    <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}"
-                        value="{{ form.username.value|default:'' }}" placeholder="Choose username" autocomplete="username"
-                        required class="form-control border-start-0 ps-1 bg-white {% if form.username.errors %}is-invalid{% endif %}"
-                        style="border-color: #e2e8f0; border-top-right-radius: 10px; border-bottom-right-radius: 10px; min-height: 46px; font-size: 0.9375rem;">
-                </div>
-                {% if form.username.errors %}
-                <div class="text-danger small mt-1.5 d-flex align-items-center gap-1" style="font-size: 0.78rem;">
-                    <i class="bi bi-exclamation-circle-fill"></i> {{ form.username.errors|first }}
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Password Input -->
-            <div class="mb-3">
-                <label for="{{ form.password.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5"
-                    style="font-size: 0.85rem;">
-                    Password <span class="text-danger">*</span>
-                </label>
-                <div class="input-group">
-                    <span class="input-group-text bg-white text-muted border-end-0 px-3"
-                        style="border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
-                        <i class="bi bi-lock text-secondary" style="font-size: 1.05rem;"></i>
-                    </span>
-                    <input type="password" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}"
-                        placeholder="••••••••••••" autocomplete="new-password" required
-                        class="form-control border-start-0 border-end-0 px-1 bg-white {% if form.password.errors %}is-invalid{% endif %}"
-                        style="border-color: #e2e8f0; min-height: 46px; font-size: 0.9375rem;">
-                    <button class="btn btn-outline-secondary border-start-0 px-3 d-flex align-items-center justify-content-center text-muted bg-white"
-                        type="button" data-password-toggle="{{ form.password.id_for_label }}" aria-label="Show password"
-                        style="border-color: #e2e8f0; border-top-right-radius: 10px; border-bottom-right-radius: 10px;">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                </div>
-                {% if form.password.errors %}
-                <div class="text-danger small mt-1.5 d-flex align-items-center gap-1" style="font-size: 0.78rem;">
-                    <i class="bi bi-exclamation-circle-fill"></i> {{ form.password.errors|first }}
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Confirm Password Input -->
-            <div class="mb-3">
-                <label for="{{ form.confirm_password.id_for_label }}" class="form-label fw-semibold small text-dark mb-1.5"
-                    style="font-size: 0.85rem;">
-                    Confirm Password <span class="text-danger">*</span>
-                </label>
-                <div class="input-group">
-                    <span class="input-group-text bg-white text-muted border-end-0 px-3"
-                        style="border-color: #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
-                        <i class="bi bi-check2-circle text-secondary" style="font-size: 1.05rem;"></i>
-                    </span>
-                    <input type="password" name="{{ form.confirm_password.name }}"
-                        id="{{ form.confirm_password.id_for_label }}" placeholder="••••••••••••" autocomplete="new-password"
-                        required class="form-control border-start-0 border-end-0 px-1 bg-white {% if form.confirm_password.errors %}is-invalid{% endif %}"
-                        style="border-color: #e2e8f0; min-height: 46px; font-size: 0.9375rem;">
-                    <button class="btn btn-outline-secondary border-start-0 px-3 d-flex align-items-center justify-content-center text-muted bg-white"
-                        type="button" data-password-toggle="{{ form.confirm_password.id_for_label }}"
-                        aria-label="Show password"
-                        style="border-color: #e2e8f0; border-top-right-radius: 10px; border-bottom-right-radius: 10px;">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                </div>
-                {% if form.confirm_password.errors %}
-                <div class="text-danger small mt-1.5 d-flex align-items-center gap-1" style="font-size: 0.78rem;">
-                    <i class="bi bi-exclamation-circle-fill"></i> {{ form.confirm_password.errors|first }}
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Requirements Box -->
-            <div class="p-3 mb-4 rounded-3 bg-white border" style="font-size: 0.78rem; border-color: #e2e8f0 !important;">
-                <div class="fw-semibold text-secondary mb-1">Password Requirements:</div>
-                <div class="text-muted d-flex flex-column gap-1">
-                    <div><i class="bi bi-check2 text-primary me-1 fw-bold"></i> At least 8 characters long</div>
-                    <div><i class="bi bi-check2 text-primary me-1 fw-bold"></i> Mix of letters and numbers</div>
-                </div>
-            </div>
-
-            <!-- Submit Action -->
-            <button type="submit" id="registerSubmitBtn"
-                class="btn btn-primary w-100 fw-semibold d-flex align-items-center justify-content-center gap-2 shadow-sm mb-3"
-                style="background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%); border: none; border-radius: 10px; min-height: 48px; font-size: 0.95rem;">
-                <span id="registerBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status"
-                    aria-hidden="true"></span>
-                <span id="registerBtnText"><i class="bi bi-person-check me-1"></i>Create Account</span>
-            </button>
-
-            <!-- Bottom Link -->
-            <div class="text-center pt-2 border-top" style="border-color: #f1f5f9 !important;">
-                <p class="text-secondary small mb-0" style="font-size: 0.875rem;">
-                    Already have an account?
-                    <a href="{% url 'accounts:login' %}" class="text-decoration-none fw-semibold"
-                        style="color: #2563eb;">Sign In</a>
-                </p>
-            </div>
-        </form>
 
     </div>
-
-    <!-- Security Microcopy Footer -->
-    <div class="mt-4 text-center text-muted small" style="font-size: 0.78rem; color: #64748b;">
-        Protected by TrizenAI Encrypted Session Authentication &bull; &copy; 2026
-    </div>
-
 </div>
 {% endblock %}
 
