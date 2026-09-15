@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     if (isAdmin) {
       sql = `
         SELECT e.id, e.name, e.slug, e.category, e.event_date, e.location, e.client_name,
-               COUNT(DISTINCT p.id)::int as photos_count,
+               COUNT(DISTINCT p.id) as photos_count,
                g.id as gallery_id, g.slug as gallery_slug, g.is_published as gallery_is_published
         FROM events_event e
         LEFT JOIN photos_photo p ON p.event_id = e.id
@@ -33,6 +33,8 @@ export async function GET(request: NextRequest) {
            OR LOWER(COALESCE(e.client_name, '')) LIKE $1
            OR LOWER(COALESCE(e.location, '')) LIKE $1
            OR LOWER(COALESCE(e.category, '')) LIKE $1
+           OR LOWER(COALESCE(e.description, '')) LIKE $1
+           OR LOWER(COALESCE(e.slug, '')) LIKE $1
         GROUP BY e.id, g.id, g.slug, g.is_published
         ORDER BY e.event_date DESC, e.created_at DESC
         LIMIT 8
@@ -41,7 +43,7 @@ export async function GET(request: NextRequest) {
     } else {
       sql = `
         SELECT e.id, e.name, e.slug, e.category, e.event_date, e.location, e.client_name,
-               COUNT(DISTINCT p.id)::int as photos_count,
+               COUNT(DISTINCT p.id) as photos_count,
                g.id as gallery_id, g.slug as gallery_slug, g.is_published as gallery_is_published
         FROM events_event e
         INNER JOIN events_eventmembership m ON m.event_id = e.id AND m.user_id = $2
@@ -51,6 +53,8 @@ export async function GET(request: NextRequest) {
            OR LOWER(COALESCE(e.client_name, '')) LIKE $1
            OR LOWER(COALESCE(e.location, '')) LIKE $1
            OR LOWER(COALESCE(e.category, '')) LIKE $1
+           OR LOWER(COALESCE(e.description, '')) LIKE $1
+           OR LOWER(COALESCE(e.slug, '')) LIKE $1
         GROUP BY e.id, g.id, g.slug, g.is_published
         ORDER BY e.event_date DESC, e.created_at DESC
         LIMIT 8
@@ -69,7 +73,7 @@ export async function GET(request: NextRequest) {
         eventDate: e.event_date,
         location: e.location,
         clientName: e.client_name,
-        photosCount: e.photos_count || 0,
+        photosCount: Number(e.photos_count) || 0,
         gallerySlug: e.gallery_slug,
         isPublished: Boolean(e.gallery_is_published),
       })),
