@@ -154,13 +154,13 @@ Uploads event photos to the platform.
 
 Admin
 
-Admin
-
-Customer
-
 Reviews all uploaded photos and selects photos for gallery.
 
+Admin
+
 Publishes Gallery and generates access Link + PIN.
+
+Customer
 
 Accesses Link, enters PIN, and views published photos.
 

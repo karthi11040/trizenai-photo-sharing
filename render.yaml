@@ -1,12 +1,13 @@
 services:
   - type: web
     name: trizenai-photo-sharing
-    runtime: python
-    buildCommand: ./build.sh
-    startCommand: sh -c "python manage.py migrate --no-input && python manage.py ensure_admin && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     envVars:
-      - key: DEBUG
-        value: "False"
+      - key: NODE_ENV
+        value: production
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
@@ -17,7 +18,3 @@ services:
         sync: false
       - key: SUPABASE_STORAGE_BUCKET
         value: event-photos
-      - key: ALLOWED_HOSTS
-        value: .onrender.com,localhost,127.0.0.1
-      - key: CSRF_TRUSTED_ORIGINS
-        value: https://*.onrender.com,http://localhost:8000,http://127.0.0.1:8000

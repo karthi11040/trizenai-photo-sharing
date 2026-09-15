@@ -29,13 +29,19 @@ wheels/
 .installed.cfg
 *.egg
 
-# Django
+# Django & SQLite
 *.log
 local_settings.py
 db.sqlite3
-db.sqlite3-journal
+db.sqlite3-*
 media/
 staticfiles/
+
+# Next.js & Build Output
+.next/
+tsconfig.tsbuildinfo
+.ag-kit-backups/
+.agents/.ag-kit/
 
 # Testing & Coverage
 .tox/

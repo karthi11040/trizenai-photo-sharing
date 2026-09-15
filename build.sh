@@ -2,17 +2,10 @@
 # Exit on error
 set -o errexit
 
-echo "--- Installing Python dependencies ---"
-pip install --upgrade pip
-pip install -r requirements.txt
+echo "--- Installing Node.js dependencies ---"
+npm install
 
-echo "--- Collecting static files ---"
-python manage.py collectstatic --no-input
-
-echo "--- Running database migrations ---"
-python manage.py migrate --no-input
-
-echo "--- Ensuring admin superuser exists ---"
-python manage.py ensure_admin
+echo "--- Building Next.js application ---"
+npm run build
 
 echo "--- Build complete ---"

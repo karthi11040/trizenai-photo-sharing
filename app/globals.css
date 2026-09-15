@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0b0f19;
+  --foreground: #f8fafc;
+  --font-inter: 'Inter', system-ui, sans-serif;
+  --font-outfit: 'Outfit', system-ui, sans-serif;
+  --studio-accent: #0f172a;
+  --studio-accent-hover: #1e293b;
+  --studio-accent-ring: rgba(15, 23, 42, 0.25);
+  --studio-font-family: var(--font-sans), system-ui, sans-serif;
+  --studio-font-scale: 100%;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter);
+  overflow-x: hidden;
+}
+
+/* Dynamic Studio Theme Engine */
+.bg-studio-accent,
+.theme-btn,
+.theme-accent-btn,
+.btn-accent {
+  background-color: var(--studio-accent) !important;
+  color: #ffffff !important;
+}
+
+.bg-studio-accent:hover,
+.theme-btn:hover,
+.theme-accent-btn:hover,
+.btn-accent:hover {
+  background-color: var(--studio-accent-hover) !important;
+  color: #ffffff !important;
+}
+
+.text-studio-accent {
+  color: var(--studio-accent) !important;
+}
+
+.border-studio-accent {
+  border-color: var(--studio-accent) !important;
+}
+
+.ring-studio-accent {
+  --tw-ring-color: var(--studio-accent-ring) !important;
+}
+
+.active-nav-theme {
+  background-color: var(--studio-accent) !important;
+  color: #ffffff !important;
+}
+
+/* Custom Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.glass-card-hover {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card-hover:hover {
+  transform: translateY(-3px);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 20px 40px -15px rgba(37, 99, 235, 0.3);
+}
+
+.glass-input {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.glass-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  background: rgba(15, 23, 42, 0.85);
+  outline: none;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.6);
+}
