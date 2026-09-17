@@ -1,7 +1,11 @@
 # Environment variables and secrets
+node_modules
+.next
 .env
 .env.local
+.env.production
 .env.*.local
+db.sqlite3
 
 # Python
 __pycache__/
