@@ -231,13 +231,31 @@ function initSqlite() {
     const token = crypto.randomBytes(16).toString("base64url");
 
     const info = sqliteDb.prepare(`
-      INSERT INTO auth_user (username, email, password, first_name, last_name, is_staff, is_superuser, is_active, date_joined)
-      VALUES (?, ?, ?, ?, ?, 1, 1, 1, ?)
-    `).run("admin", "admin@trizenai.studio", passwordHash, "Super", "Admin", now);
+      INSERT INTO auth_user (username, email, email_normalized, password, first_name, last_name, is_staff, is_superuser, is_active, date_joined)
+      VALUES (?, ?, ?, ?, ?, ?, 1, 1, 1, ?)
+    `).run("admin", "admin@trizenai.studio", "admin@trizenai.studio", passwordHash, "Super", "Admin", now);
 
     sqliteDb.prepare(`
-      INSERT INTO accounts_profile (user_id, role, status, studio_name, dashboard_token, is_email_verified, created_at, updated_at)
-      VALUES (?, 'ADMIN', 'ACTIVE', 'TrizenAI Studio', ?, 1, ?, ?)
+      INSERT INTO accounts_profile (user_id, workspace_id, role, status, phone_number, phone_normalized, studio_name, dashboard_token, is_email_verified, created_at, updated_at)
+      VALUES (?, 1, 'ADMIN', 'ACTIVE', '+919876543210', '+919876543210', 'TrizenAI Studio', ?, 1, ?, ?)
+    `).run(info.lastInsertRowid, token, now, now);
+  }
+
+  // Ensure sample team member exists in workspace 1
+  const existingTeam = sqliteDb.prepare("SELECT * FROM auth_user WHERE username = ? OR email = ?").get("team_member", "team@trizenai.studio");
+  if (!existingTeam) {
+    const passwordHash = bcrypt.hashSync("TeamPassword2026!", 10);
+    const now = new Date().toISOString();
+    const token = crypto.randomBytes(16).toString("base64url");
+
+    const info = sqliteDb.prepare(`
+      INSERT INTO auth_user (username, email, email_normalized, password, first_name, last_name, is_staff, is_superuser, is_active, date_joined)
+      VALUES (?, ?, ?, ?, ?, ?, 0, 0, 1, ?)
+    `).run("team_member", "team@trizenai.studio", "team@trizenai.studio", passwordHash, "Alex", "Photographer", now);
+
+    sqliteDb.prepare(`
+      INSERT INTO accounts_profile (user_id, workspace_id, role, status, phone_number, phone_normalized, studio_name, dashboard_token, must_change_password, is_email_verified, created_at, updated_at)
+      VALUES (?, 1, 'TEAM_MEMBER', 'ACTIVE', '+919876543211', '+919876543211', 'TrizenAI Studio', ?, 0, 1, ?, ?)
     `).run(info.lastInsertRowid, token, now, now);
   }
 

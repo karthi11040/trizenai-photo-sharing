@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { loginAction } from "@/app/actions/auth";
-import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, KeyRound } from "lucide-react";
+import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, KeyRound, UserCheck, ShieldCheck } from "lucide-react";
 
 export default function LoginPage() {
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -26,6 +28,12 @@ export default function LoginPage() {
     }
   }
 
+  function fillCredentials(email: string, pass: string) {
+    setIdentifier(email);
+    setPassword(pass);
+    setError(null);
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Title & Intro */}
@@ -40,6 +48,39 @@ export default function LoginPage() {
         <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
           Sign in to your photography studio workspace to manage shoots, team members, and client proofing.
         </p>
+      </div>
+
+      {/* Quick Demo Credentials Card */}
+      <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+          <span>Demo Credentials (Same Workspace)</span>
+          <span className="text-indigo-600 font-medium">Click to fill</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => fillCredentials("admin@trizenai.studio", "AdminPassword2026!")}
+            className="p-2.5 bg-white hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-300 rounded-xl text-left transition-all group cursor-pointer"
+          >
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 group-hover:text-indigo-600">
+              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Studio Admin</span>
+            </div>
+            <p className="text-[10px] text-slate-500 truncate mt-0.5">admin@trizenai.studio</p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => fillCredentials("team@trizenai.studio", "TeamPassword2026!")}
+            className="p-2.5 bg-white hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-300 rounded-xl text-left transition-all group cursor-pointer"
+          >
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 group-hover:text-indigo-600">
+              <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Team Member</span>
+            </div>
+            <p className="text-[10px] text-slate-500 truncate mt-0.5">team@trizenai.studio</p>
+          </button>
+        </div>
       </div>
 
       {/* Error Alert */}
@@ -64,8 +105,10 @@ export default function LoginPage() {
             <input
               type="text"
               name="identifier"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               required
-              placeholder="admin@trizenai.com"
+              placeholder="admin@trizenai.studio"
               className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all font-medium"
             />
           </div>
@@ -91,6 +134,8 @@ export default function LoginPage() {
             <input
               type={showPassword ? "text" : "password"}
               name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="••••••••••••"
               className="w-full pl-10 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all font-mono"
