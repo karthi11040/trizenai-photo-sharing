@@ -1,197 +1,160 @@
-# TrizenAI Photo Sharing Platform
+# TrizenAI Photo Sharing & Client Proofing Platform
 
-A full-stack, production-quality photo sharing platform built for photography and event teams. Allows photography leads to coordinate events, assign team members, review and curate uploaded event photos, and publish PIN-protected customer galleries accessible via a shareable link without requiring an account.
+A full-stack, enterprise-grade Next.js 15 photo sharing and client proofing platform designed for photography studios and event teams. Enforces **strict multi-tenant workspace isolation**, server-side authorization guards, role-based access control (RBAC), and PIN-protected client proofing galleries.
 
 ---
 
-## Architecture Diagram
+## Architecture Overview
 
 ```text
-                     Browser (Customer / Team / Admin)
-                                     │
-                                     ▼
-                       Django Templates + JavaScript
-                                     │
-                                     ▼
-                         Django Modular Monolith
-             ┌───────────────┬───────────────┬───────────────┐
-             ▼               ▼               ▼               ▼
-         Accounts         Events          Photos         Galleries
-        (Auth/RBAC)    (Management)    (Upload/Store)   (PIN/Publish)
-             │               │               │               │
-             └───────────────┴───────┬───────┴───────────────┘
-                                     │
-                             REST API & Services
-                                     │
-                         ┌───────────┴───────────┐
-                         ▼                       ▼
-                Supabase PostgreSQL       Supabase Storage
-                (Metadata, RBAC,          (Private 'event-photos'
-                 Galleries, PIN hashes)    bucket, signed URLs)
+                      Browser (Customer / Team / Admin)
+                                      │
+                                      ▼
+                      Next.js 15 App Router (TypeScript / React)
+                                      │
+                                      ▼
+                      Server Actions & Auth Guards
+              ┌───────────────────────┼───────────────────────┐
+              ▼                       ▼                       ▼
+      Workspace Isolation       Event & Gallery        Photo Processing
+       & Identity Engine          RBAC Engine             & Curation
+              │                       │                       │
+              └───────────────────────┼───────────────────────┘
+                                      │
+                           ┌──────────┴──────────┐
+                           ▼                     ▼
+                  SQLite / Supabase PG   Supabase Storage
+                  (Multi-Tenant Data,    (Private 'event-photos'
+                   PIN hashes, RBAC)      bucket, Signed URLs)
 ```
 
 ---
 
-## Architectural Rationale
+## Architectural & Security Foundation
 
-1. **Modular Django Monolith**: Avoids premature microservice complexity for an internship MVP while cleanly isolating concerns across four core domain apps (`accounts`, `events`, `photos`, `galleries`).
-2. **Why Supabase PostgreSQL**: Provides fully managed, robust PostgreSQL infrastructure with relational integrity, foreign keys, unique constraints, and indexes.
-3. **Why Photos are NOT stored in PostgreSQL**: Storing large binary image blobs in relational databases causes table bloat, degrades query performance, impairs backup times, and strains database RAM. Image files belong strictly in object storage.
-4. **Why Private Object Storage**: The `event-photos` bucket is private. Photos must never be publicly indexable before curation or outside authorized events.
-5. **How Signed URLs Work**: Time-limited cryptographic signed URLs (`/storage/v1/object/sign/...`) are generated server-side on-demand for authorized users and customers with valid session access.
-6. **How Role-Based Authorization Works**: Server-side RBAC ensures Team Members cannot publish galleries, access unassigned events, or manage other photographers' photos.
-7. **How Customer PIN Authentication Works**: The gallery PIN is never stored in plaintext (hashed with Django's PBKDF2/SHA256 password hashing). A server-side session flag (`gallery_authenticated_<id>`) is granted only upon passing PIN verification, protected against brute force with rate-limiting.
+1. **Multi-Tenant Workspace Isolation Engine**:
+   - Each photography studio operates inside a completely isolated `Workspace` entity.
+   - Global identity uniqueness constraint: Email addresses and phone numbers belong to **exactly ONE workspace**.
+   - Server-side authorization guards (`requireWorkspaceSession`, `assertWorkspaceAccess`, `requireWorkspaceRole`, `requireEventAccess`, `requireGalleryAccess`) derive workspace state exclusively from HTTP session JWT tokens, preventing IDOR or parameter tampering.
 
----
+2. **Database Engine**:
+   - Production / Local SQLite (via `better-sqlite3` WAL mode) & Supabase PostgreSQL support.
+   - Foreign key integrity, indexed lookups, and transactional user/workspace provisioning.
 
-## Technology Stack
+3. **Private Cloud Storage & Signed URLs**:
+   - Image files are uploaded directly to Supabase Storage (`trizenai-photo-sharing` / `event-photos`).
+   - Photos are served via time-limited signed URLs generated on-demand.
 
-- **Backend**: Python 3.12+, Django 6.0+, Django REST Framework (DRF)
-- **Database**: Supabase PostgreSQL (Production / Development), SQLite (explicit isolated test fallback)
-- **Object Storage**: Supabase Storage (private bucket `event-photos`)
-- **Frontend**: Django Templates, HTML5, CSS3, JavaScript (ES6+), Bootstrap 5.3
-- **Authentication**: Django session authentication & cryptographic password hashing (`make_password`)
-- **Production Server**: Gunicorn WSGI, WhiteNoise (static files)
-- **Deployment Platform**: Render
-- **Continuous Integration**: GitHub Actions
+4. **PIN-Protected Client Proofing**:
+   - Galleries require a 4-6 digit security PIN.
+   - PINs are hashed using cryptographic SHA-256 (`hashPin`). No plaintext PINs are ever stored.
 
 ---
 
-## User Roles & Permissions Matrix
+## User Roles & Workspace Matrix
 
-| Capability | Admin / Lead | Team Member | Customer |
-|---|:---:|:---:|:---:|
-| Register via Public Form | ❌ (creates Team Member) | ✅ | ❌ (No account needed) |
-| Create Admin Account | ✅ (via `createsuperuser`) | ❌ | ❌ |
-| Create / Edit Events | ✅ | ❌ (403 Forbidden) | ❌ |
-| Add / Remove Team Members | ✅ | ❌ (403 Forbidden) | ❌ |
-| View Assigned Events | ✅ (All events) | ✅ (Assigned only) | ❌ |
-| Upload Photos | ✅ | ✅ (To assigned events) | ❌ |
-| Manage Other Users' Photos | ✅ | ❌ (403 Forbidden) | ❌ |
-| Review & Select Photos | ✅ | ❌ | ❌ |
-| Create & Publish Gallery | ✅ | ❌ (403 Forbidden) | ❌ |
-| Set Gallery PIN | ✅ | ❌ | ❌ |
-| Access Published Gallery | ✅ | ✅ | ✅ (Link + Valid PIN) |
-| Access Unpublished Photos | ✅ (Authorized event) | ❌ (Denied) | ❌ (404 Not Found) |
+| Capability | Studio Admin | Co-Admin | Team Member | Client / Guest |
+|---|:---:|:---:|:---:|:---:|
+| Register New Workspace | ✅ | ❌ | ❌ | ❌ |
+| Manage Workspace Settings & Logo | ✅ | ✅ | ❌ | ❌ |
+| Invite & Manage Team Members | ✅ | ✅ | ❌ | ❌ |
+| Create / Edit Photoshoot Events | ✅ | ✅ | ❌ | ❌ |
+| View Assigned Photoshoot Events | ✅ | ✅ | ✅ (Assigned only) | ❌ |
+| Upload Photos to Events | ✅ | ✅ | ✅ (Assigned only) | ❌ |
+| Create & Publish PIN Galleries | ✅ | ✅ | ❌ | ❌ |
+| Access Published Client Gallery | ✅ | ✅ | ✅ | ✅ (PIN required) |
 
 ---
 
-## Local Development Setup
+## Demo Credentials (Same Workspace: `TrizenAI Studio`)
+
+Both demo accounts belong to the **same default workspace** (`TrizenAI Studio`, Workspace ID: 1) for full multi-role testing.
+
+### 🔑 Studio Admin (Admin Role)
+- **Email / Identifier**: `admin@trizenai.studio`
+- **Password**: `AdminPassword2026!`
+- **Role**: `ADMIN`
+- **Dashboard**: `/dashboard/admin`
+
+### 📷 Team Member (Photographer Role)
+- **Email / Identifier**: `team@trizenai.studio`
+- **Password**: `TeamPassword2026!`
+- **Role**: `TEAM_MEMBER`
+- **Dashboard**: `/dashboard/team`
+
+> *Tip: The `/login` page includes interactive **Quick Demo Credentials** buttons to pre-fill these credentials instantly.*
+
+---
+
+## Technical Stack
+
+- **Framework**: Next.js 15 (App Router, Server Actions, React 19)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS, Lucide Icons
+- **Database**: SQLite (`better-sqlite3` with WAL mode) & Supabase PostgreSQL
+- **Cloud Storage**: Supabase Storage
+- **Authentication**: JWT Cookie Sessions (`jose`) & Bcrypt / PBKDF2 Password Hashing
+- **Test Runner**: Custom automated test suite via `npx tsx`
+
+---
+
+## Local Development & Setup
 
 ### Prerequisites
-- Python 3.12 or newer
-- Git
+- Node.js 18.x or 20.x or newer
+- npm / npx
 
-### 1. Clone the repository
+### 1. Clone & Install
 ```bash
-git clone <repository-url>
+git clone https://github.com/karthi11040/trizenai-photo-sharing.git
 cd Photo_Sharing_Platform
+npm install
 ```
 
-### 2. Create and activate a virtual environment
-**Windows (PowerShell):**
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-```
-**Linux / macOS:**
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### 3. Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Configure environment variables
-Copy `.env.example` to `.env`:
-```bash
-cp .env.example .env
-```
-For local offline testing, `.env` defaults to:
+### 2. Environment Setup
+Verify `.env` configuration:
 ```ini
-DEBUG=True
-SECRET_KEY=django-insecure-dev-key
-DATABASE_ENGINE=sqlite
-ALLOWED_HOSTS=localhost,127.0.0.1
-```
-To connect to live Supabase PostgreSQL and Storage:
-```ini
-DEBUG=True
-SECRET_KEY=your-secret-key
-DATABASE_URL=postgresql://postgres.xxx:password@aws-0-region.pooler.supabase.com:6543/postgres
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
-SUPABASE_STORAGE_BUCKET=event-photos
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+SUPABASE_STORAGE_BUCKET=trizenai-photo-sharing
 ```
 
-### 5. Apply migrations
+### 3. Run Development Server
 ```bash
-python manage.py migrate
+npm run dev
 ```
-
-### 6. Create initial Administrator
-As required by security guidelines, public registration only creates `TEAM_MEMBER` roles. The initial Admin must be created through:
-```bash
-python manage.py createsuperuser
-```
-
-### 7. Run the development server
-```bash
-python manage.py runserver
-```
-Access the application at [http://127.0.0.1:8000/](http://127.0.0.1:8000/).
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## Running Automated Tests
+## Automated Test Execution
 
-Run the full Django test suite:
+Run the complete **15-scenario multi-tenant workspace isolation test suite**:
+
 ```bash
-python manage.py test
+npx tsx tests/workspace-isolation.test.ts
 ```
 
----
-
-## Operational & Security Documentation
-
-Detailed documentation is available in the [`docs/`](file:///d:/Photo_Sharing_Platform/docs) directory:
-- [Operations & Maintenance Runbook](file:///d:/Photo_Sharing_Platform/docs/operations.md): Health monitoring, log correlation via Request ID, backup strategies, and incident runbooks.
-- [Security Architecture & Hardening](file:///d:/Photo_Sharing_Platform/docs/security.md): Server-side RBAC, IDOR protection, private media storage, PIN security, and rate limiting controls.
-
----
-
-## Production Security & Deployment Verification
-
-Before executing a production deployment on Render, run the Django system deployment check:
-```bash
-python manage.py check --deploy
-python manage.py check
-python manage.py test
-```
+### Verified Test Coverage:
+1. `Identity Normalization` (Email trim & lowercase, E.164 phone formatting)
+2. `Workspace Creation` (Isolated Workspace IDs per Admin)
+3. `Global Email Uniqueness` (Admin registration duplicate check)
+4. `Same Workspace Duplicate Email` (Team invite duplicate check)
+5. `Cross-Workspace Duplicate Email` (Block reusing email in another studio)
+6. `Same Workspace Duplicate Phone` (Team invite phone check)
+7. `Cross-Workspace Duplicate Phone` (Block reusing phone in another studio)
+8. `Workspace Scoped User Listing` (Strict team isolation)
+9. `Workspace Scoped Event Listing` (Strict event isolation)
+10. `Cross-Workspace Event Member Assignment Block` (Prevent assigning team members of studio A to studio B)
+11. `Cross-Workspace Event Access Guard` (IDOR protection)
+12. `Cross-Workspace Gallery Access Guard` (IDOR protection)
+13. `Workspace Scoped Photo Querying` (Private upload scoping)
+14. `Workspace Isolation in Event Search` (Query isolation)
+15. `Workspace Isolation in Team Member Updates` (Profile update protection)
 
 ---
 
-## Demo Credentials (Submission Placeholder)
+## Source Code & Deployment Information
 
-> *Note: Live deployment details will be filled upon completion of deployment in Phase 9.*
-
-- **Live Application URL**: Pending Render Deployment
-- **Source Code Repository**: Pending GitHub Push
-- **Admin Demo Credentials**:
-  - Username: `admin_demo`
-  - Password: `AdminPassword2026!`
-- **Team Member Demo Credentials**:
-  - Username: `team_demo`
-  - Password: `TeamPassword2026!`
-- **Demo Gallery URL**: Pending
-- **Demo Gallery PIN**: Pending
-
----
-
-## Known Limitations & Planned Enhancements
-- Rate limiting on PIN verification and Login is IP/Session window based (`RateLimitMiddleware`).
-- Storage fallback handles transient Supabase downtime with user-safe alerts and zero data corruption.
-
+- **GitHub Source Code Repository**: [https://github.com/karthi11040/trizenai-photo-sharing](https://github.com/karthi11040/trizenai-photo-sharing)
+- **Primary Branch**: `master` (and synchronized `main`)
+- **Live Local Server**: `http://localhost:3000` (via `npm run dev`)
