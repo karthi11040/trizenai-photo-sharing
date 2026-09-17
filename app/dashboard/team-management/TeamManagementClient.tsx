@@ -219,7 +219,7 @@ export function TeamManagementClient({
                 const displayName = `${m.first_name || ""} ${m.last_name || ""}`.trim() || m.username;
                 const isSelf = m.id === currentUserId;
                 const role = m.profile?.role || (m.is_superuser ? "ADMIN" : "TEAM_MEMBER");
-                const mustChange = m.profile?.must_change_password;
+                const mustChange = Boolean(m.profile?.must_change_password);
 
                 return (
                   <tr key={m.id} className="hover:bg-slate-50/70 transition-colors">
