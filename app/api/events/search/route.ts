@@ -18,6 +18,8 @@ export async function GET(request: NextRequest) {
 
     const isAdmin = user.is_superuser || user.profile?.role === "ADMIN" || user.profile?.role === "CO_ADMIN";
 
+    const workspaceId = user.profile?.workspace_id || 1;
+
     let sql: string;
     let params: any[];
 
@@ -29,17 +31,19 @@ export async function GET(request: NextRequest) {
         FROM events_event e
         LEFT JOIN photos_photo p ON p.event_id = e.id
         LEFT JOIN galleries_gallery g ON g.event_id = e.id
-        WHERE LOWER(e.name) LIKE $1 
-           OR LOWER(COALESCE(e.client_name, '')) LIKE $1
-           OR LOWER(COALESCE(e.location, '')) LIKE $1
-           OR LOWER(COALESCE(e.category, '')) LIKE $1
-           OR LOWER(COALESCE(e.description, '')) LIKE $1
-           OR LOWER(COALESCE(e.slug, '')) LIKE $1
+        WHERE e.workspace_id = $2 AND (
+             LOWER(e.name) LIKE $1 
+          OR LOWER(COALESCE(e.client_name, '')) LIKE $1
+          OR LOWER(COALESCE(e.location, '')) LIKE $1
+          OR LOWER(COALESCE(e.category, '')) LIKE $1
+          OR LOWER(COALESCE(e.description, '')) LIKE $1
+          OR LOWER(COALESCE(e.slug, '')) LIKE $1
+        )
         GROUP BY e.id, g.id, g.slug, g.is_published
         ORDER BY e.event_date DESC, e.created_at DESC
         LIMIT 8
       `;
-      params = [`%${q}%`];
+      params = [`%${q}%`, workspaceId];
     } else {
       sql = `
         SELECT e.id, e.name, e.slug, e.category, e.event_date, e.location, e.client_name,
@@ -49,17 +53,19 @@ export async function GET(request: NextRequest) {
         INNER JOIN events_eventmembership m ON m.event_id = e.id AND m.user_id = $2
         LEFT JOIN photos_photo p ON p.event_id = e.id
         LEFT JOIN galleries_gallery g ON g.event_id = e.id
-        WHERE LOWER(e.name) LIKE $1 
-           OR LOWER(COALESCE(e.client_name, '')) LIKE $1
-           OR LOWER(COALESCE(e.location, '')) LIKE $1
-           OR LOWER(COALESCE(e.category, '')) LIKE $1
-           OR LOWER(COALESCE(e.description, '')) LIKE $1
-           OR LOWER(COALESCE(e.slug, '')) LIKE $1
+        WHERE e.workspace_id = $3 AND (
+             LOWER(e.name) LIKE $1 
+          OR LOWER(COALESCE(e.client_name, '')) LIKE $1
+          OR LOWER(COALESCE(e.location, '')) LIKE $1
+          OR LOWER(COALESCE(e.category, '')) LIKE $1
+          OR LOWER(COALESCE(e.description, '')) LIKE $1
+          OR LOWER(COALESCE(e.slug, '')) LIKE $1
+        )
         GROUP BY e.id, g.id, g.slug, g.is_published
         ORDER BY e.event_date DESC, e.created_at DESC
         LIMIT 8
       `;
-      params = [`%${q}%`, user.id];
+      params = [`%${q}%`, user.id, workspaceId];
     }
 
     const events = await query<any>(sql, params);

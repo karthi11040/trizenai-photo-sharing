@@ -20,10 +20,41 @@ function initSqlite() {
 
   // Create tables if they do not exist
   sqliteDb.exec(`
+    CREATE TABLE IF NOT EXISTS workspaces (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      slug TEXT UNIQUE NOT NULL,
+      owner_id INTEGER NOT NULL DEFAULT 1,
+      email TEXT DEFAULT '',
+      email_normalized TEXT UNIQUE DEFAULT '',
+      phone TEXT DEFAULT '',
+      phone_normalized TEXT DEFAULT '',
+      logo TEXT DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'ACTIVE',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS team_invitations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      workspace_id INTEGER NOT NULL,
+      email TEXT NOT NULL,
+      email_normalized TEXT NOT NULL,
+      phone TEXT DEFAULT '',
+      phone_normalized TEXT DEFAULT '',
+      role TEXT NOT NULL DEFAULT 'TEAM_MEMBER',
+      token_hash TEXT UNIQUE NOT NULL,
+      expires_at TEXT NOT NULL,
+      invited_by_id INTEGER NOT NULL,
+      accepted_at TEXT,
+      created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS auth_user (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
       email TEXT UNIQUE NOT NULL,
+      email_normalized TEXT UNIQUE,
       password TEXT NOT NULL,
       first_name TEXT DEFAULT '',
       last_name TEXT DEFAULT '',
@@ -36,9 +67,11 @@ function initSqlite() {
     CREATE TABLE IF NOT EXISTS accounts_profile (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER UNIQUE NOT NULL,
+      workspace_id INTEGER NOT NULL DEFAULT 1,
       role TEXT NOT NULL DEFAULT 'TEAM_MEMBER',
       status TEXT NOT NULL DEFAULT 'ACTIVE',
       phone_number TEXT DEFAULT '',
+      phone_normalized TEXT,
       studio_name TEXT DEFAULT 'TrizenAI Studio',
       studio_logo TEXT DEFAULT '',
       studio_tagline TEXT DEFAULT 'Professional Photography & Client Proofing',
@@ -60,6 +93,7 @@ function initSqlite() {
 
     CREATE TABLE IF NOT EXISTS events_event (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      workspace_id INTEGER NOT NULL DEFAULT 1,
       name TEXT NOT NULL,
       slug TEXT UNIQUE NOT NULL,
       category TEXT DEFAULT 'Wedding',
@@ -88,6 +122,7 @@ function initSqlite() {
 
     CREATE TABLE IF NOT EXISTS photos_photo (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      workspace_id INTEGER NOT NULL DEFAULT 1,
       event_id INTEGER NOT NULL,
       uploaded_by_id INTEGER NOT NULL,
       filename TEXT NOT NULL,
@@ -102,6 +137,7 @@ function initSqlite() {
 
     CREATE TABLE IF NOT EXISTS galleries_gallery (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      workspace_id INTEGER NOT NULL DEFAULT 1,
       event_id INTEGER UNIQUE NOT NULL,
       title TEXT NOT NULL DEFAULT '',
       slug TEXT UNIQUE NOT NULL,
@@ -122,6 +158,7 @@ function initSqlite() {
 
     CREATE TABLE IF NOT EXISTS galleries_galleryview (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      workspace_id INTEGER NOT NULL DEFAULT 1,
       gallery_id INTEGER NOT NULL,
       viewed_at TEXT NOT NULL,
       ip_address TEXT,
@@ -140,6 +177,25 @@ function initSqlite() {
       }
     } catch {}
   };
+
+  safeAddColumn("auth_user", "email_normalized", "TEXT");
+  safeAddColumn("accounts_profile", "workspace_id", "INTEGER DEFAULT 1");
+  safeAddColumn("accounts_profile", "phone_normalized", "TEXT");
+  safeAddColumn("events_event", "workspace_id", "INTEGER DEFAULT 1");
+  safeAddColumn("photos_photo", "workspace_id", "INTEGER DEFAULT 1");
+  safeAddColumn("galleries_gallery", "workspace_id", "INTEGER DEFAULT 1");
+  safeAddColumn("galleries_galleryview", "workspace_id", "INTEGER DEFAULT 1");
+  safeAddColumn("workspaces", "email_normalized", "TEXT");
+  safeAddColumn("workspaces", "phone_normalized", "TEXT");
+
+  // Create Default Workspace if not existing
+  try {
+    const now = new Date().toISOString();
+    sqliteDb.exec(`
+      INSERT OR IGNORE INTO workspaces (id, name, slug, owner_id, email, email_normalized, phone, phone_normalized, status, created_at, updated_at)
+      VALUES (1, 'TrizenAI Photography Workspace', 'trizenai-photography-workspace', 1, 'admin@trizenai.studio', 'admin@trizenai.studio', '+919876543210', '+919876543210', 'ACTIVE', '${now}', '${now}')
+    `);
+  } catch {}
 
   safeAddColumn("events_event", "category", "TEXT DEFAULT 'Wedding'");
   safeAddColumn("events_event", "client_name", "TEXT DEFAULT ''");
@@ -222,16 +278,29 @@ export async function query<T = any>(text: string, params: any[] = []): Promise<
   // SQLite execution
   const db = initSqlite();
 
-  // Normalize parameters for SQLite (convert booleans to 1/0, undefined to null)
-  const sqliteParams = params.map((p) => {
-    if (p === undefined) return null;
-    if (typeof p === "boolean") return p ? 1 : 0;
-    return p;
-  });
+  // Normalize PostgreSQL queries & parameters to SQLite:
+  // 1. Convert $1, $2, $1... to ?, ?, ? and map params positionally
+  const sqliteParams: any[] = [];
+  const paramMatches = Array.from(text.matchAll(/\$(\d+)\b/g));
 
-  // Normalize PostgreSQL queries to SQLite:
-  // 1. Convert $1, $2, ... to ?, ?, ...
-  let sqliteQuery = text.replace(/\$(\d+)/g, "?");
+  let sqliteQuery = text;
+  if (paramMatches.length > 0) {
+    for (const match of paramMatches) {
+      const idx = parseInt(match[1], 10) - 1; // 1-indexed to 0-indexed
+      let val = idx >= 0 && idx < params.length ? params[idx] : null;
+      if (val === undefined) val = null;
+      if (typeof val === "boolean") val = val ? 1 : 0;
+      sqliteParams.push(val);
+    }
+    sqliteQuery = text.replace(/\$(\d+)\b/g, "?");
+  } else {
+    // If no $1 placeholders were in text, use passed params as is
+    params.forEach((p) => {
+      let val = p === undefined ? null : p;
+      if (typeof val === "boolean") val = val ? 1 : 0;
+      sqliteParams.push(val);
+    });
+  }
   
   // 2. Convert NOW() to datetime('now')
   sqliteQuery = sqliteQuery.replace(/\bNOW\(\)/gi, "datetime('now')");
@@ -242,53 +311,59 @@ export async function query<T = any>(text: string, params: any[] = []): Promise<
   // 4. Convert TO_CHAR(event_date, 'YYYY-MM-DD') to strftime('%Y-%m-%d', event_date)
   sqliteQuery = sqliteQuery.replace(/TO_CHAR\(([^,]+),\s*'YYYY-MM-DD'\)/gi, "strftime('%Y-%m-%d', $1)");
 
-  const trimmed = sqliteQuery.trim();
-  const isInsert = trimmed.toUpperCase().startsWith("INSERT");
-  const isUpdate = trimmed.toUpperCase().startsWith("UPDATE");
-  const isDelete = trimmed.toUpperCase().startsWith("DELETE");
+  try {
+    const trimmed = sqliteQuery.trim();
+    const isInsert = trimmed.toUpperCase().startsWith("INSERT");
+    const isUpdate = trimmed.toUpperCase().startsWith("UPDATE");
+    const isDelete = trimmed.toUpperCase().startsWith("DELETE");
 
-  // Handle RETURNING clause in SQLite
-  const returningMatch = trimmed.match(/\s+RETURNING\s+(.+)$/i);
-  let finalQuery = sqliteQuery;
-  if (returningMatch) {
-    finalQuery = sqliteQuery.slice(0, returningMatch.index);
-  }
-
-  if (isInsert) {
-    const stmt = db.prepare(finalQuery);
-    const info = stmt.run(...sqliteParams);
+    // Handle RETURNING clause in SQLite
+    const returningMatch = trimmed.match(/\s+RETURNING\s+(.+)$/i);
+    let finalQuery = sqliteQuery;
     if (returningMatch) {
-      // Determine table name
-      const tableMatch = trimmed.match(/INSERT\s+INTO\s+([a-zA-Z0-9_]+)/i);
-      if (tableMatch) {
-        const table = tableMatch[1];
-        const row = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(info.lastInsertRowid);
-        return row ? [row as T] : [];
-      }
+      finalQuery = sqliteQuery.slice(0, returningMatch.index);
     }
-    return [{ id: info.lastInsertRowid } as unknown as T];
-  }
 
-  if (isUpdate || isDelete) {
-    const stmt = db.prepare(finalQuery);
-    stmt.run(...sqliteParams);
-    if (returningMatch && isUpdate) {
-      // Return updated row if possible
-      const lastParam = sqliteParams[sqliteParams.length - 1];
-      const tableMatch = trimmed.match(/UPDATE\s+([a-zA-Z0-9_]+)/i);
-      if (tableMatch && lastParam !== undefined) {
-        const table = tableMatch[1];
-        const row = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(lastParam);
-        return row ? [row as T] : [];
+    if (isInsert) {
+      const stmt = db.prepare(finalQuery);
+      const info = stmt.run(...sqliteParams);
+      if (returningMatch) {
+        const tableMatch = trimmed.match(/INSERT\s+INTO\s+([a-zA-Z0-9_]+)/i);
+        if (tableMatch) {
+          const table = tableMatch[1];
+          const row = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(info.lastInsertRowid);
+          return row ? [row as T] : [];
+        }
       }
+      return [{ id: info.lastInsertRowid } as unknown as T];
     }
-    return [];
-  }
 
-  // SELECT query
-  const stmt = db.prepare(sqliteQuery);
-  const rows = stmt.all(...sqliteParams);
-  return rows as T[];
+    if (isUpdate || isDelete) {
+      const stmt = db.prepare(finalQuery);
+      stmt.run(...sqliteParams);
+      if (returningMatch && isUpdate) {
+        const lastParam = sqliteParams[sqliteParams.length - 1];
+        const tableMatch = trimmed.match(/UPDATE\s+([a-zA-Z0-9_]+)/i);
+        if (tableMatch && lastParam !== undefined) {
+          const table = tableMatch[1];
+          const row = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(lastParam);
+          return row ? [row as T] : [];
+        }
+      }
+      return [];
+    }
+
+    // SELECT query
+    const stmt = db.prepare(sqliteQuery);
+    const rows = stmt.all(...sqliteParams);
+    return rows as T[];
+  } catch (err: any) {
+    console.error("DB Query Failed:", err.message);
+    console.error("Original SQL:", text);
+    console.error("SQLite SQL:", sqliteQuery);
+    console.error("Params:", params);
+    throw err;
+  }
 }
 
 export async function queryOne<T = any>(text: string, params: any[] = []): Promise<T | null> {

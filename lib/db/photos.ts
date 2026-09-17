@@ -142,7 +142,18 @@ export async function deletePhoto(photoId: number): Promise<boolean> {
   return true;
 }
 
-export async function getAllRecentPhotos(limit: number = 10): Promise<any[]> {
+export async function getAllRecentPhotos(limit: number = 10, workspaceId?: number): Promise<any[]> {
+  const params: any[] = [];
+  let whereClause = "";
+  if (workspaceId) {
+    whereClause = "WHERE e.workspace_id = $1";
+    params.push(workspaceId);
+    params.push(limit);
+  } else {
+    params.push(limit);
+  }
+  const limitParam = workspaceId ? "$2" : "$1";
+
   const photos = await query<any>(
     `SELECT p.*, 
             e.name as event_name,
@@ -152,9 +163,10 @@ export async function getAllRecentPhotos(limit: number = 10): Promise<any[]> {
      FROM photos_photo p
      LEFT JOIN events_event e ON e.id = p.event_id
      LEFT JOIN auth_user u ON u.id = p.uploaded_by_id
+     ${whereClause}
      ORDER BY p.uploaded_at DESC, p.id DESC
-     LIMIT $1`,
-    [limit]
+     LIMIT ${limitParam}`,
+    params
   );
   return photos;
 }

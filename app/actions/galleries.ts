@@ -1,6 +1,7 @@
 "use server";
 
-import { getCurrentUser, checkMemberActive } from "@/lib/auth/session";
+import { requireWorkspaceRole, requireEventAccess } from "@/lib/auth/workspace";
+import { checkMemberActive } from "@/lib/auth/session";
 import {
   createOrUpdateGallery,
   getGalleryBySlug,
@@ -12,8 +13,13 @@ import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 
 export async function publishGalleryAction(formData: FormData): Promise<{ success: boolean; error?: string; slug?: string }> {
-  const user = await getCurrentUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const eventIdRaw = formData.get("event_id") as string;
+  if (!eventIdRaw) {
+    return { success: false, error: "Event ID is required." };
+  }
+  const eventId = parseInt(eventIdRaw, 10);
+
+  const { user, workspaceId } = await requireEventAccess(eventId);
 
   const isAdmin = user.is_superuser || user.profile?.role === "ADMIN" || user.profile?.role === "CO_ADMIN";
   if (!isAdmin) {
@@ -25,16 +31,14 @@ export async function publishGalleryAction(formData: FormData): Promise<{ succes
     return { success: false, error: statusCheck.error };
   }
 
-  const eventIdRaw = formData.get("event_id") as string;
   const title = (formData.get("title") as string || "").trim();
   const pin = (formData.get("pin") as string || "").trim();
   const photoIdsRaw = formData.getAll("photo_ids") as string[];
 
-  if (!eventIdRaw || !title || !pin) {
+  if (!title || !pin) {
     return { success: false, error: "Title, event, and 4-6 digit PIN are required." };
   }
 
-  const eventId = parseInt(eventIdRaw, 10);
   const photoIds = photoIdsRaw.map((id) => parseInt(id, 10)).filter((id) => !isNaN(id));
 
   const slug = title
@@ -45,6 +49,7 @@ export async function publishGalleryAction(formData: FormData): Promise<{ succes
   try {
     const gallery = await createOrUpdateGallery({
       eventId,
+      workspaceId,
       title,
       slug,
       pin,
@@ -91,8 +96,7 @@ export async function updateGallerySelectionAction(
   eventId: number,
   photoIds: number[]
 ): Promise<{ success: boolean; error?: string; noGallery?: boolean }> {
-  const user = await getCurrentUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const { user, workspaceId } = await requireEventAccess(eventId);
 
   const isAdmin = user.is_superuser || user.profile?.role === "ADMIN" || user.profile?.role === "CO_ADMIN";
   if (!isAdmin) {
@@ -103,7 +107,7 @@ export async function updateGallerySelectionAction(
   if (!statusCheck.allowed) return { success: false, error: statusCheck.error };
 
   try {
-    const result = await updateGalleryPhotoSelection(eventId, photoIds);
+    const result = await updateGalleryPhotoSelection(eventId, photoIds, workspaceId);
     if (!result.updated) {
       return { success: false, noGallery: true, error: "No gallery exists for this event yet. Create a gallery PIN first." };
     }

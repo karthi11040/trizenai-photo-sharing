@@ -1,16 +1,101 @@
 import { query, queryOne } from "./index";
 import type { User, Profile, Role, MemberStatus } from "@/types/database";
+import { normalizeEmail, normalizePhone } from "@/lib/utils/normalization";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
+export interface Workspace {
+  id: number;
+  name: string;
+  slug: string;
+  owner_id: number;
+  email: string;
+  email_normalized: string;
+  phone: string;
+  phone_normalized: string;
+  logo?: string | null;
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+  created_at: string;
+  updated_at: string;
+}
+
 export interface UserWithProfile extends User {
-  profile: Profile;
+  profile: Profile & { workspace_id?: number; phone_normalized?: string | null };
+}
+
+/**
+ * 1. Global Identity Check for Email & Phone Uniqueness Across Workspaces
+ */
+export async function validateGlobalIdentity(
+  email?: string | null,
+  phone?: string | null,
+  targetWorkspaceId?: number,
+  excludeUserId?: number
+): Promise<void> {
+  const normEmail = normalizeEmail(email);
+  const normPhone = normalizePhone(phone);
+
+  if (normEmail) {
+    // Check existing users
+    const existingUser = await queryOne<any>(
+      `SELECT u.id, p.workspace_id 
+       FROM auth_user u
+       LEFT JOIN accounts_profile p ON p.user_id = u.id
+       WHERE (LOWER(u.email) = $1 OR u.email_normalized = $1)
+       ${excludeUserId ? "AND u.id != " + Number(excludeUserId) : ""}
+       LIMIT 1`,
+      [normEmail]
+    );
+
+    if (existingUser) {
+      const userWorkspaceId = existingUser.workspace_id || 1;
+      if (targetWorkspaceId && userWorkspaceId === targetWorkspaceId) {
+        throw new Error("This email is already part of your workspace.");
+      } else {
+        throw new Error("This email is already associated with another workspace and cannot be used here.");
+      }
+    }
+
+    // Check existing workspace owners or invitations
+    const existingInvitation = await queryOne<any>(
+      `SELECT workspace_id FROM team_invitations WHERE email_normalized = $1 AND accepted_at IS NULL LIMIT 1`,
+      [normEmail]
+    );
+    if (existingInvitation) {
+      if (targetWorkspaceId && existingInvitation.workspace_id === targetWorkspaceId) {
+        throw new Error("This email is already part of your workspace.");
+      } else {
+        throw new Error("This email is already associated with another workspace and cannot be used here.");
+      }
+    }
+  }
+
+  if (normPhone) {
+    const existingPhone = await queryOne<any>(
+      `SELECT p.user_id, p.workspace_id 
+       FROM accounts_profile p
+       WHERE p.phone_normalized = $1
+       ${excludeUserId ? "AND p.user_id != " + Number(excludeUserId) : ""}
+       LIMIT 1`,
+      [normPhone]
+    );
+
+    if (existingPhone) {
+      const phoneWorkspaceId = existingPhone.workspace_id || 1;
+      if (targetWorkspaceId && phoneWorkspaceId === targetWorkspaceId) {
+        throw new Error("This phone number is already part of your workspace.");
+      } else {
+        throw new Error("This phone number is already associated with another workspace and cannot be reused.");
+      }
+    }
+  }
 }
 
 export async function findUserByEmail(email: string): Promise<UserWithProfile | null> {
+  const norm = normalizeEmail(email);
   const user = await queryOne<User>(
-    `SELECT * FROM auth_user WHERE LOWER(email) = LOWER($1) LIMIT 1`,
-    [email.trim()]
+    `SELECT * FROM auth_user WHERE LOWER(email) = $1 OR email_normalized = $1 LIMIT 1`,
+    [norm]
   );
   if (!user) return null;
 
@@ -24,6 +109,7 @@ export async function findUserByEmail(email: string): Promise<UserWithProfile | 
     profile: profile || {
       id: 0,
       user_id: user.id,
+      workspace_id: 1,
       role: user.is_superuser ? "ADMIN" : "TEAM_MEMBER",
       status: "ACTIVE",
       studio_name: "TrizenAI Studio",
@@ -48,6 +134,7 @@ export async function findUserByUsername(username: string): Promise<UserWithProf
     profile: profile || {
       id: 0,
       user_id: user.id,
+      workspace_id: 1,
       role: user.is_superuser ? "ADMIN" : "TEAM_MEMBER",
       status: "ACTIVE",
       studio_name: "TrizenAI Studio",
@@ -69,6 +156,7 @@ export async function findUserById(id: number): Promise<UserWithProfile | null> 
     profile: profile || {
       id: 0,
       user_id: user.id,
+      workspace_id: 1,
       role: user.is_superuser ? "ADMIN" : "TEAM_MEMBER",
       status: "ACTIVE",
       studio_name: "TrizenAI Studio",
@@ -92,10 +180,104 @@ export async function findUserByDashboardToken(token: string): Promise<UserWithP
   };
 }
 
+/**
+ * Creates a new independent Workspace with owner Admin user inside a transaction
+ */
+export async function createWorkspace(data: {
+  workspaceName: string;
+  adminUsername: string;
+  adminEmail: string;
+  adminPhone?: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+}): Promise<{ workspace: Workspace; owner: UserWithProfile }> {
+  const normEmail = normalizeEmail(data.adminEmail);
+  const normPhone = normalizePhone(data.adminPhone);
+
+  // Global identity uniqueness validation
+  await validateGlobalIdentity(normEmail, normPhone);
+
+  const now = new Date().toISOString();
+  const slug = data.workspaceName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now();
+  const passwordHash = await bcrypt.hash(data.password, 10);
+
+  // Transaction: Create user, workspace, and set owner link
+  const user = await queryOne<User>(
+    `INSERT INTO auth_user (username, email, email_normalized, password, first_name, last_name, is_staff, is_superuser, is_active, date_joined)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     RETURNING id, username, email, first_name, last_name, is_staff, is_superuser`,
+    [
+      data.adminUsername.trim(),
+      data.adminEmail.trim(),
+      normEmail,
+      passwordHash,
+      data.firstName || "",
+      data.lastName || "",
+      true,
+      true,
+      true,
+      now,
+    ]
+  );
+
+  if (!user) throw new Error("Failed to create admin user.");
+
+  const workspace = await queryOne<Workspace>(
+    `INSERT INTO workspaces (name, slug, owner_id, email, email_normalized, phone, phone_normalized, status, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     RETURNING *`,
+    [
+      data.workspaceName.trim(),
+      slug,
+      user.id,
+      data.adminEmail.trim(),
+      normEmail,
+      data.adminPhone || "",
+      normPhone,
+      "ACTIVE",
+      now,
+      now,
+    ]
+  );
+
+  if (!workspace) throw new Error("Failed to create workspace.");
+
+  const dashboardToken = crypto.randomBytes(16).toString("base64url");
+  const profile = await queryOne<Profile>(
+    `INSERT INTO accounts_profile (user_id, workspace_id, role, status, phone_number, phone_normalized, studio_name, dashboard_token, is_email_verified, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     RETURNING *`,
+    [
+      user.id,
+      workspace.id,
+      "ADMIN",
+      "ACTIVE",
+      data.adminPhone || "",
+      normPhone,
+      workspace.name,
+      dashboardToken,
+      true,
+      now,
+      now,
+    ]
+  );
+
+  return {
+    workspace,
+    owner: {
+      ...user,
+      profile: profile!,
+    },
+  };
+}
+
 export async function createUser(data: {
   username: string;
   email: string;
   password: string;
+  phone?: string;
+  workspaceId?: number;
   firstName?: string;
   lastName?: string;
   role?: Role;
@@ -103,16 +285,24 @@ export async function createUser(data: {
   studioName?: string;
   isSuperuser?: boolean;
 }): Promise<UserWithProfile> {
+  const normEmail = normalizeEmail(data.email);
+  const normPhone = normalizePhone(data.phone);
+  const targetWorkspaceId = data.workspaceId || 1;
+
+  // Global identity validation across all workspaces
+  await validateGlobalIdentity(normEmail, normPhone, targetWorkspaceId);
+
   const passwordHash = await bcrypt.hash(data.password, 10);
   const now = new Date().toISOString();
 
   const user = await queryOne<User>(
-    `INSERT INTO auth_user (username, email, password, first_name, last_name, is_staff, is_superuser, is_active, date_joined)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `INSERT INTO auth_user (username, email, email_normalized, password, first_name, last_name, is_staff, is_superuser, is_active, date_joined)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING id, username, email, first_name, last_name, is_staff, is_superuser`,
     [
       data.username.trim(),
       data.email.trim(),
+      normEmail,
       passwordHash,
       data.firstName || "",
       data.lastName || "",
@@ -132,13 +322,16 @@ export async function createUser(data: {
   const status = data.status || "ACTIVE";
 
   const profile = await queryOne<Profile>(
-    `INSERT INTO accounts_profile (user_id, role, status, studio_name, dashboard_token, is_email_verified, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO accounts_profile (user_id, workspace_id, role, status, phone_number, phone_normalized, studio_name, dashboard_token, is_email_verified, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      RETURNING *`,
     [
       user.id,
+      targetWorkspaceId,
       role,
       status,
+      data.phone || "",
+      normPhone,
       data.studioName || "TrizenAI Studio",
       dashboardToken,
       true,
@@ -155,7 +348,6 @@ export async function createUser(data: {
 
 export async function verifyPassword(providedPassword: string, storedHash: string): Promise<boolean> {
   if (storedHash.startsWith("pbkdf2_sha256$")) {
-    // Django PBKDF2 hash format: pbkdf2_sha256$iterations$salt$hash
     const parts = storedHash.split("$");
     if (parts.length === 4) {
       const iterations = parseInt(parts[1], 10);
@@ -165,18 +357,25 @@ export async function verifyPassword(providedPassword: string, storedHash: strin
       return crypto.timingSafeEqual(Buffer.from(expectedKey), Buffer.from(derivedKey));
     }
   }
-  // Standard bcrypt comparison
   return bcrypt.compare(providedPassword, storedHash);
 }
 
-export async function getAllTeamMembers(): Promise<UserWithProfile[]> {
+/**
+ * Scopes team listing strictly by workspaceId
+ */
+export async function getAllTeamMembers(workspaceId: number = 1): Promise<UserWithProfile[]> {
   const users = await query<User>(
-    `SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.is_staff, u.is_superuser, u.date_joined
+    `SELECT u.id, u.username, u.email, u.email_normalized, u.first_name, u.last_name, u.is_staff, u.is_superuser, u.date_joined
      FROM auth_user u
-     ORDER BY u.id ASC`
+     INNER JOIN accounts_profile p ON p.user_id = u.id AND p.workspace_id = $1
+     ORDER BY u.id ASC`,
+    [workspaceId]
   );
 
-  const profiles = await query<Profile>(`SELECT * FROM accounts_profile`);
+  const profiles = await query<Profile>(
+    `SELECT * FROM accounts_profile WHERE workspace_id = $1`,
+    [workspaceId]
+  );
   const profileMap = new Map<number, Profile>();
   profiles.forEach((p) => profileMap.set(p.user_id, p));
 
@@ -185,6 +384,7 @@ export async function getAllTeamMembers(): Promise<UserWithProfile[]> {
     profile: profileMap.get(u.id) || {
       id: 0,
       user_id: u.id,
+      workspace_id: workspaceId,
       role: u.is_superuser ? "ADMIN" : "TEAM_MEMBER",
       status: "ACTIVE",
     },
@@ -202,8 +402,21 @@ export async function updateUserAndProfile(
     phoneNumber?: string;
     mustChangePassword?: boolean;
     newPassword?: string;
+    workspaceId?: number;
   }
 ): Promise<void> {
+  const targetUser = await findUserById(userId);
+  if (!targetUser) throw new Error("User not found.");
+
+  const currentWorkspaceId = data.workspaceId || targetUser.profile?.workspace_id || 1;
+
+  // Validate identity uniqueness if email or phone is changing
+  const normEmail = data.email ? normalizeEmail(data.email) : undefined;
+  const normPhone = data.phoneNumber ? normalizePhone(data.phoneNumber) : undefined;
+  if (normEmail || normPhone) {
+    await validateGlobalIdentity(normEmail, normPhone, currentWorkspaceId, userId);
+  }
+
   const now = new Date().toISOString();
 
   if (data.firstName !== undefined || data.lastName !== undefined || data.email !== undefined || data.newPassword) {
@@ -217,12 +430,14 @@ export async function updateUserAndProfile(
        SET first_name = COALESCE($1, first_name),
            last_name = COALESCE($2, last_name),
            email = COALESCE($3, email),
-           password = COALESCE($4, password)
-       WHERE id = $5`,
+           email_normalized = COALESCE($4, email_normalized),
+           password = COALESCE($5, password)
+       WHERE id = $6`,
       [
         data.firstName ?? null,
         data.lastName ?? null,
         data.email ? data.email.trim() : null,
+        normEmail ?? null,
         passwordHash ?? null,
         userId,
       ]
@@ -232,10 +447,8 @@ export async function updateUserAndProfile(
   if (data.role !== undefined || data.status !== undefined || data.phoneNumber !== undefined || data.mustChangePassword !== undefined) {
     let finalStatus = data.status;
 
-    // Fetch existing user/profile to enforce immunity
-    const currentUser = await findUserById(userId);
-    const isSuper = currentUser?.is_superuser;
-    const effectiveRole = data.role || currentUser?.profile?.role;
+    const isSuper = targetUser.is_superuser;
+    const effectiveRole = data.role || targetUser.profile?.role;
     const isAdmin = isSuper || effectiveRole === "ADMIN" || effectiveRole === "CO_ADMIN";
 
     if (isAdmin && finalStatus === "SUSPENDED") {
@@ -247,13 +460,15 @@ export async function updateUserAndProfile(
        SET role = COALESCE($1, role),
            status = COALESCE($2, status),
            phone_number = COALESCE($3, phone_number),
-           must_change_password = COALESCE($4, must_change_password),
-           updated_at = $5
-       WHERE user_id = $6`,
+           phone_normalized = COALESCE($4, phone_normalized),
+           must_change_password = COALESCE($5, must_change_password),
+           updated_at = $6
+       WHERE user_id = $7`,
       [
         data.role ?? null,
         finalStatus ?? null,
         data.phoneNumber ?? null,
+        normPhone ?? null,
         data.mustChangePassword !== undefined ? (data.mustChangePassword ? 1 : 0) : null,
         now,
         userId,
@@ -262,14 +477,17 @@ export async function updateUserAndProfile(
   }
 }
 
-export async function deleteUser(userId: number): Promise<void> {
+export async function deleteUser(userId: number, workspaceId: number = 1): Promise<void> {
   if (!userId || userId <= 0) {
     throw new Error("Invalid user ID provided for deletion.");
   }
   const targetUser = await findUserById(userId);
   if (!targetUser) return;
 
-  // Accidental Data Loss Prevention: Protect Superusers & Studio Administrators from deletion
+  if (targetUser.profile?.workspace_id !== workspaceId) {
+    throw new Error("You do not have access to this workspace resource.");
+  }
+
   if (targetUser.is_superuser || targetUser.profile?.role === "ADMIN") {
     throw new Error("Studio Administrators and Superusers are protected from deletion to prevent accidental data loss.");
   }
@@ -289,6 +507,7 @@ export async function updatePasswordAndClearMustChange(userId: number, newPasswo
 
 export async function updateStudioSettings(
   userId: number,
+  workspaceId: number,
   data: {
     studioName?: string;
     studioTagline?: string;
@@ -320,7 +539,7 @@ export async function updateStudioSettings(
          client_downloads_enabled = COALESCE($11, client_downloads_enabled),
          studio_logo = COALESCE($12, studio_logo),
          updated_at = $13
-     WHERE user_id = $14`,
+     WHERE user_id = $14 AND workspace_id = $15`,
     [
       data.studioName ?? null,
       data.studioTagline ?? null,
@@ -336,7 +555,7 @@ export async function updateStudioSettings(
       data.studioLogo ?? null,
       now,
       userId,
+      workspaceId,
     ]
   );
 }
-

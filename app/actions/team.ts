@@ -1,6 +1,6 @@
 "use server";
 
-import { getCurrentUser } from "@/lib/auth/session";
+import { requireWorkspaceRole } from "@/lib/auth/workspace";
 import { createUser, updateUserAndProfile, deleteUser, findUserByEmail, findUserByUsername, findUserById } from "@/lib/db/users";
 import { sendTeamInvitationEmail } from "@/lib/email";
 import { revalidatePath } from "next/cache";
@@ -16,10 +16,7 @@ export interface TeamActionResult {
 }
 
 export async function addTeamMemberAction(formData: FormData): Promise<TeamActionResult> {
-  const user = await getCurrentUser();
-  if (!user || (!user.is_superuser && user.profile.role !== "ADMIN" && user.profile.role !== "CO_ADMIN")) {
-    return { error: "Access denied. Only studio administrators can invite team members." };
-  }
+  const { user, workspaceId } = await requireWorkspaceRole(["ADMIN", "CO_ADMIN"]);
 
   const firstName = (formData.get("first_name") as string || "").trim();
   const lastName = (formData.get("last_name") as string || "").trim();
@@ -30,12 +27,6 @@ export async function addTeamMemberAction(formData: FormData): Promise<TeamActio
 
   if (!email || !firstName) {
     return { error: "First name and email are required." };
-  }
-
-  // Check if email already exists
-  const existing = await findUserByEmail(email);
-  if (existing) {
-    return { error: `A team member with email ${email} already exists.` };
   }
 
   // Generate username from email or name
@@ -53,7 +44,9 @@ export async function addTeamMemberAction(formData: FormData): Promise<TeamActio
     const newMember = await createUser({
       username,
       email,
+      phone,
       password: temporaryPassword,
+      workspaceId,
       firstName,
       lastName,
       role,
@@ -62,16 +55,15 @@ export async function addTeamMemberAction(formData: FormData): Promise<TeamActio
       isSuperuser: false,
     });
 
-    // Mark must_change_password = true and set phone number
+    // Mark must_change_password = true
     await updateUserAndProfile(newMember.id, {
-      phoneNumber: phone,
       mustChangePassword: true,
+      workspaceId,
     });
 
     const origin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const loginUrl = `${origin}/login?email=${encodeURIComponent(email)}`;
 
-    // If requested, send email
     if (sendEmail) {
       await sendTeamInvitationEmail({
         to: email,
@@ -99,14 +91,11 @@ export async function addTeamMemberAction(formData: FormData): Promise<TeamActio
 }
 
 export async function updateTeamMemberAction(memberId: number, formData: FormData): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
-  if (!user || (!user.is_superuser && user.profile.role !== "ADMIN" && user.profile.role !== "CO_ADMIN")) {
-    return { success: false, error: "Unauthorized" };
-  }
+  const { workspaceId } = await requireWorkspaceRole(["ADMIN", "CO_ADMIN"]);
 
   const targetMember = await findUserById(memberId);
-  if (!targetMember) {
-    return { success: false, error: "Team member not found." };
+  if (!targetMember || targetMember.profile?.workspace_id !== workspaceId) {
+    return { success: false, error: "You do not have access to this workspace resource." };
   }
 
   const firstName = (formData.get("first_name") as string || "").trim();
@@ -117,7 +106,6 @@ export async function updateTeamMemberAction(memberId: number, formData: FormDat
   let status = formData.get("status") as any;
   const resetPassword = formData.get("reset_password") === "true";
 
-  // Rule: Studio Administrators & Co-Admins cannot be suspended (Only Team Members / Photographers can be suspended)
   const isTargetAdmin = targetMember.is_superuser || targetMember.profile?.role === "ADMIN" || targetMember.profile?.role === "CO_ADMIN";
   const isNewRoleAdmin = role === "ADMIN" || role === "CO_ADMIN";
 
@@ -125,7 +113,6 @@ export async function updateTeamMemberAction(memberId: number, formData: FormDat
     if (status === "SUSPENDED") {
       return { success: false, error: "Studio Administrators and Co-Admins cannot be suspended. Only team members can be suspended." };
     }
-    // If promoting to admin, ensure status is ACTIVE if it was suspended
     if (isNewRoleAdmin && targetMember.profile?.status === "SUSPENDED" && !status) {
       status = "ACTIVE";
     }
@@ -146,6 +133,7 @@ export async function updateTeamMemberAction(memberId: number, formData: FormDat
       status: status || undefined,
       mustChangePassword: resetPassword ? true : undefined,
       newPassword,
+      workspaceId,
     });
 
     revalidatePath("/dashboard/team-management");
@@ -157,17 +145,14 @@ export async function updateTeamMemberAction(memberId: number, formData: FormDat
 }
 
 export async function deleteTeamMemberAction(memberId: number): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
-  if (!user || (!user.is_superuser && user.profile.role !== "ADMIN")) {
-    return { success: false, error: "Only super administrators can delete team members." };
-  }
+  const { user, workspaceId } = await requireWorkspaceRole(["ADMIN"]);
 
   if (memberId === user.id) {
     return { success: false, error: "You cannot delete your own admin account." };
   }
 
   try {
-    await deleteUser(memberId);
+    await deleteUser(memberId, workspaceId);
     revalidatePath("/dashboard/team-management");
     revalidatePath("/dashboard/administrators");
     return { success: true };

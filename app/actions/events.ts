@@ -1,6 +1,7 @@
 "use server";
 
-import { getCurrentUser, checkMemberActive } from "@/lib/auth/session";
+import { requireWorkspaceSession, requireEventAccess } from "@/lib/auth/workspace";
+import { checkMemberActive } from "@/lib/auth/session";
 import {
   createEvent,
   updateEvent,
@@ -26,10 +27,7 @@ export interface EventActionResult {
 }
 
 export async function createEventAction(formData: FormData): Promise<EventActionResult> {
-  const user = await getCurrentUser();
-  if (!user) {
-    return { error: "You must be signed in to create an event." };
-  }
+  const { user, workspaceId } = await requireWorkspaceSession();
 
   const statusCheck = checkMemberActive(user);
   if (!statusCheck.allowed) {
@@ -88,6 +86,7 @@ export async function createEventAction(formData: FormData): Promise<EventAction
 
   try {
     const event = await createEvent({
+      workspaceId,
       name,
       slug,
       category,
@@ -104,11 +103,11 @@ export async function createEventAction(formData: FormData): Promise<EventAction
       createdById: user.id,
     });
 
-    // Add selected team members
+    // Add selected team members (ensuring they belong to the same workspace)
     for (const mId of membersRaw) {
       const parsedId = parseInt(mId, 10);
       if (!isNaN(parsedId)) {
-        await addEventMember(event.id, parsedId);
+        await addEventMember(event.id, parsedId, workspaceId);
       }
     }
 
@@ -125,8 +124,7 @@ export async function createEventAction(formData: FormData): Promise<EventAction
 }
 
 export async function updateEventAction(eventId: number, formData: FormData): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const { user, workspaceId } = await requireEventAccess(eventId);
 
   const statusCheck = checkMemberActive(user);
   if (!statusCheck.allowed) {
@@ -158,7 +156,7 @@ export async function updateEventAction(eventId: number, formData: FormData): Pr
       endTime,
       location,
       venueAddress,
-    });
+    }, workspaceId);
 
     revalidatePath(`/events/${eventId}`);
     revalidatePath("/events");
@@ -169,8 +167,7 @@ export async function updateEventAction(eventId: number, formData: FormData): Pr
 }
 
 export async function deleteEventAction(eventId: number): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const { user, workspaceId } = await requireEventAccess(eventId);
 
   const statusCheck = checkMemberActive(user);
   if (!statusCheck.allowed) {
@@ -178,7 +175,7 @@ export async function deleteEventAction(eventId: number): Promise<{ success: boo
   }
 
   try {
-    await deleteEvent(eventId);
+    await deleteEvent(eventId, workspaceId);
     revalidatePath("/events");
     revalidatePath("/dashboard/admin");
     return { success: true };
@@ -192,8 +189,7 @@ export async function toggleEventMemberAction(
   userId: number,
   isAssigned: boolean
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const { user, workspaceId } = await requireEventAccess(eventId);
 
   const statusCheck = checkMemberActive(user);
   if (!statusCheck.allowed) {
@@ -215,9 +211,9 @@ export async function toggleEventMemberAction(
 
   try {
     if (isAssigned) {
-      await addEventMember(eventId, userId);
+      await addEventMember(eventId, userId, workspaceId);
     } else {
-      await removeEventMember(eventId, userId);
+      await removeEventMember(eventId, userId, workspaceId);
     }
     revalidatePath(`/events/${eventId}`);
     return { success: true };
@@ -230,8 +226,7 @@ export async function updateEventStatusAction(
   eventId: number,
   status: EventStatus
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const { user } = await requireEventAccess(eventId);
 
   const statusCheck = checkMemberActive(user);
   if (!statusCheck.allowed) {
@@ -254,8 +249,7 @@ export async function cancelEventAction(
   eventId: number,
   reason: string
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const { user } = await requireEventAccess(eventId);
 
   const statusCheck = checkMemberActive(user);
   if (!statusCheck.allowed) {
@@ -285,8 +279,7 @@ export async function rescheduleEventAction(
   endTime: string,
   reason?: string
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const { user } = await requireEventAccess(eventId);
 
   const statusCheck = checkMemberActive(user);
   if (!statusCheck.allowed) {
@@ -312,8 +305,7 @@ export async function rescheduleEventAction(
 export async function startShootNowAction(
   eventId: number
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const { user } = await requireEventAccess(eventId);
 
   const statusCheck = checkMemberActive(user);
   if (!statusCheck.allowed) {
@@ -335,8 +327,7 @@ export async function startShootNowAction(
 export async function completeShootNowAction(
   eventId: number
 ): Promise<{ success: boolean; error?: string }> {
-  const user = await getCurrentUser();
-  if (!user) return { success: false, error: "Unauthorized" };
+  const { user } = await requireEventAccess(eventId);
 
   const statusCheck = checkMemberActive(user);
   if (!statusCheck.allowed) {

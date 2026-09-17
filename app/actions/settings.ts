@@ -1,6 +1,6 @@
 "use server";
 
-import { getCurrentUser } from "@/lib/auth/session";
+import { requireWorkspaceRole } from "@/lib/auth/workspace";
 import { updateStudioSettings } from "@/lib/db/users";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { query } from "@/lib/db";
@@ -13,10 +13,7 @@ export interface StudioSettingsResult {
 }
 
 export async function updateStudioSettingsAction(formData: FormData): Promise<StudioSettingsResult> {
-  const user = await getCurrentUser();
-  if (!user || (!user.is_superuser && user.profile.role !== "ADMIN" && user.profile.role !== "CO_ADMIN")) {
-    return { error: "Access denied. Only studio administrators can update studio settings." };
-  }
+  const { user, workspaceId } = await requireWorkspaceRole(["ADMIN", "CO_ADMIN"]);
 
   const studioName = (formData.get("studio_name") as string || "").trim();
   const studioTagline = (formData.get("studio_tagline") as string || "").trim();
@@ -87,7 +84,7 @@ export async function updateStudioSettingsAction(formData: FormData): Promise<St
   }
 
   try {
-    await updateStudioSettings(user.id, {
+    await updateStudioSettings(user.id, workspaceId, {
       studioName,
       studioTagline,
       studioEmail,
